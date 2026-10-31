@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GymTracker — трекер для новичков</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f1115; color: #e6e8eb; margin: 0 auto; padding: 20px; max-width: 480px; }
+  h1 { font-size: 22px; margin: 0 0 16px; }
+  h2 { font-size: 18px; margin: 16px 0 12px; }
+  button { background: #4f8cff; color: white; border: none; padding: 12px 16px;
+    border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+    width: 100%; margin-bottom: 8px; }
+  button.secondary { background: #23262d; }
+  button.danger { background: #ff4f4f; }
+  input, select { width: 100%; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid #2c3038; background: #1a1d23; color: #e6e8eb;
+    font-size: 15px; margin-bottom: 10px; }
+  label { display: block; font-size: 13px; color: #9aa0aa; margin-bottom: 4px; }
+  .card { background: #1a1d23; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .stat { font-size: 28px; font-weight: 700; color: #4f8cff; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row > * { flex: 1; }
+  .muted { color: #9aa0aa; font-size: 13px; }
+  .hint { color: #ffb84f; font-size: 13px; margin-top: 6px; }
+  .success { color: #4fff8f; }
+  .set-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 14px; }
+  .set-row > span { min-width: 50px; }
+  .ex-list { max-height: 320px; overflow-y: auto; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const STORAGE = { profile: 'gt_profile', workouts: 'gt_workouts', bodyLog: 'gt_bodylog' };
+
+const BASE_EXERCISES = [
+  { name: 'Приседания со штангой', group: 'Ноги' },
+  { name: 'Жим лёжа', group: 'Грудь' },
+  { name: 'Становая тяга', group: 'Спина' },
+  { name: 'Жим стоя', group: 'Плечи' },
+  { name: 'Подтягивания', group: 'Спина' },
+  { name: 'Тяга штанги в наклоне', group: 'Спина' },
+  { name: 'Жим гантелей лёжа', group: 'Грудь' },
+  { name: 'Тяга верхнего блока', group: 'Спина' },
+  { name: 'Жим ногами', group: 'Ноги' },
+  { name: 'Выпады с гантелями', group: 'Ноги' },
+  { name: 'Подъём штанги на бицепс', group: 'Руки' },
+  { name: 'Французский жим', group: 'Руки' },
+  { name: 'Махи гантелями в стороны', group: 'Плечи' },
+  { name: 'Скручивания', group: 'Пресс' },
+];
+
+let state = {
+  profile: load(STORAGE.profile),
+  workouts: load(STORAGE.workouts) || [],
+  bodyLog: load(STORAGE.bodyLog) || [],
+  screen: 'home',
+  currentWorkout: null,
+};
+
+function load(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
+function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+function today() { return new Date().toISOString().slice(0, 10); }
+
+function calcTargets({ goal, weight, height, age, sex }) {
+  let bmr = 10 * weight + 6.25 * height - 5 * age;
+  bmr += sex === 'male' ? 5 : -161;
+  const tdee = bmr * 1.5;
+  let calories = tdee;
+  if (goal === 'mass') calories += 400;
+  if (goal === 'cut') calories -= 400;
+  const protein = Math.round(weight * (goal === 'cut' ? 2.0 : 1.8));
+  return { calories: Math.round(calories), protein };
+}
+
+function getLastSetsFor(exerciseName) {
+  const sorted = [...state.workouts].sort((a, b) => b.date.localeCompare(a.date));
+  for (const w of sorted) {
+    const ex = w.exercises.find(e => e.name === exerciseName);
+    if (ex && ex.sets.length) return ex.sets;
+  }
+  return null;
+}
+
+function suggestWeight(exerciseName) {
+  const last = getLastSetsFor(exerciseName);
+  if (!last) return null;
+  const maxReps = Math.max(...last.map(s => s.reps));
+  const topWeight = Math.max(...last.map(s => s.weight));
+  const allAtTop = last.every(s => s.reps >= 12);
+  return {
+    weight: allAtTop ? topWeight + 2.5 : topWeight,
+    note: allAtTop
+      ? `Прошлый раз: ${topWeight} кг. Все подходы на 12+ — пробуй ${topWeight + 2.5} кг`
+      : `Прошлый раз: ${topWeight} кг × до ${maxReps}. Цель — все подходы по 12, потом +2.5 кг`,
+  };
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if (!state.profile) { app.innerHTML = renderOnboarding(); return; }
+  if (state.screen === 'home') app.innerHTML = renderHome();
+  else if (state.screen === 'newWorkout') app.innerHTML = renderNewWorkout();
+  else if (state.screen === 'history') app.innerHTML = renderHistory();
+  else if (state.screen === 'progress') app.innerHTML = renderProgress();
+}
+
+function renderOnboarding() {
+  return `
+    <h1>GymTracker</h1>
+    <p class="muted">Пара шагов — и подскажем, какой вес брать и сколько есть.</p>
+    <div class="card">
+      <label>Цель</label>
+      <select id="goal">
+        <option value="mass">Набрать массу</option>
+        <option value="cut">Похудеть</option>
+        <option value="maintain">Поддерживать</option>
+      </select>
+      <label>Вес (кг)</label><input id="weight" type="number" placeholder="75">
+      <label>Рост (см)</label><input id="height" type="number" placeholder="180">
+      <label>Возраст</label><input id="age" type="number" placeholder="25">
+      <label>Пол</label>
+      <select id="sex"><option value="male">Мужской</option><option value="female">Женский</option></select>
+      <button onclick="completeOnboarding()">Поехали</button>
+    </div>`;
+}
+
+function completeOnboarding() {
+  const profile = {
+    goal: document.getElementById('goal').value,
+    weight: +document.getElementById('weight').value,
+    height: +document.getElementById('height').value,
+    age: +document.getElementById('age').value,
+    sex: document.getElementById('sex').value,
+  };
+  if (!profile.weight || !profile.height || !profile.age) { alert('Заполни все поля'); return; }
+  profile.targets = calcTargets(profile);
+  state.profile = profile;
+  save(STORAGE.profile, profile);
+  render();
+}
+
+function renderHome() {
+  const t = state.profile.targets;
+  const done = state.workouts.some(w => w.date === today());
+  return `
+    <h1>Сегодня</h1>
+    <div class="card">
+      <p class="muted">Нормы питания</p>
+      <div class="row">
+        <div><div class="stat">${t.calories}</div><div class="muted">ккал</div></div>
+        <div><div class="stat">${t.protein} г</div><div class="muted">белок</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <p class="muted">Тренировка</p>
+      ${done ? '<p class="success">✓ Сегодня сделана</p>' : '<p>Ещё не начата</p>'}
+      <button onclick="startWorkout()">${done ? 'Добавить ещё' : 'Начать тренировку'}</button>
+    </div>
+    <button class="secondary" onclick="go('history')">История тренировок</button>
+    <button class="secondary" onclick="go('progress')">Прогресс по весу</button>
+    <button class="secondary" onclick="resetProfile()">Сбросить всё</button>`;
+}
+
+function startWorkout() {
+  state.currentWorkout = { date: today(), exercises: [] };
+  state.screen = 'newWorkout';
+  render();
+}
+
+function renderNewWorkout() {
+  const w = state.currentWorkout;
+  return `
+    <h1>Тренировка</h1>
+    <div class="card">
+      <h2>Добавить упражнение</h2>
+      <div class="ex-list">
+        ${BASE_EXERCISES.map(ex => {
+          const hint = suggestWeight(ex.name);
+          return `<button class="secondary" style="text-align:left" onclick="addExercise('${ex.name}')">
+            <div>${ex.name}</div>
+            ${hint ? `<div class="hint">${hint.note}</div>` : '<div class="muted">первый раз — вбей любой вес</div>'}
+          </button>`;
+        }).join('')}
+      </div>
+    </div>
+    ${w.exercises.length ? `
+      <div class="card">
+        <h2>В тренировке</h2>
+        ${w.exercises.map((ex, i) => `
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <strong>${ex.name}</strong>
+              <button class="danger" style="width:auto;padding:4px 10px" onclick="removeExercise(${i})">×</button>
+            </div>
+            ${ex.sets.map((s, j) => `
+              <div class="set-row">
+                <span>Подход ${j + 1}</span>
+                <input type="number" value="${s.weight}" placeholder="кг" onchange="updateSet(${i},${j},'weight',this.value)">
+                <input type="number" value="${s.reps}" placeholder="повторы" onchange="updateSet(${i},${j},'reps',this.value)">
+              </div>`).join('')}
+            <button class="secondary" onclick="addSet(${i})">+ подход</button>
+          </div>`).join('')}
+      </div>
+      <button onclick="finishWorkout()">Завершить тренировку</button>` : ''}
+    <button class="secondary" onclick="cancelWorkout()">Отменить</button>`;
+}
+
+function addExercise(name) {
+  const hint = suggestWeight(name);
+  state.currentWorkout.exercises.push({
+    name, sets: [{ weight: hint ? hint.weight : 0, reps: 8 }],
+  });
+  render();
+}
+function removeExercise(i) { state.currentWorkout.exercises.splice(i, 1); render(); }
+function addSet(i) {
+  const ex = state.currentWorkout.exercises[i];
+  const last = ex.sets[ex.sets.length - 1];
+  ex.sets.push({ weight: last.weight, reps: last.reps });
+  render();
+}
+function updateSet(i, j, field, val) { state.currentWorkout.exercises[i].sets[j][field] = +val; }
+function finishWorkout() {
+  state.workouts.push({ ...state.currentWorkout, id: Date.now() });
+  save(STORAGE.workouts, state.workouts);
+  state.currentWorkout = null;
+  state.screen = 'home';
+  render();
+}
+function cancelWorkout() { state.currentWorkout = null; state.screen = 'home'; render(); }
+
+function renderHistory() {
+  const sorted = [...state.workouts].sort((a, b) => b.date.localeCompare(a.date));
+  return `
+    <h1>История</h1>
+    ${sorted.length === 0 ? '<p class="muted">Пока пусто</p>' : ''}
+    ${sorted.map(w => `
+      <div class="card">
+        <div class="muted">${w.date}</div>
+        ${w.exercises.map(ex => `
+          <div style="margin-top:8px">
+            <strong>${ex.name}</strong>
+            <div class="muted">${ex.sets.map(s => `${s.weight}×${s.reps}`).join(' · ')}</div>
+          </div>`).join('')}
+      </div>`).join('')}
+    <button class="secondary" onclick="go('home')">← Назад</button>`;
+}
+
+function renderProgress() {
+  return `
+    <h1>Вес тела</h1>
+    <div class="card">
+      <label>Записать вес сегодня</label>
+      <div class="row">
+        <input id="bw" type="number" placeholder="кг">
+        <button style="width:auto" onclick="logBodyWeight()">OK</button>
+      </div>
+    </div>
+    <div class="card">
+      ${state.bodyLog.length === 0 ? '<p class="muted">Пока пусто</p>' : ''}
+      ${[...state.bodyLog].sort((a, b) => b.date.localeCompare(a.date))
+        .map(b => `<div class="set-row"><span>${b.date}</span><strong>${b.weight} кг</strong></div>`).join('')}
+    </div>
+    <button class="secondary" onclick="go('home')">← Назад</button>`;
+}
+function logBodyWeight() {
+  const w = +document.getElementById('bw').value;
+  if (!w) return;
+  state.bodyLog.push({ date: today(), weight: w });
+  save(STORAGE.bodyLog, state.bodyLog);
+  render();
+}
+function go(screen) { state.screen = screen; render(); }
+function resetProfile() {
+  if (!confirm('Сбросить всё?')) return;
+  localStorage.clear();
+  state = { profile: null, workouts: [], bodyLog: [], screen: 'home', currentWorkout: null };
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
