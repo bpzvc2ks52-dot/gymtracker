@@ -32,10 +32,8 @@
   button.secondary { background: var(--card-light); color: var(--text); }
   button.danger { background: rgba(250,17,79,0.15); color: var(--move); }
   
-  /* Убираем стрелочки у инпутов */
   input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=number] { -moz-appearance: textfield; }
-  
   input, select { width: 100%; padding: 18px; border-radius: 16px; border: none; 
     background: var(--card-light); color: var(--text); font-size: 17px; margin-bottom: 12px; outline: none; 
     font-family: inherit; font-weight: 600; transition: box-shadow 0.2s; text-align: center; }
@@ -43,7 +41,6 @@
   
   label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px;}
   
-  /* Bento Grid */
   .bento-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
   .card { background: var(--card); border-radius: var(--radius); padding: 24px; 
           box-shadow: 0 4px 20px rgba(0,0,0,0.2); overflow: hidden; position: relative; }
@@ -52,7 +49,6 @@
   .stat-num { font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: -1.5px; }
   .stat-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
 
-  /* Навигация */
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--border); display: flex; justify-content: space-around;
@@ -63,7 +59,6 @@
   .nav-item.active i { color: var(--accent); }
   .nav-item i { font-size: 26px; }
 
-  /* Кольца */
   .rings-container { display: flex; justify-content: center; gap: 20px; padding: 10px 0; }
   .ring-wrap { position: relative; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; }
   .ring-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -73,7 +68,6 @@
   .ring-icon { font-size: 20px; margin-bottom: 2px; }
   .ring-val { font-size: 14px; font-weight: 800; }
 
-  /* Сетка подходов */
   .set-row { display: grid; grid-template-columns: 40px 1fr 1fr 44px; gap: 10px; align-items: center; margin-bottom: 12px; }
   .set-num { width: 40px; height: 40px; background: var(--card-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--muted); }
   .set-row input { margin-bottom: 0; padding: 14px; font-size: 17px; border-radius: 12px; text-align: center; font-weight: 700; }
@@ -81,32 +75,31 @@
   .set-row.warmup input { color: var(--move); }
   .btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 12px; background: var(--card-light); color: var(--text); border: none; display: flex; align-items: center; justify-content: center; font-size: 20px; }
 
-  /* Premium Блокировка (Blur) */
   .premium-lock { position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); 
     -webkit-backdrop-filter: blur(6px); display: flex; flex-direction: column; align-items: center; 
     justify-content: center; z-index: 10; cursor: pointer; transition: background 0.2s; }
   .premium-icon { color: var(--premium); font-size: 32px; margin-bottom: 8px; }
   .premium-text { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--premium); }
 
-  /* Бег */
   .run-screen { display: flex; flex-direction: column; height: calc(100vh - 160px); justify-content: center; }
   .run-time-big { font-size: 70px; font-weight: 800; line-height: 1; letter-spacing: -3px; font-variant-numeric: tabular-nums; text-align: center; margin-bottom: 20px; }
   .run-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 40px; }
   .run-metric-box { background: var(--card); padding: 24px; border-radius: var(--radius); text-align: center; }
   .run-metric-val { font-size: 32px; font-weight: 800; color: var(--exercise); line-height: 1; margin-bottom: 4px; }
 
-  /* Модалки */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(10px); }
   .modal-overlay.active { display: flex; animation: slideUp 0.3s ease; }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal-content { background: var(--card); padding: 32px 24px; border-radius: 32px 32px 0 0; max-width: 480px; width: 100%; text-align: center; }
+  .modal-content { background: var(--card); padding: 32px 24px; border-radius: 32px 32px 0 0; max-width: 480px; width: 100%; text-align: center; max-height: 90vh; overflow-y: auto;}
 
-  /* Paywall */
   .paywall-icon { font-size: 64px; color: var(--premium); margin-bottom: 16px; }
   .paywall-title { font-size: 28px; font-weight: 800; margin-bottom: 12px; }
   .paywall-list { text-align: left; margin: 24px 0; padding: 0 20px; list-style: none; }
   .paywall-list li { margin-bottom: 12px; font-size: 16px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
   .paywall-list i { color: var(--accent); font-size: 20px; }
+
+  .mood-btn { font-size: 36px; background: var(--card-light); border-radius: 16px; padding: 10px; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; }
+  .mood-btn.selected { border-color: var(--accent); background: rgba(162,255,0,0.1); }
 
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px 24px 40px 24px; }
@@ -116,7 +109,7 @@
     .bento-grid { grid-template-columns: 1fr 1fr; gap: 20px; }
     .span-2 { grid-column: span 2; }
     .modal-overlay { align-items: center; }
-    .modal-content { border-radius: 32px; max-width: 420px; }
+    .modal-content { border-radius: 32px; max-width: 450px; }
     .run-time-big { font-size: 110px; }
     .workout-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
   }
@@ -130,18 +123,43 @@
     <i class="ph-fill ph-crown paywall-icon"></i>
     <div class="paywall-title">Fitness Pro Premium</div>
     <p class="muted">Разблокируй полный потенциал</p>
-    
     <ul class="paywall-list">
-      <li><i class="ph ph-check-circle"></i> Персональный план тренировок</li>
+      <li><i class="ph ph-check-circle"></i> Готовый план тренировок</li>
       <li><i class="ph ph-check-circle"></i> Детальный план питания</li>
-      <li><i class="ph ph-check-circle"></i> Анализ состава тела (жир/мышцы)</li>
-      <li><i class="ph ph-check-circle"></i> Расширенная аналитика</li>
+      <li><i class="ph ph-check-circle"></i> Анализ состава тела</li>
     </ul>
-
     <button onclick="unlockPremium()" style="background: linear-gradient(90deg, #ffd700, #ffaa00); color: #000; font-size: 20px;">
       Оформить за 299 ₽ / мес
     </button>
     <button class="secondary" onclick="closeModal('premium-modal')">Позже</button>
+  </div>
+</div>
+
+<!-- Модалка Оценки Тренировки -->
+<div id="feedback-modal" class="modal-overlay">
+  <div class="modal-content">
+    <h2 style="margin-top:0">Как прошла тренировка?</h2>
+    <p class="muted" style="margin-bottom:20px;">Это поможет отслеживать твое состояние</p>
+    
+    <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;" id="mood-container">
+      <div class="mood-btn" onclick="selectMood('🔥')">🔥</div>
+      <div class="mood-btn" onclick="selectMood('💪')">💪</div>
+      <div class="mood-btn" onclick="selectMood('🥵')">🥵</div>
+      <div class="mood-btn" onclick="selectMood('😴')">😴</div>
+    </div>
+
+    <input type="text" id="workout-note" placeholder="Заметка (например: болела спина)" style="text-align:left;">
+    
+    <button onclick="saveWorkoutWithFeedback()" style="margin-top:10px;">Сохранить тренировку</button>
+  </div>
+</div>
+
+<!-- Модалка Контента Premium (Планы) -->
+<div id="plan-modal" class="modal-overlay" onclick="closeModal('plan-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
+    <h2 id="plan-title" style="text-align:center; color:var(--premium);">Premium План</h2>
+    <div id="plan-content" style="margin-top:20px; line-height:1.6; font-size:16px;"></div>
+    <button class="secondary" style="margin-top:24px;" onclick="closeModal('plan-modal')">Закрыть</button>
   </div>
 </div>
 
@@ -173,7 +191,7 @@
 <div id="app"></div>
 
 <script>
-const STORAGE = { profile: 'fit_p2', workouts: 'fit_w2', bodyLog: 'fit_b2', daily: 'fit_d2', runs: 'fit_r2', premium: 'fit_prem2' };
+const STORAGE = { profile: 'fit_p3', workouts: 'fit_w3', bodyLog: 'fit_b3', daily: 'fit_d3', runs: 'fit_r3', premium: 'fit_prem3' };
 
 const EXERCISE_DB = {
   'Приседания со штангой': 'Ноги', 'Жим лёжа': 'Грудь', 'Становая тяга': 'Спина', 
@@ -194,9 +212,10 @@ let state = {
   workouts: load(STORAGE.workouts) || [], 
   bodyLog: load(STORAGE.bodyLog) || [],
   runs: load(STORAGE.runs) || [],
-  daily: load(STORAGE.daily) || { date: today(), water: 0 },
+  daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0 },
   isPremium: load(STORAGE.premium) || false,
-  screen: 'home', currentWorkout: null, chartInstance: null
+  screen: 'home', currentWorkout: null, chartInstance: null,
+  tempMood: null
 };
 
 let timerInt = null, timerTime = 90;
@@ -206,30 +225,35 @@ function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { r
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 function today() { return new Date().toISOString().slice(0, 10); }
 
-if (state.daily.date !== today()) { state.daily = { date: today(), water: 0 }; save(STORAGE.daily, state.daily); }
+if (state.daily.date !== today()) { state.daily = { date: today(), water: 0, calories: 0 }; save(STORAGE.daily, state.daily); }
 
-// --- МАТЕМАТИКА ---
+// --- РЕАЛЬНАЯ МАТЕМАТИКА ---
 function calcTonnage(workout) {
   if (!workout || !workout.exercises) return 0;
   return workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).reduce((sSum, s) => sSum + (s.weight * s.reps), 0), 0);
 }
 
-function calcStreak() {
-  if (state.workouts.length === 0) return 0;
-  const dates = [...new Set(state.workouts.map(w => w.date))].sort().reverse();
-  let streak = 0, curr = new Date(today());
-  for (let i = 0; i < 30; i++) {
-    if (dates.includes(curr.toISOString().slice(0, 10))) { streak++; curr.setDate(curr.getDate() - 1); }
-    else if (i === 0) { curr.setDate(curr.getDate() - 1); }
-    else break;
-  }
-  return streak;
+// Расчет процента жира (Формула Deurenberg на основе ИМТ)
+function calcBodyFat(profile) {
+  if (!profile || !profile.weight || !profile.height || !profile.age) return 0;
+  const bmi = profile.weight / Math.pow(profile.height / 100, 2);
+  const sex = profile.sex === 'male' ? 1 : 0;
+  let fat = (1.20 * bmi) + (0.23 * profile.age) - (10.8 * sex) - 5.4;
+  return Math.max(3, Math.min(50, Math.round(fat))); // Ограничиваем 3-50%
 }
 
-function getLastSetsFor(name) {
-  const sorted = [...state.workouts].sort((a, b) => b.date.localeCompare(a.date));
-  for (const w of sorted) { const ex = w.exercises.find(e => e.name === name); if (ex && ex.sets.length) return ex.sets; }
-  return null;
+// Расчет восстановления (зависит от дней отдыха и тяжести прошлой тренировки)
+function calcRecovery() {
+  if (state.workouts.length === 0) return 100;
+  const last = [...state.workouts].sort((a,b) => b.date.localeCompare(a.date))[0];
+  const daysSince = Math.floor((new Date(today()) - new Date(last.date)) / (1000 * 60 * 60 * 24));
+  
+  if (daysSince >= 2) return 100;
+  if (daysSince === 1) {
+    // Если вчера был большой тоннаж, восстановление хуже
+    return last.tonnage > 5000 ? 50 : 70;
+  }
+  return 30; // Если тренировался сегодня
 }
 
 // --- РЕНДЕР ---
@@ -252,6 +276,7 @@ function renderOnboarding() {
     <h1 style="font-size:44px; margin-bottom:10px;">Fitness</h1>
     <div class="card" style="text-align:left;">
       <label>Цель</label><select id="goal"><option value="mass">Набор массы</option><option value="cut">Похудение</option></select>
+      <label>Пол</label><select id="sex"><option value="male">Мужской</option><option value="female">Женский</option></select>
       <label>Вес (кг)</label><input id="weight" type="number" placeholder="75">
       <label>Рост (см)</label><input id="height" type="number" placeholder="180">
       <label>Возраст</label><input id="age" type="number" placeholder="25">
@@ -261,7 +286,13 @@ function renderOnboarding() {
 }
 
 function completeOnboarding() {
-  const p = { goal: document.getElementById('goal').value, weight: +document.getElementById('weight').value, height: +document.getElementById('height').value, age: +document.getElementById('age').value };
+  const p = { 
+    goal: document.getElementById('goal').value, 
+    sex: document.getElementById('sex').value,
+    weight: +document.getElementById('weight').value, 
+    height: +document.getElementById('height').value, 
+    age: +document.getElementById('age').value 
+  };
   if (!p.weight || !p.height || !p.age) { alert('Заполни все поля'); return; }
   state.profile = p; save(STORAGE.profile, p);
   document.getElementById('nav').style.display = 'flex';
@@ -273,7 +304,6 @@ function renderHome() {
   const done = state.workouts.some(w => w.date === today());
   const waterPct = Math.min((state.daily.water / 8) * 100, 100);
   const wPct = done ? 100 : 0;
-  const streak = calcStreak();
   
   const size = 100, stroke = 10, r = (size-stroke)/2, circ = 2*Math.PI*r;
 
@@ -282,11 +312,7 @@ function renderHome() {
   </div>`;
 
   return `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-      <h1 style="margin:0;">Сводка</h1>
-      ${streak > 0 ? `<div style="background:rgba(250,17,79,0.15); color:var(--move); padding:8px 16px; border-radius:99px; font-weight:800; display:flex; align-items:center; gap:5px;"><i class="ph-fill ph-fire"></i> ${streak} дн.</div>` : ''}
-    </div>
-    
+    <h1>Сводка</h1>
     <div class="bento-grid">
       <!-- Кольца -->
       <div class="card span-2" style="padding: 30px 20px;">
@@ -300,24 +326,26 @@ function renderHome() {
             <div class="ring-content"><i class="ph ph-drop ring-icon" style="color:var(--stand)"></i><span class="ring-val">${state.daily.water}/8</span></div>
           </div>
         </div>
-        <button class="secondary" onclick="addWater()" style="margin-top:20px; font-size:15px; padding:12px;"><i class="ph ph-plus"></i> Выпить стакан воды</button>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button class="secondary" onclick="addWater()" style="margin:0; font-size:14px; padding:12px;"><i class="ph ph-plus"></i> Вода</button>
+          <button class="secondary" onclick="addCalories()" style="margin:0; font-size:14px; padding:12px;"><i class="ph ph-fork-knife"></i> Еда (${state.daily.calories} ккал)</button>
+        </div>
       </div>
 
-      <!-- План тренировок (Premium) -->
+      <!-- План тренировок -->
       <div class="card" style="min-height:180px;">
         <h2 style="margin-bottom:10px;">План тренировок</h2>
         <p class="muted">Программа на неделю</p>
-        ${!state.isPremium ? premiumLock : '<button style="margin-top:20px;">Смотреть план</button>'}
+        ${!state.isPremium ? premiumLock : `<button style="margin-top:20px;" onclick="showPlan('workout')">Смотреть план</button>`}
       </div>
 
-      <!-- План питания (Premium) -->
+      <!-- План питания -->
       <div class="card" style="min-height:180px;">
         <h2 style="margin-bottom:10px;">План питания</h2>
         <p class="muted">Меню под твою цель</p>
-        ${!state.isPremium ? premiumLock : '<button style="margin-top:20px;">Смотреть меню</button>'}
+        ${!state.isPremium ? premiumLock : `<button style="margin-top:20px;" onclick="showPlan('food')">Смотреть меню</button>`}
       </div>
 
-      <!-- Быстрый старт -->
       <div class="card span-2">
         <button onclick="startWorkout()" style="margin:0;"><i class="ph ph-play"></i> Начать тренировку</button>
       </div>
@@ -325,9 +353,15 @@ function renderHome() {
   `;
 }
 
+function addWater() { state.daily.water = Math.min((state.daily.water || 0) + 1, 8); save(STORAGE.daily, state.daily); render(); }
+function addCalories() { 
+  const c = prompt('Сколько калорий съел?'); 
+  if(c && !isNaN(c)) { state.daily.calories = (state.daily.calories || 0) + +c; save(STORAGE.daily, state.daily); render(); }
+}
+
 // --- ТРЕНИРОВКА ---
 function startWorkout() {
-  state.currentWorkout = { date: today(), exercises: [] };
+  state.currentWorkout = { date: today(), exercises: [], mood: null, note: '' };
   state.screen = 'newWorkout';
   render();
 }
@@ -345,7 +379,6 @@ function renderNewWorkout() {
     </div>
 
     <div class="workout-layout">
-      <!-- Активная часть -->
       <div>
         ${w.exercises.length > 0 ? w.exercises.map((ex, i) => `
           <div class="card" style="margin-bottom:16px; padding:20px;">
@@ -372,10 +405,9 @@ function renderNewWorkout() {
           </div>
         `).join('') : `<div class="card" style="text-align:center; padding:60px 20px; border:2px dashed var(--border); background:transparent; box-shadow:none;"><p class="muted">Добавь упражнения из списка</p></div>`}
         
-        ${w.exercises.length > 0 ? `<button onclick="finishWorkout()" style="margin-top:10px;"><i class="ph ph-check-circle"></i> Завершить</button>` : ''}
+        ${w.exercises.length > 0 ? `<button onclick="promptFinishWorkout()" style="margin-top:10px;"><i class="ph ph-check-circle"></i> Завершить</button>` : ''}
       </div>
 
-      <!-- Список упражнений и шаблоны -->
       <div>
         <div class="card" style="padding:20px; margin-bottom:16px;">
           <h2>Шаблоны</h2>
@@ -405,13 +437,40 @@ function addSet(i) { const ex = state.currentWorkout.exercises[i]; const l = ex.
 function updateSet(i, j, f, v) { state.currentWorkout.exercises[i].sets[j][f] = +v; render(); }
 function addWarmup(i) { const ex = state.currentWorkout.exercises[i]; const w = ex.sets[0]?.weight || 20; ex.sets.unshift({ weight: Math.round((w*0.5)/2.5)*2.5, reps: 10, isWarmup: true }, { weight: Math.round((w*0.7)/2.5)*2.5, reps: 8, isWarmup: true }); render(); }
 
-function finishWorkout() {
+// --- ОЦЕНКА ТРЕНИРОВКИ ---
+function promptFinishWorkout() {
   if (state.currentWorkout.exercises.length === 0) return;
-  const total = calcTonnage(state.currentWorkout);
-  state.workouts.push({ ...state.currentWorkout, id: Date.now(), tonnage: total });
-  save(STORAGE.workouts, state.workouts);
-  state.currentWorkout = null; state.screen = 'home'; render();
+  state.tempMood = null;
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('workout-note').value = '';
+  document.getElementById('feedback-modal').classList.add('active');
 }
+
+function selectMood(emoji) {
+  state.tempMood = emoji;
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+  event.target.classList.add('selected');
+}
+
+function saveWorkoutWithFeedback() {
+  const note = document.getElementById('workout-note').value;
+  const total = calcTonnage(state.currentWorkout);
+  
+  state.workouts.push({ 
+    ...state.currentWorkout, 
+    id: Date.now(), 
+    tonnage: total,
+    mood: state.tempMood || '😐',
+    note: note
+  });
+  
+  save(STORAGE.workouts, state.workouts);
+  closeModal('feedback-modal');
+  state.currentWorkout = null; 
+  state.screen = 'home'; 
+  render();
+}
+
 function cancelWorkout() { if(confirm('Отменить тренировку?')) { state.currentWorkout = null; state.screen = 'home'; render(); } }
 
 // --- БЕГ ---
@@ -424,7 +483,6 @@ function renderRunning() {
   return `
     <div class="run-screen">
       <div class="run-time-big" id="run-time">${formatTime(runTime)}</div>
-      
       <div class="run-metrics">
         <div class="run-metric-box">
           <div class="run-metric-val" id="run-dist">${dist}</div>
@@ -439,11 +497,9 @@ function renderRunning() {
           <div class="stat-label">СОЖЖЕНО ККАЛ</div>
         </div>
       </div>
-
       <button onclick="toggleRun()" id="run-btn" style="border-radius:99px; padding:24px; font-size:22px; background:${runActive ? 'var(--move)' : 'var(--exercise)'}; color:${runActive ? '#fff' : '#000'};">
         <i class="ph ${runActive ? 'ph-pause' : 'ph-play'}"></i> ${runActive ? 'ПАУЗА' : 'СТАРТ'}
       </button>
-      
       <button class="secondary" id="run-save-btn" style="display:${runActive || runTime === 0 ? 'none' : 'flex'};" onclick="saveRun(${dist}, ${cal})">
         Сохранить
       </button>
@@ -475,16 +531,17 @@ function saveRun(dist, cal) {
   runTime = 0; runActive = false; render();
 }
 
-// --- ПРОГРЕСС / ТРЕНДЫ ---
+// --- ТРЕНДЫ ---
 function renderProgress() {
   setTimeout(drawWeightChart, 50);
+  const fat = calcBodyFat(state.profile);
+  const recovery = calcRecovery();
   
   const premiumLock = `<div class="premium-lock" onclick="openPremiumModal()"><i class="ph-fill ph-lock-key premium-icon"></i><span class="premium-text">Premium</span></div>`;
 
   return `
     <h1>Тренды</h1>
     <div class="bento-grid">
-      <!-- График -->
       <div class="card span-2">
         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
           <h2>Вес тела</h2>
@@ -498,17 +555,16 @@ function renderProgress() {
         </div>
       </div>
 
-      <!-- Premium Блоки -->
       <div class="card" style="min-height:200px;">
         <h2>Состав тела</h2>
-        <p class="muted">Анализ жира и мышц</p>
-        ${!state.isPremium ? premiumLock : '<div class="stat-num" style="color:var(--stand); margin-top:20px;">15%</div>'}
+        <p class="muted">Примерный % жира (по ИМТ)</p>
+        ${!state.isPremium ? premiumLock : `<div class="stat-num" style="color:var(--stand); margin-top:20px;">${fat}%</div><div class="stat-label">ЖИР</div>`}
       </div>
       
       <div class="card" style="min-height:200px;">
         <h2>Восстановление</h2>
         <p class="muted">Готовность к залу</p>
-        ${!state.isPremium ? premiumLock : '<div class="stat-num" style="color:var(--accent); margin-top:20px;">85%</div>'}
+        ${!state.isPremium ? premiumLock : `<div class="stat-num" style="color:${recovery > 70 ? 'var(--accent)' : 'var(--move)'}; margin-top:20px;">${recovery}%</div><div class="stat-label">ГОТОВНОСТЬ</div>`}
       </div>
     </div>`;
 }
@@ -541,18 +597,56 @@ function renderProfile() {
       <h2 style="margin-bottom:8px;">Атлет</h2>
       ${state.isPremium ? `<div style="color:var(--premium); font-weight:bold; display:flex; align-items:center; justify-content:center; gap:5px;"><i class="ph-fill ph-crown"></i> Premium Активен</div>` : '<p class="muted">Базовый аккаунт</p>'}
     </div>
+
+    <div class="card">
+      <h2>История тренировок</h2>
+      ${state.workouts.length === 0 ? '<p class="muted">Пока нет данных</p>' : ''}
+      ${[...state.workouts].sort((a,b)=>b.id-a.id).slice(0,5).map(w => `
+        <div style="padding:16px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-weight:700;">${w.date}</div>
+            <div class="muted" style="font-size:13px; margin-top:4px;">${w.note || 'Без заметки'}</div>
+          </div>
+          <div style="font-size:24px;">${w.mood || '😐'}</div>
+        </div>
+      `).join('')}
+    </div>
+
     <div class="card">
       <button class="danger" onclick="resetApp()"><i class="ph ph-trash"></i> Сбросить данные</button>
     </div>`;
+}
+
+// --- ПРЕМИУМ ПЛАНЫ ---
+function showPlan(type) {
+  const title = document.getElementById('plan-title');
+  const content = document.getElementById('plan-content');
+  
+  if (type === 'workout') {
+    title.innerText = "План тренировок (3 дня)";
+    content.innerHTML = `
+      <div style="margin-bottom:16px;"><b>День 1: Верх тела (Push)</b><br><span class="muted">Жим лёжа 4х8, Жим гантелей 3х10, Махи в стороны 3х15, Французский жим 3х12</span></div>
+      <div style="margin-bottom:16px;"><b>День 2: Низ тела</b><br><span class="muted">Приседания 4х8, Жим ногами 3х10, Выпады 3х12, Икры 4х15</span></div>
+      <div><b>День 3: Верх тела (Pull)</b><br><span class="muted">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10, Бицепс 3х12</span></div>
+    `;
+  } else {
+    title.innerText = "План питания";
+    content.innerHTML = `
+      <div style="margin-bottom:16px;"><b>Твоя норма (набор массы):</b><br><span class="muted">~3000 ккал, Белки: 150г, Жиры: 80г, Углеводы: 350г</span></div>
+      <div style="margin-bottom:10px;"><b>Завтрак:</b> Овсянка + 3 яйца + банан</div>
+      <div style="margin-bottom:10px;"><b>Обед:</b> Гречка + Куриная грудка 200г + овощи</div>
+      <div style="margin-bottom:10px;"><b>Перекус:</b> Творог 200г + орехи</div>
+      <div><b>Ужин:</b> Рыба 200г + рис + салат</div>
+    `;
+  }
+  document.getElementById('plan-modal').classList.add('active');
 }
 
 // --- УТИЛИТЫ ---
 function openPremiumModal() { document.getElementById('premium-modal').classList.add('active'); }
 function unlockPremium() { state.isPremium = true; save(STORAGE.premium, true); closeModal('premium-modal'); render(); }
 function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id==='timer-modal') clearInterval(timerInt); }
-function addWater() { state.daily.water = Math.min((state.daily.water || 0) + 1, 8); save(STORAGE.daily, state.daily); render(); }
 
-// Блины
 function showPlatesFromRow(btn) { showPlates(+btn.parentElement.querySelector('input').value); }
 function showPlates(totalWeight) {
   let target = (totalWeight - 20) / 2; const plates = [25, 20, 15, 10, 5, 2.5, 1.25]; let res = [];
@@ -561,7 +655,6 @@ function showPlates(totalWeight) {
   document.getElementById('plates-modal').classList.add('active');
 }
 
-// Таймер
 function startTimer() {
   document.getElementById('timer-modal').classList.add('active');
   timerTime = 90; document.getElementById('timer-display').innerText = "01:30";
