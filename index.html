@@ -12,7 +12,7 @@
     --bg: #000000; --card: #1c1c1e; --card-light: #2c2c2e;
     --text: #ffffff; --muted: #8e8e93;
     --move: #fa114f; --exercise: #a2ff00; --stand: #00d4ff; 
-    --accent: #a2ff00; /* По умолчанию зеленый */
+    --accent: #a2ff00; 
     --radius: 28px; --border: #38383a; --nav-bg: rgba(28,28,30,0.9);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -60,7 +60,6 @@
   .nav-item.active i { color: var(--accent); }
   .nav-item i { font-size: 26px; }
 
-  /* Кольца */
   .rings-container { display: flex; justify-content: center; gap: 15px; padding: 10px 0; }
   .ring-wrap { position: relative; width: 90px; height: 90px; display: flex; align-items: center; justify-content: center; }
   .ring-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -70,7 +69,6 @@
   .ring-icon { font-size: 18px; margin-bottom: 2px; }
   .ring-val { font-size: 12px; font-weight: 800; }
 
-  /* Сетка подходов */
   .set-row { display: grid; grid-template-columns: 40px 1fr 1fr 44px; gap: 10px; align-items: center; margin-bottom: 12px; }
   .set-num { width: 40px; height: 40px; background: var(--card-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--muted); }
   .set-row input { margin-bottom: 0; padding: 14px; font-size: 17px; border-radius: 12px; text-align: center; font-weight: 700; }
@@ -78,7 +76,6 @@
   .set-row.warmup input { color: var(--move); }
   .btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 12px; background: var(--card-light); color: var(--text); border: none; display: flex; align-items: center; justify-content: center; font-size: 20px; }
 
-  /* Бег */
   .run-screen { display: flex; flex-direction: column; height: calc(100vh - 160px); justify-content: center; }
   .run-time-big { font-size: 70px; font-weight: 800; line-height: 1; letter-spacing: -3px; font-variant-numeric: tabular-nums; text-align: center; margin-bottom: 20px; }
   .run-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 40px; }
@@ -96,8 +93,7 @@
   .color-swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; }
   .color-swatch.active { border-color: #fff; transform: scale(1.1); }
 
-  /* Скрытая зона для экспорта (Strava Style) */
-  #export-area { position: absolute; left: -9999px; top: -9999px; width: 400px; background: #111; padding: 30px; border-radius: 30px; color: #fff; font-family: -apple-system, sans-serif; }
+  #export-area { position: absolute; left: -9999px; top: -9999px; width: 400px; background: #000; font-family: -apple-system, sans-serif; }
 
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px 24px 40px 24px; }
@@ -115,7 +111,6 @@
 </head>
 <body>
 
-<!-- Модалка Оценки Тренировки -->
 <div id="feedback-modal" class="modal-overlay">
   <div class="modal-content">
     <h2 style="margin-top:0">Как прошла тренировка?</h2>
@@ -130,7 +125,6 @@
   </div>
 </div>
 
-<!-- Модалка Своего Упражнения -->
 <div id="custom-ex-modal" class="modal-overlay" onclick="closeModal('custom-ex-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Свое упражнение</h2>
@@ -148,7 +142,6 @@
   </div>
 </div>
 
-<!-- Модалка Планов -->
 <div id="plan-modal" class="modal-overlay" onclick="closeModal('plan-modal')">
   <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
     <h2 id="plan-title" style="text-align:center; color:var(--accent);">План</h2>
@@ -157,7 +150,6 @@
   </div>
 </div>
 
-<!-- Модалка Деталей Истории -->
 <div id="history-modal" class="modal-overlay" onclick="closeModal('history-modal')">
   <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
     <h2 id="history-title" style="text-align:center;">Детали тренировки</h2>
@@ -166,7 +158,6 @@
   </div>
 </div>
 
-<!-- Модалка Таймера -->
 <div id="timer-modal" class="modal-overlay" onclick="closeModal('timer-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <div id="timer-display" style="font-size:72px; font-weight:800; font-variant-numeric:tabular-nums; margin:20px 0; color:var(--accent);">01:30</div>
@@ -174,7 +165,6 @@
   </div>
 </div>
 
-<!-- Модалка Блинов -->
 <div id="plates-modal" class="modal-overlay" onclick="closeModal('plates-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Блины 🥞</h2>
@@ -252,7 +242,6 @@ function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { r
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 function today() { return new Date().toISOString().slice(0, 10); }
 
-// Применяем сохраненный цвет
 document.documentElement.style.setProperty('--accent', state.themeColor);
 
 if (state.daily.date !== today()) { 
@@ -261,7 +250,6 @@ if (state.daily.date !== today()) {
   save(STORAGE.daily, state.daily); 
 }
 
-// --- МАТЕМАТИКА ---
 function getAllExercises() { return { ...BASE_EXERCISES_DB, ...state.customExercises }; }
 function calcTonnage(workout) { return (!workout || !workout.exercises) ? 0 : workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).reduce((sSum, s) => sSum + (s.weight * s.reps), 0), 0); }
 function calcBodyFat(p) { if (!p || !p.weight) return 0; const bmi = p.weight / Math.pow(p.height / 100, 2); let fat = (1.20 * bmi) + (0.23 * p.age) - (10.8 * (p.sex === 'male' ? 1 : 0)) - 5.4; return Math.max(3, Math.min(50, Math.round(fat))); }
@@ -291,7 +279,6 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 
-// --- РЕНДЕР ---
 function render() {
   const app = document.getElementById('app');
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.screen === state.screen));
@@ -335,7 +322,6 @@ function completeOnboarding() {
   render();
 }
 
-// --- ГЛАВНЫЙ ЭКРАН ---
 function renderHome() {
   const done = state.workouts.some(w => w.date === today());
   const waterPct = Math.min((state.daily.water / 8) * 100, 100);
@@ -421,7 +407,6 @@ function addWater() { state.daily.water = Math.min((state.daily.water || 0) + 1,
 function addCalories() { const c = prompt('Сколько калорий съел?'); if(c && !isNaN(c)) { state.daily.calories = (state.daily.calories || 0) + +c; save(STORAGE.daily, state.daily); render(); } }
 function addSteps() { const s = prompt('Сколько шагов добавить?'); if(s && !isNaN(s)) { state.daily.steps = (state.daily.steps || 0) + +s; save(STORAGE.daily, state.daily); render(); } }
 
-// --- ТРЕНИРОВКА ---
 function startWorkout() {
   state.currentWorkout = { date: today(), exercises: [], mood: null, note: '' };
   state.screen = 'newWorkout';
@@ -520,15 +505,13 @@ function saveWorkoutWithFeedback() {
   save(STORAGE.workouts, state.workouts);
   closeModal('feedback-modal');
   
-  // Сразу предлагаем экспорт
   setTimeout(() => showExportModal(state.workouts[state.workouts.length - 1]), 300);
-  
   state.currentWorkout = null; state.screen = 'home'; render();
 }
 
 function cancelWorkout() { if(confirm('Отменить тренировку?')) { state.currentWorkout = null; state.screen = 'home'; render(); } }
 
-// --- ЭКСПОРТ В STRAVA STYLE ---
+// --- ИСПРАВЛЕННЫЙ ЭКСПОРТ ---
 function showExportModal(workout) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay active';
@@ -537,18 +520,17 @@ function showExportModal(workout) {
       <div style="font-size:64px; margin-bottom:16px">🏆</div>
       <h1 style="margin:0 0 8px 0; font-size:28px;">Тренировка сохранена!</h1>
       <p class="muted" style="margin-bottom:24px;">Общий тоннаж: ${workout.tonnage} кг</p>
-      <button onclick="generateStravaCard(${workout.id})" style="background:linear-gradient(90deg, #fc4c02, #ff8c00); color:#fff; font-weight:800; font-size:18px;"><i class="ph ph-download-simple"></i> Сохранить картинку</button>
+      <button onclick="generateWorkoutCard(${workout.id})" style="background:linear-gradient(90deg, #fc4c02, #ff8c00); color:#fff; font-weight:800; font-size:18px;"><i class="ph ph-download-simple"></i> Сохранить картинку</button>
       <button class="secondary" onclick="this.closest('.modal-overlay').remove(); go('home');">Пропустить</button>
     </div>
   `;
   document.body.appendChild(overlay);
 }
 
-function generateStravaCard(id) {
+function generateWorkoutCard(id) {
   const w = state.workouts.find(x => x.id === id);
   if(!w) return;
   
-  // Сортируем упражнения по тоннажу и берем топ-3
   const topEx = [...w.exercises].map(ex => {
     const ton = ex.sets.filter(s=>!s.isWarmup).reduce((sum, s) => sum + (s.weight*s.reps), 0);
     return { name: ex.name, ton };
@@ -557,12 +539,9 @@ function generateStravaCard(id) {
   const dateStr = new Date(w.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
   const area = document.getElementById('export-area');
   
-  // Генерируем красивую карточку (вертикальная, 400x700)
+  // Чистый, ровный дизайн без багов с размытием
   area.innerHTML = `
-    <div style="width: 400px; height: 700px; background: linear-gradient(150deg, #1c1c1e 0%, #000000 100%); border-radius: 30px; padding: 40px 30px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #333; position: relative; overflow: hidden;">
-      
-      <!-- Фоновый паттерн -->
-      <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: ${state.themeColor}; filter: blur(100px); opacity: 0.3;"></div>
+    <div style="width: 400px; height: 650px; background: #0a0a0a; border-radius: 30px; padding: 40px 30px; display: flex; flex-direction: column; justify-content: space-between; position: relative; border: 1px solid #222; font-family: -apple-system, sans-serif; overflow: hidden;">
       
       <!-- Хедер -->
       <div style="display: flex; justify-content: space-between; align-items: center; z-index: 10;">
@@ -570,25 +549,25 @@ function generateStravaCard(id) {
           <div style="width: 32px; height: 32px; background: ${state.themeColor}; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
             <i class="ph-bold ph-barbell" style="color: #000; font-size: 18px;"></i>
           </div>
-          <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.5px;">Fitness Pro</div>
+          <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: white;">Fitness Pro</div>
         </div>
         <div style="color: #8e8e93; font-size: 14px; font-weight: 600;">${dateStr}</div>
       </div>
 
       <!-- Основная инфа -->
-      <div style="text-align: center; z-index: 10; margin-top: 20px;">
+      <div style="text-align: center; z-index: 10; margin-top: 10px;">
         <div style="color: ${state.themeColor}; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Тоннаж</div>
-        <div style="font-size: 72px; font-weight: 900; line-height: 0.9; letter-spacing: -3px;">${w.tonnage.toLocaleString('ru-RU')}</div>
+        <div style="font-size: 76px; font-weight: 900; line-height: 0.9; letter-spacing: -3px; color: white;">${w.tonnage.toLocaleString('ru-RU')}</div>
         <div style="color: #8e8e93; font-size: 18px; font-weight: 600; margin-top: 5px;">КГ</div>
       </div>
 
       <!-- Топ упражнений -->
-      <div style="background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; z-index: 10;">
+      <div style="background: #1c1c1e; border-radius: 20px; padding: 20px; z-index: 10;">
         <div style="color: #8e8e93; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Лучшие упражнения</div>
         ${topEx.map((ex, i) => `
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: ${i === 2 ? '0' : '12px'};">
-            <div style="font-size: 16px; font-weight: 600;">${ex.name}</div>
-            <div style="font-size: 14px; font-weight: 800; color: #fff; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 8px;">${ex.ton} кг</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: ${i === topEx.length - 1 ? '0' : '12px'};">
+            <div style="font-size: 16px; font-weight: 600; color: white;">${ex.name}</div>
+            <div style="font-size: 14px; font-weight: 800; color: white; background: #2c2c2e; padding: 4px 10px; border-radius: 8px;">${ex.ton} кг</div>
           </div>
         `).join('')}
       </div>
@@ -599,24 +578,23 @@ function generateStravaCard(id) {
           <div style="font-size: 32px;">${w.mood || '😐'}</div>
           <div>
             <div style="font-size: 12px; color: #8e8e93; font-weight: 600;">Настроение</div>
-            <div style="font-size: 14px; font-weight: 700;">${w.note ? w.note.slice(0, 15) + '...' : 'Отличная работа!'}</div>
+            <div style="font-size: 14px; font-weight: 700; color: white;">Тренировка завершена</div>
           </div>
         </div>
-        <div style="font-size: 24px; color: #8e8e93;"><i class="ph-fill ph-lightning"></i></div>
+        <i class="ph-fill ph-lightning" style="font-size: 24px; color: ${state.themeColor};"></i>
       </div>
     </div>
   `;
 
   html2canvas(area, { scale: 2, backgroundColor: '#000000' }).then(canvas => {
     const link = document.createElement('a');
-    link.download = `strava_workout_${w.date}.png`;
+    link.download = `fitness_pro_${w.date}.png`; // Исправлено название
     link.href = canvas.toDataURL('image/png');
     link.click();
-    document.querySelector('.modal-overlay').remove(); // Закрываем окно после скачивания
+    document.querySelector('.modal-overlay').remove(); 
   });
 }
 
-// --- БЕГ ---
 function renderRunning() {
   const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); 
   const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0;
@@ -693,7 +671,6 @@ function saveRun(cal) {
   render();
 }
 
-// --- ТРЕНДЫ ---
 function renderProgress() {
   setTimeout(drawWeightChart, 50);
   const fat = calcBodyFat(state.profile), recovery = calcRecovery(), prs = getPRs();
@@ -789,7 +766,6 @@ function drawWeightChart() {
 }
 function logBodyWeight() { const w = +document.getElementById('bw').value; if (!w) return; state.bodyLog.push({ date: today(), weight: w }); save(STORAGE.bodyLog, state.bodyLog); render(); }
 
-// --- ПРОФИЛЬ ---
 function renderProfile() {
   return `
     <h1>Профиль</h1>
@@ -843,7 +819,6 @@ function showHistoryDetails(id) {
   document.getElementById('history-modal').classList.add('active');
 }
 
-// --- ПЛАНЫ ---
 function showPlan(type) {
   const title = document.getElementById('plan-title'), content = document.getElementById('plan-content');
   if (type === 'workout') {
@@ -863,7 +838,6 @@ function showPlan(type) {
   document.getElementById('plan-modal').classList.add('active');
 }
 
-// --- УТИЛИТЫ ---
 function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id==='timer-modal') clearInterval(timerInt); }
 function showPlatesFromRow(btn) { showPlates(+btn.parentElement.querySelector('input').value); }
 function showPlates(totalWeight) {
