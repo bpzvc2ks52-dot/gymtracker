@@ -90,14 +90,11 @@
   .color-swatch.active { border-color: #fff; transform: scale(1.1); }
 
   .chart-container { position:relative; height:220px; width:100%; background:var(--card-light); border-radius:16px; padding:10px; }
-
-  /* Стили для Карты Мышц и Лидерборда */
   .muscle-svg { width: 100px; height: 200px; fill: #2c2c2e; transition: fill 0.5s; }
   .leaderboard-item { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
   .avatar { width:32px; height:32px; border-radius:50%; background:var(--card-light); display:flex; align-items:center; justify-content:center; font-weight:bold; color:var(--accent); }
 
-  #export-area { position: absolute; left: -9999px; top: -9999px; width: 400px; background: #000; font-family: -apple-system, sans-serif; }
-  #report-area { position: absolute; left: -9999px; top: -9999px; width: 400px; background: #111; padding: 30px; border-radius: 30px; color: #fff; font-family: -apple-system, sans-serif; }
+  #export-area, #report-area { position: absolute; left: -9999px; top: -9999px; width: 400px; background: #111; padding: 30px; border-radius: 30px; color: #fff; font-family: -apple-system, sans-serif; }
 
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px 24px 40px 24px; }
@@ -115,6 +112,19 @@
 </head>
 <body>
 
+<!-- Модалка Еды (Умный ввод) -->
+<div id="food-modal" class="modal-overlay" onclick="closeModal('food-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0">Добавить еду</h2>
+    <p class="muted" style="font-size:14px; margin-bottom:20px;">Напиши название и вес (в граммах).<br>Например: <b>творог 180</b> или <b>курица 200</b></p>
+    <input type="text" id="food-input" placeholder="Название и вес..." style="text-align:center; margin-bottom:20px;">
+    <button onclick="processFoodInput()"><i class="ph ph-check"></i> Добавить в дневник</button>
+    <div style="margin-top:20px; font-size:12px; color:var(--muted);">
+      В базе: курица, творог, яйцо, овсянка, банан, рис, гречка, макароны.
+    </div>
+  </div>
+</div>
+
 <!-- Модалка Оценки Тренировки -->
 <div id="feedback-modal" class="modal-overlay">
   <div class="modal-content">
@@ -129,20 +139,6 @@
     <button onclick="saveWorkoutWithFeedback()" style="margin-top:10px;">Сохранить тренировку</button>
   </div>
 </div>
-
-<!-- Модалка Сканера Штрихкода -->
-<div id="scanner-modal" class="modal-overlay" onclick="closeModal('scanner-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-top:0">Сканер продуктов</h2>
-    <div style="width: 100%; height: 200px; background: #000; border-radius: 16px; border: 2px dashed var(--accent); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; position: relative; overflow: hidden;">
-      <div style="width: 80%; height: 2px; background: red; position: absolute; animation: scan 2s infinite linear; box-shadow: 0 0 10px red;"></div>
-      <i class="ph ph-barcode" style="font-size: 64px; color: #333;"></i>
-    </div>
-    <p class="muted" style="margin-bottom:20px;">Наведите камеру на штрихкод</p>
-    <button onclick="simulateScan()" class="secondary">Симулировать скан</button>
-  </div>
-</div>
-<style>@keyframes scan { 0% { top: 20%; } 50% { top: 80%; } 100% { top: 20%; } }</style>
 
 <!-- Модалка AI Плана -->
 <div id="ai-modal" class="modal-overlay" onclick="closeModal('ai-modal')">
@@ -204,13 +200,25 @@
 <div id="report-area"></div>
 
 <script>
-const STORAGE = { profile: 'fit_p8', workouts: 'fit_w8', bodyLog: 'fit_b8', daily: 'fit_d8', runs: 'fit_r8', sleepLog: 'fit_s8', themeColor: 'fit_color8', customEx: 'fit_custom8' };
+const STORAGE = { profile: 'fit_p9', workouts: 'fit_w9', bodyLog: 'fit_b9', daily: 'fit_d9', runs: 'fit_r9', sleepLog: 'fit_s9', themeColor: 'fit_color9', customEx: 'fit_custom9' };
 
 const BASE_EXERCISES_DB = {
   'Приседания со штангой': 'Ноги', 'Жим лёжа': 'Грудь', 'Становая тяга': 'Спина', 
   'Жим стоя': 'Плечи', 'Подтягивания': 'Спина', 'Тяга штанги в наклоне': 'Спина', 
   'Жим гантелей лёжа': 'Грудь', 'Тяга верхнего блока': 'Спина', 'Жим ногами': 'Ноги', 
   'Выпады с гантелями': 'Ноги', 'Подъём штанги на бицепс': 'Руки', 'Французский жим': 'Руки'
+};
+
+// База продуктов для умного ввода
+const FOOD_DB = {
+  'курица': { c: 165, p: 31, f: 3.6, cb: 0 },
+  'творог': { c: 180, p: 18, f: 2, cb: 2 },
+  'яйцо': { c: 155, p: 13, f: 11, cb: 1.1 },
+  'овсянка': { c: 350, p: 12, f: 6, cb: 60 },
+  'банан': { c: 89, p: 1.1, f: 0.3, cb: 22.8 },
+  'рис': { c: 344, p: 6.7, f: 0.7, cb: 78 },
+  'гречка': { c: 343, p: 12.6, f: 3.3, cb: 62 },
+  'макароны': { c: 350, p: 12, f: 1.5, cb: 70 }
 };
 
 const MEAL_DB = {
@@ -224,7 +232,7 @@ let state = {
   profile: load(STORAGE.profile), workouts: load(STORAGE.workouts) || [], bodyLog: load(STORAGE.bodyLog) || [],
   runs: load(STORAGE.runs) || [], sleepLog: load(STORAGE.sleepLog) || [], customExercises: load(STORAGE.customEx) || {},
   themeColor: load(STORAGE.themeColor) || '#a2ff00',
-  daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, sleep: null, mood: null, steps: 0 },
+  daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0 },
   screen: 'home', currentWorkout: null, chartInstance: null, tempMood: null
 };
 
@@ -237,7 +245,7 @@ document.documentElement.style.setProperty('--accent', state.themeColor);
 
 if (state.daily.date !== today()) { 
   if (state.daily.sleep) { state.sleepLog.push({ date: state.daily.date, sleep: state.daily.sleep, mood: state.daily.mood }); save(STORAGE.sleepLog, state.sleepLog); }
-  state.daily = { date: today(), water: 0, calories: 0, sleep: null, mood: null, steps: 0 }; save(STORAGE.daily, state.daily); 
+  state.daily = { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0 }; save(STORAGE.daily, state.daily); 
 }
 
 function getAllExercises() { return { ...BASE_EXERCISES_DB, ...state.customExercises }; }
@@ -333,10 +341,18 @@ function renderHome() {
           <div class="ring-wrap"><svg class="ring-svg" viewBox="0 0 90 90"><circle class="ring-bg" cx="45" cy="45" r="${r}"></circle><circle class="ring-progress" cx="45" cy="45" r="${r}" style="stroke:var(--stand); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (waterPct/100)*circ};"></circle></svg><div class="ring-content"><i class="ph ph-drop ring-icon" style="color:var(--stand)"></i><span class="ring-val">${state.daily.water}/8</span></div></div>
           <div class="ring-wrap"><svg class="ring-svg" viewBox="0 0 90 90"><circle class="ring-bg" cx="45" cy="45" r="${r}"></circle><circle class="ring-progress" cx="45" cy="45" r="${r}" style="stroke:var(--move); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (stepsPct/100)*circ};"></circle></svg><div class="ring-content"><i class="ph ph-sneaker ring-icon" style="color:var(--move)"></i><span class="ring-val">${state.daily.steps}</span></div></div>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:20px;">
-          <button class="secondary" onclick="addWater()" style="margin:0; font-size:12px; padding:10px;"><i class="ph ph-plus"></i> Вода</button>
-          <button class="secondary" onclick="addCalories()" style="margin:0; font-size:12px; padding:10px;"><i class="ph ph-fork-knife"></i> ${state.daily.calories}</button>
-          <button class="secondary" onclick="addSteps()" style="margin:0; font-size:12px; padding:10px;"><i class="ph ph-sneaker"></i> Шаги</button>
+        
+        <!-- Блок питания (КБЖУ) -->
+        <div style="background:var(--card-light); padding:16px; border-radius:16px; margin-top:20px; display:flex; justify-content:space-between; text-align:center;">
+          <div><div style="font-size:18px; font-weight:800; color:var(--accent);">${state.daily.calories}</div><div class="muted" style="font-size:11px;">ККАЛ</div></div>
+          <div><div style="font-size:18px; font-weight:800;">${state.daily.p}</div><div class="muted" style="font-size:11px;">БЕЛКИ</div></div>
+          <div><div style="font-size:18px; font-weight:800;">${state.daily.f}</div><div class="muted" style="font-size:11px;">ЖИРЫ</div></div>
+          <div><div style="font-size:18px; font-weight:800;">${state.daily.cb}</div><div class="muted" style="font-size:11px;">УГЛЕВ.</div></div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;">
+          <button class="secondary" onclick="addWater()" style="margin:0; font-size:14px; padding:14px;"><i class="ph ph-plus"></i> Вода</button>
+          <button class="secondary" onclick="openFoodModal()" style="margin:0; font-size:14px; padding:14px;"><i class="ph ph-fork-knife"></i> Добавить еду</button>
         </div>
       </div>
       <div class="card" style="min-height:180px;">
@@ -356,36 +372,51 @@ function renderHome() {
   `;
 }
 
-function setSleep(hours, btn) {
-  state.daily.sleep = hours; save(STORAGE.daily, state.daily);
-  document.querySelectorAll('.sleep-btn').forEach(b => { b.classList.remove('active'); b.style.borderColor = 'transparent'; });
-  btn.style.borderColor = 'var(--stand)'; btn.style.color = 'var(--stand)';
-  if(state.daily.mood) render();
-}
-function setMood(mood, el) {
-  state.daily.mood = mood; save(STORAGE.daily, state.daily);
-  el.classList.add('active-mood'); el.style.opacity = 1;
-  setTimeout(render, 300);
-}
+function setSleep(hours, btn) { state.daily.sleep = hours; save(STORAGE.daily, state.daily); document.querySelectorAll('.sleep-btn').forEach(b => { b.classList.remove('active'); b.style.borderColor = 'transparent'; }); btn.style.borderColor = 'var(--stand)'; btn.style.color = 'var(--stand)'; if(state.daily.mood) render(); }
+function setMood(mood, el) { state.daily.mood = mood; save(STORAGE.daily, state.daily); el.classList.add('active-mood'); el.style.opacity = 1; setTimeout(render, 300); }
 function addWater() { state.daily.water = Math.min((state.daily.water || 0) + 1, 8); save(STORAGE.daily, state.daily); render(); }
-function addCalories() { document.getElementById('scanner-modal').classList.add('active'); }
-function simulateScan() {
-  closeModal('scanner-modal');
-  const foods = [ { n: "Куриное филе", c: 165, p: 31 }, { n: "Банан", c: 105, p: 1 }, { n: "Протеиновый батончик", c: 200, p: 20 }, { n: "Овсянка", c: 350, p: 12 } ];
-  const f = foods[Math.floor(Math.random()*foods.length)];
-  setTimeout(() => {
-    state.daily.calories = (state.daily.calories || 0) + f.c; save(STORAGE.daily, state.daily);
-    alert(`Отсканировано: ${f.n}\nКалории: ${f.c}\nБелки: ${f.p}г`);
+
+// --- УМНЫЙ ВВОД ЕДЫ ---
+function openFoodModal() { document.getElementById('food-input').value = ''; document.getElementById('food-modal').classList.add('active'); }
+function processFoodInput() {
+  const input = document.getElementById('food-input').value.toLowerCase().trim();
+  if(!input) return;
+
+  // Ищем вхождение названия продукта из базы и число (вес)
+  let foundProduct = null;
+  let weight = 100; // по умолчанию 100г
+
+  for (const key in FOOD_DB) {
+    if (input.includes(key)) {
+      foundProduct = key;
+      // Ищем число после названия
+      const match = input.match(/(\d+)/);
+      if (match) weight = parseInt(match[1]);
+      break;
+    }
+  }
+
+  if (foundProduct) {
+    const p = FOOD_DB[foundProduct];
+    const multiplier = weight / 100;
+    
+    state.daily.calories = (state.daily.calories || 0) + Math.round(p.c * multiplier);
+    state.daily.p = (state.daily.p || 0) + Math.round(p.p * multiplier);
+    state.daily.f = (state.daily.f || 0) + Math.round(p.f * multiplier);
+    state.daily.cb = (state.daily.cb || 0) + Math.round(p.cb * multiplier);
+    
+    save(STORAGE.daily, state.daily);
+    closeModal('food-modal');
     render();
-  }, 1500);
+  } else {
+    alert(`Продукт "${input}" не найден.\nПопробуйте: курица, творог, яйцо, овсянка, банан, рис.`);
+  }
 }
-function addSteps() { const s = prompt('Сколько шагов добавить?'); if(s && !isNaN(s)) { state.daily.steps = (state.daily.steps || 0) + +s; save(STORAGE.daily, state.daily); render(); } }
 
 function generateAIPlan() {
   const goal = state.profile.goal === 'mass' ? 'Набор массы' : 'Похудение';
-  const days = 3;
   document.getElementById('ai-content').innerHTML = `
-    <p style="margin-bottom:16px; color:var(--muted);">На основе твоей цели (<b>${goal}</b>) и частоты тренировок (3 раза в неделю) AI сгенерировал сплит:</p>
+    <p style="margin-bottom:16px; color:var(--muted);">На основе твоей цели (<b>${goal}</b>) AI сгенерировал сплит:</p>
     <div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;">
       <b>День 1: Push (Верх тела)</b><br><span class="muted" style="font-size:14px;">Жим лёжа 4х8, Жим гантелей 3х10, Махи в стороны 3х15</span>
     </div>
@@ -399,15 +430,9 @@ function generateAIPlan() {
   `;
   document.getElementById('ai-modal').classList.add('active');
 }
-function applyAIPlan() {
-  closeModal('ai-modal');
-  alert("AI План сохранен в ваш профиль!");
-}
+function applyAIPlan() { closeModal('ai-modal'); alert("AI План сохранен в ваш профиль!"); }
 
-function startWorkout() {
-  state.currentWorkout = { date: today(), exercises: [], mood: null, note: '' };
-  state.screen = 'newWorkout'; render();
-}
+function startWorkout() { state.currentWorkout = { date: today(), exercises: [], mood: null, note: '' }; state.screen = 'newWorkout'; render(); }
 
 function renderNewWorkout() {
   if (!state.currentWorkout) startWorkout();
@@ -542,11 +567,10 @@ function saveRun(cal) {
   runTime = 0; runActive = false; gpsDistance = 0; lastPos = null; render();
 }
 
-// --- ТРЕНДЫ (С Картой Мышц и Лидербордом) ---
+// --- ТРЕНДЫ (Исправленный график) ---
 function renderProgress() {
   setTimeout(drawWeightChart, 50);
   
-  // Считаем тоннаж по мышцам за последние 7 дней
   let muscleLoad = { 'Грудь': 0, 'Спина': 0, 'Ноги': 0, 'Руки': 0, 'Плечи': 0 };
   const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
   state.workouts.filter(w => new Date(w.date) >= weekAgo).forEach(w => {
@@ -557,79 +581,42 @@ function renderProgress() {
       }
     });
   });
-  
-  const getColor = (group) => {
-    const load = muscleLoad[group];
-    if (load === 0) return '#2c2c2e'; // Не тренировал
-    if (load > 1000) return '#fa114f'; // Красный (восстанавливается)
-    return '#a2ff00'; // Зеленый (готово)
-  };
+  const getColor = (group) => { const load = muscleLoad[group]; if (load === 0) return '#2c2c2e'; if (load > 1000) return '#fa114f'; return '#a2ff00'; };
 
-  // Моковые друзья для лидерборда
   const myTon = state.workouts.reduce((sum, w) => sum + w.tonnage, 0);
-  const friends = [
-    { name: "Макс", ton: myTon + 1500 },
-    { name: "Анна", ton: myTon + 800 },
-    { name: "Ты", ton: myTon, me: true },
-    { name: "Алекс", ton: myTon - 300 }
-  ].sort((a,b) => b.ton - a.ton);
+  const friends = [{ name: "Макс", ton: myTon + 1500 }, { name: "Анна", ton: myTon + 800 }, { name: "Ты", ton: myTon, me: true }, { name: "Алекс", ton: myTon - 300 }].sort((a,b) => b.ton - a.ton);
 
   return `
     <h1>Тренды</h1>
     <div class="bento-grid">
-      
-      <!-- Карта Мышц -->
       <div class="card" style="display:flex; align-items:center; gap:20px; padding:20px;">
         <div style="flex:1;">
           <h2 style="margin-bottom:8px;">Карта мышц</h2>
           <p class="muted" style="font-size:13px; margin-bottom:16px;">Нагрузка за 7 дней</p>
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#fa114f;"></div><span style="font-size:12px;">Восстановление</span></div>
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#a2ff00;"></div><span style="font-size:12px;">Готово к работе</span></div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#a2ff00;"></div><span style="font-size:12px;">Готово</span></div>
           <div style="display:flex; align-items:center; gap:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#2c2c2e;"></div><span style="font-size:12px;">Без нагрузки</span></div>
         </div>
-        <!-- Упрощенный SVG Человека -->
         <svg viewBox="0 0 100 200" class="muscle-svg">
-          <!-- Голова -->
           <circle cx="50" cy="20" r="12" fill="#2c2c2e"></circle>
-          <!-- Плечи (Передние) -->
           <rect x="25" y="35" width="15" height="15" rx="5" fill="${getColor('Плечи')}"></rect>
           <rect x="60" y="35" width="15" height="15" rx="5" fill="${getColor('Плечи')}"></rect>
-          <!-- Грудь -->
           <rect x="30" y="45" width="40" height="25" rx="5" fill="${getColor('Грудь')}"></rect>
-          <!-- Руки -->
           <rect x="15" y="55" width="12" height="35" rx="5" fill="${getColor('Руки')}"></rect>
           <rect x="73" y="55" width="12" height="35" rx="5" fill="${getColor('Руки')}"></rect>
-          <!-- Пресс -->
           <rect x="38" y="75" width="24" height="30" rx="5" fill="#2c2c2e"></rect>
-          <!-- Ноги -->
           <rect x="30" y="110" width="16" height="60" rx="5" fill="${getColor('Ноги')}"></rect>
           <rect x="54" y="110" width="16" height="60" rx="5" fill="${getColor('Ноги')}"></rect>
         </svg>
       </div>
-
-      <!-- Лидерборд -->
       <div class="card">
         <h2>Лидерборд</h2>
         <p class="muted" style="font-size:13px; margin-bottom:16px;">Тоннаж за месяц</p>
-        ${friends.map((f, i) => `
-          <div class="leaderboard-item">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span style="font-weight:800; color:${i===0?'#ffd700':'var(--muted)'}">${i+1}</span>
-              <div class="avatar" style="background:${f.me ? 'var(--accent)' : 'var(--card-light)'}; color:${f.me ? '#000' : '#fff'}">${f.name[0]}</div>
-              <span style="font-weight:${f.me ? '800' : '500'}; color:${f.me ? 'var(--accent)' : 'var(--text)'}">${f.name}</span>
-            </div>
-            <span style="font-weight:700;">${f.ton.toLocaleString('ru')} кг</span>
-          </div>
-        `).join('')}
+        ${friends.map((f, i) => `<div class="leaderboard-item"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:800; color:${i===0?'#ffd700':'var(--muted)'}">${i+1}</span><div class="avatar" style="background:${f.me ? 'var(--accent)' : 'var(--card-light)'}; color:${f.me ? '#000' : '#fff'}">${f.name[0]}</div><span style="font-weight:${f.me ? '800' : '500'}; color:${f.me ? 'var(--accent)' : 'var(--text)'}">${f.name}</span></div><span style="font-weight:700;">${f.ton.toLocaleString('ru')} кг</span></div>`).join('')}
       </div>
-
-      <!-- График веса с прогнозом -->
       <div class="card span-2">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
-          <div>
-            <h2 style="margin:0;">Вес и Прогноз</h2>
-            <p class="muted" style="font-size:13px; margin-top:4px;">Пунктир — прогноз на месяц</p>
-          </div>
+          <div><h2 style="margin:0;">Вес тела</h2></div>
           <div style="display:flex; gap:10px;">
             <input id="bw" type="number" placeholder="Вес" style="width:100px; margin:0; padding:10px;">
             <button style="width:44px; height:44px; margin:0; padding:0; border-radius:12px;" onclick="logBodyWeight()"><i class="ph ph-plus"></i></button>
@@ -637,8 +624,6 @@ function renderProgress() {
         </div>
         <div class="chart-container"><canvas id="weightChart"></canvas></div>
       </div>
-
-      <!-- Отчет -->
       <div class="card span-2" style="text-align:center; padding:30px;">
         <h2>PDF Отчет для тренера</h2>
         <p class="muted" style="margin-bottom:20px;">Скачай полную статистику тренировок</p>
@@ -653,38 +638,13 @@ function drawWeightChart() {
   const sorted = [...state.bodyLog].sort((a, b) => a.date.localeCompare(b.date));
   let labels = sorted.length ? sorted.map(b => b.date.slice(5)) : ['Нет данных'];
   let data = sorted.length ? sorted.map(b => b.weight) : [state.profile.weight];
-  let forecastData = new Array(data.length - 1).fill(null);
-
-  // Простой прогноз (линейная регрессия)
-  if (data.length > 1) {
-    const n = data.length;
-    const sumX = (n * (n - 1)) / 2;
-    const sumY = data.reduce((a, b) => a + b, 0);
-    const sumXY = data.reduce((a, b, i) => a + i * b, 0);
-    const sumX2 = (n * (n - 1) * (2 * n - 1)) / 6;
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-    
-    const lastVal = data[data.length - 1];
-    const nextVal = intercept + slope * n;
-    forecastData.push(lastVal);
-    forecastData.push(nextVal); // Прогноз на след. точку
-    labels.push("Прогноз");
-    data.push(null); // Текущая точка для графика
-  }
 
   let gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 250);
   gradient.addColorStop(0, state.themeColor + '88'); gradient.addColorStop(1, state.themeColor + '00');
 
   state.chartInstance = new Chart(ctx, {
     type: 'line',
-    data: { 
-      labels: labels,
-      datasets: [
-        { label: 'Вес', data: data, borderColor: state.themeColor, backgroundColor: gradient, borderWidth: 4, tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#fff' },
-        { label: 'Прогноз', data: forecastData, borderColor: '#8e8e93', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, fill: false }
-      ] 
-    },
+    data: { labels: labels, datasets: [{ data: data, borderColor: state.themeColor, backgroundColor: gradient, borderWidth: 4, tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#fff' }] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93' } }, x: { grid: { display: false }, ticks: { color: '#8e8e93' } } } }
   });
 }
@@ -699,7 +659,6 @@ function renderProfile() {
       </div>
       <h2 style="margin-bottom:8px;">Атлет</h2>
       <p class="muted" style="margin-bottom:16px;">Исключения: ${state.profile.foodPrefs?.length ? state.profile.foodPrefs.join(', ') : 'Нет'}</p>
-      
       <div style="margin-top:20px; margin-bottom:20px;">
         <label>Цвет интерфейса</label>
         <div style="display:flex; justify-content:center; gap:12px; margin-top:10px;">
@@ -708,93 +667,34 @@ function renderProfile() {
       </div>
       <button class="secondary" onclick="downloadReport()"><i class="ph ph-file-pdf"></i> Скачать отчет</button>
     </div>
-
     <div class="card">
       <h2>История тренировок</h2>
-      ${[...state.workouts].sort((a,b)=>b.id-a.id).slice(0,5).map(w => `
-        <div style="padding:16px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showHistoryDetails(${w.id})">
-          <div><div style="font-weight:700;">${w.date}</div><div class="muted" style="font-size:13px; margin-top:4px;">${w.exercises.map(e => e.name).join(', ').slice(0, 30)}...</div></div>
-          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:24px;">${w.mood || '😐'}</span><i class="ph ph-caret-right muted"></i></div>
-        </div>
-      `).join('')}
+      ${[...state.workouts].sort((a,b)=>b.id-a.id).slice(0,5).map(w => `<div style="padding:16px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showHistoryDetails(${w.id})"><div><div style="font-weight:700;">${w.date}</div><div class="muted" style="font-size:13px; margin-top:4px;">${w.exercises.map(e => e.name).join(', ').slice(0, 30)}...</div></div><div style="display:flex; align-items:center; gap:10px;"><span style="font-size:24px;">${w.mood || '😐'}</span><i class="ph ph-caret-right muted"></i></div></div>`).join('')}
     </div>
-
     <div class="card">
       <button class="danger" onclick="resetApp()"><i class="ph ph-trash"></i> Сбросить данные</button>
     </div>`;
 }
-
 function changeThemeColor(hex) { state.themeColor = hex; save(STORAGE.themeColor, hex); document.documentElement.style.setProperty('--accent', hex); render(); }
-
 function showHistoryDetails(id) {
   const w = state.workouts.find(x => x.id === id); if (!w) return;
   document.getElementById('history-title').innerText = `Тренировка от ${w.date}`;
-  document.getElementById('history-content').innerHTML = `
-    <div style="text-align:center; font-size:36px; margin-bottom:20px;">${w.mood || '😐'}</div>
-    ${w.note ? `<div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:20px; font-style:italic;">"${w.note}"</div>` : ''}
-    <div style="margin-bottom:16px; font-weight:700; color:var(--accent);">Тоннаж: ${w.tonnage} кг</div>
-    ${w.exercises.map(ex => `<div style="margin-bottom:16px;"><div style="font-weight:700; margin-bottom:8px;">${ex.name}</div><div style="display:flex; flex-wrap:wrap; gap:8px;">${ex.sets.map((s, i) => `<div style="background:var(--card-light); padding:8px 12px; border-radius:8px; font-size:14px; ${s.isWarmup ? 'color:var(--move)' : ''}">${s.isWarmup ? 'W' : i+1}: ${s.weight}кг × ${s.reps}</div>`).join('')}</div></div>`).join('')}
-  `;
+  document.getElementById('history-content').innerHTML = `<div style="text-align:center; font-size:36px; margin-bottom:20px;">${w.mood || '😐'}</div>${w.note ? `<div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:20px; font-style:italic;">"${w.note}"</div>` : ''}<div style="margin-bottom:16px; font-weight:700; color:var(--accent);">Тоннаж: ${w.tonnage} кг</div>${w.exercises.map(ex => `<div style="margin-bottom:16px;"><div style="font-weight:700; margin-bottom:8px;">${ex.name}</div><div style="display:flex; flex-wrap:wrap; gap:8px;">${ex.sets.map((s, i) => `<div style="background:var(--card-light); padding:8px 12px; border-radius:8px; font-size:14px; ${s.isWarmup ? 'color:var(--move)' : ''}">${s.isWarmup ? 'W' : i+1}: ${s.weight}кг × ${s.reps}</div>`).join('')}</div></div>`).join('')}`;
   document.getElementById('history-modal').classList.add('active');
 }
 
-// --- ГЕНЕРАЦИЯ PDF ОТЧЕТА ---
 function downloadReport() {
   const area = document.getElementById('report-area');
   const fat = calcBodyFat(state.profile);
   const totalTon = state.workouts.reduce((sum, w) => sum + w.tonnage, 0);
-  
-  area.innerHTML = `
-    <div style="text-align:center; margin-bottom:30px;">
-      <div style="width:50px; height:50px; background:${state.themeColor}; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:10px;">
-        <i class="ph-bold ph-barbell" style="color:#000; font-size:28px;"></i>
-      </div>
-      <h1 style="color:#fff; margin:0; font-size:28px; font-weight:800;">Fitness Pro Отчет</h1>
-      <p style="color:#8e8e93; margin:5px 0 0 0;">Дата: ${today()}</p>
-    </div>
-
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:30px;">
-      <div style="background:#1c1c1e; padding:20px; border-radius:16px; text-align:center;">
-        <div style="color:#8e8e93; font-size:12px; font-weight:700; text-transform:uppercase;">Тоннаж</div>
-        <div style="font-size:32px; font-weight:800; color:${state.themeColor};">${totalTon.toLocaleString('ru')}</div>
-        <div style="color:#8e8e93; font-size:12px;">КГ</div>
-      </div>
-      <div style="background:#1c1c1e; padding:20px; border-radius:16px; text-align:center;">
-        <div style="color:#8e8e93; font-size:12px; font-weight:700; text-transform:uppercase;">% Жира</div>
-        <div style="font-size:32px; font-weight:800; color:#00d4ff;">${fat}%</div>
-        <div style="color:#8e8e93; font-size:12px;">ПРИМЕРНО</div>
-      </div>
-    </div>
-
-    <h2 style="color:#fff; font-size:20px; margin-bottom:15px;">Последние тренировки</h2>
-    ${state.workouts.slice(0, 5).map(w => `
-      <div style="background:#1c1c1e; padding:16px; border-radius:16px; margin-bottom:12px;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-          <span style="color:#fff; font-weight:700;">${w.date}</span>
-          <span style="color:${state.themeColor}; font-weight:800;">${w.tonnage} кг</span>
-        </div>
-        <div style="color:#8e8e93; font-size:13px;">${w.exercises.map(e => e.name).join(', ')}</div>
-      </div>
-    `).join('')}
-
-    <div style="text-align:center; margin-top:30px; color:#8e8e93; font-size:12px;">
-      Сгенерировано в приложении Fitness Pro
-    </div>
-  `;
-
-  html2canvas(area, { scale: 2, backgroundColor: '#111111' }).then(canvas => {
-    const link = document.createElement('a');
-    link.download = `fitness_report_${today()}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  });
+  area.innerHTML = `<div style="text-align:center; margin-bottom:30px;"><div style="width:50px; height:50px; background:${state.themeColor}; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:10px;"><i class="ph-bold ph-barbell" style="color:#000; font-size:28px;"></i></div><h1 style="color:#fff; margin:0; font-size:28px; font-weight:800;">Fitness Pro Отчет</h1><p style="color:#8e8e93; margin:5px 0 0 0;">Дата: ${today()}</p></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:30px;"><div style="background:#1c1c1e; padding:20px; border-radius:16px; text-align:center;"><div style="color:#8e8e93; font-size:12px; font-weight:700; text-transform:uppercase;">Тоннаж</div><div style="font-size:32px; font-weight:800; color:${state.themeColor};">${totalTon.toLocaleString('ru')}</div><div style="color:#8e8e93; font-size:12px;">КГ</div></div><div style="background:#1c1c1e; padding:20px; border-radius:16px; text-align:center;"><div style="color:#8e8e93; font-size:12px; font-weight:700; text-transform:uppercase;">% Жира</div><div style="font-size:32px; font-weight:800; color:#00d4ff;">${fat}%</div><div style="color:#8e8e93; font-size:12px;">ПРИМЕРНО</div></div></div><h2 style="color:#fff; font-size:20px; margin-bottom:15px;">Последние тренировки</h2>${state.workouts.slice(0, 5).map(w => `<div style="background:#1c1c1e; padding:16px; border-radius:16px; margin-bottom:12px;"><div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span style="color:#fff; font-weight:700;">${w.date}</span><span style="color:${state.themeColor}; font-weight:800;">${w.tonnage} кг</span></div><div style="color:#8e8e93; font-size:13px;">${w.exercises.map(e => e.name).join(', ')}</div></div>`).join('')}<div style="text-align:center; margin-top:30px; color:#8e8e93; font-size:12px;">Сгенерировано в приложении Fitness Pro</div>`;
+  html2canvas(area, { scale: 2, backgroundColor: '#111111' }).then(canvas => { const link = document.createElement('a'); link.download = `fitness_report_${today()}.png`; link.href = canvas.toDataURL('image/png'); link.click(); });
 }
 
-// Утилиты
 function showPlan(type) {
   const title = document.getElementById('plan-title'), content = document.getElementById('plan-content');
   if (type === 'food') {
-    const dayIndex = new Date().getDay() % 1; const meals = MEAL_DB[state.profile.goal][dayIndex];
+    const meals = MEAL_DB[state.profile.goal][0];
     title.innerText = "План питания";
     content.innerHTML = `<div style="margin-bottom:10px;"><b>Завтрак:</b> ${meals.b}</div><div style="margin-bottom:10px;"><b>Обед:</b> ${meals.l}</div><div style="margin-bottom:10px;"><b>Перекус:</b> ${meals.s}</div><div><b>Ужин:</b> ${meals.d}</div>`;
   }
@@ -812,11 +712,7 @@ function startTimer() {
   document.getElementById('timer-modal').classList.add('active');
   timerTime = 90; document.getElementById('timer-display').innerText = "01:30";
   clearInterval(timerInt);
-  timerInt = setInterval(() => {
-    timerTime--;
-    document.getElementById('timer-display').innerText = `${Math.floor(timerTime/60).toString().padStart(2,'0')}:${(timerTime%60).toString().padStart(2,'0')}`;
-    if (timerTime <= 0) { clearInterval(timerInt); document.getElementById('timer-display').innerText = "СТАРТ!"; }
-  }, 1000);
+  timerInt = setInterval(() => { timerTime--; document.getElementById('timer-display').innerText = `${Math.floor(timerTime/60).toString().padStart(2,'0')}:${(timerTime%60).toString().padStart(2,'0')}`; if (timerTime <= 0) { clearInterval(timerInt); document.getElementById('timer-display').innerText = "СТАРТ!"; } }, 1000);
 }
 function resetApp() { if (confirm('Удалить все данные?')) { localStorage.clear(); location.reload(); } }
 function go(screen) { if (screen === 'newWorkout' && !state.currentWorkout) { startWorkout(); return; } state.screen = screen; render(); window.scrollTo(0,0); }
