@@ -6,11 +6,13 @@
 <title>Fitness Pro</title>
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root {
     --bg: #000000; --card: #1c1c1e; --card-light: #2c2c2e;
     --text: #ffffff; --muted: #8e8e93;
-    --move: #fa114f; --exercise: #a2ff00; --stand: #00d4ff; --accent: #a2ff00;
+    --move: #fa114f; --exercise: #a2ff00; --stand: #00d4ff; 
+    --accent: #a2ff00; /* По умолчанию зеленый */
     --radius: 28px; --border: #38383a; --nav-bg: rgba(28,28,30,0.9);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -58,15 +60,17 @@
   .nav-item.active i { color: var(--accent); }
   .nav-item i { font-size: 26px; }
 
-  .rings-container { display: flex; justify-content: center; gap: 20px; padding: 10px 0; }
-  .ring-wrap { position: relative; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; }
+  /* Кольца */
+  .rings-container { display: flex; justify-content: center; gap: 15px; padding: 10px 0; }
+  .ring-wrap { position: relative; width: 90px; height: 90px; display: flex; align-items: center; justify-content: center; }
   .ring-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
-  .ring-bg { fill: none; stroke: var(--card-light); stroke-width: 10; opacity: 0.3; }
-  .ring-progress { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s ease-in-out; }
+  .ring-bg { fill: none; stroke: var(--card-light); stroke-width: 8; opacity: 0.3; }
+  .ring-progress { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s ease-in-out; }
   .ring-content { z-index: 10; text-align: center; display: flex; flex-direction: column; align-items: center; }
-  .ring-icon { font-size: 20px; margin-bottom: 2px; }
-  .ring-val { font-size: 14px; font-weight: 800; }
+  .ring-icon { font-size: 18px; margin-bottom: 2px; }
+  .ring-val { font-size: 12px; font-weight: 800; }
 
+  /* Сетка подходов */
   .set-row { display: grid; grid-template-columns: 40px 1fr 1fr 44px; gap: 10px; align-items: center; margin-bottom: 12px; }
   .set-num { width: 40px; height: 40px; background: var(--card-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--muted); }
   .set-row input { margin-bottom: 0; padding: 14px; font-size: 17px; border-radius: 12px; text-align: center; font-weight: 700; }
@@ -74,16 +78,12 @@
   .set-row.warmup input { color: var(--move); }
   .btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 12px; background: var(--card-light); color: var(--text); border: none; display: flex; align-items: center; justify-content: center; font-size: 20px; }
 
-  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
-  .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px; font-weight: 600; color: var(--muted); }
-  .cal-day.done { background: var(--accent); color: #000; font-weight: 800; }
-  .cal-day.today { border: 2px solid var(--text); }
-
+  /* Бег */
   .run-screen { display: flex; flex-direction: column; height: calc(100vh - 160px); justify-content: center; }
   .run-time-big { font-size: 70px; font-weight: 800; line-height: 1; letter-spacing: -3px; font-variant-numeric: tabular-nums; text-align: center; margin-bottom: 20px; }
   .run-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 40px; }
   .run-metric-box { background: var(--card); padding: 24px; border-radius: var(--radius); text-align: center; }
-  .run-metric-val { font-size: 32px; font-weight: 800; color: var(--exercise); line-height: 1; margin-bottom: 4px; }
+  .run-metric-val { font-size: 32px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 4px; }
 
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(10px); }
   .modal-overlay.active { display: flex; animation: slideUp 0.3s ease; }
@@ -92,14 +92,12 @@
 
   .mood-btn { font-size: 36px; background: var(--card-light); border-radius: 16px; padding: 10px; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; }
   .mood-btn.selected { border-color: var(--accent); background: rgba(162,255,0,0.1); }
+  
+  .color-swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; }
+  .color-swatch.active { border-color: #fff; transform: scale(1.1); }
 
-  .sleep-btn { background: var(--card-light); color: var(--text); border: 2px solid transparent; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; flex: 1; }
-  .sleep-btn.active { border-color: var(--stand); background: rgba(0,212,255,0.1); color: var(--stand); }
-
-  /* Челенджи */
-  .challenge-card { background: var(--card-light); border-radius: 20px; padding: 20px; margin-bottom: 16px; }
-  .progress-bar-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 12px; overflow: hidden; }
-  .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.5s ease; }
+  /* Скрытая зона для экспорта (Strava Style) */
+  #export-area { position: absolute; left: -9999px; top: -9999px; width: 400px; background: #111; padding: 30px; border-radius: 30px; color: #fff; font-family: -apple-system, sans-serif; }
 
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px 24px 40px 24px; }
@@ -129,6 +127,24 @@
     </div>
     <input type="text" id="workout-note" placeholder="Заметка (например: болела спина)" style="text-align:left;">
     <button onclick="saveWorkoutWithFeedback()" style="margin-top:10px;">Сохранить тренировку</button>
+  </div>
+</div>
+
+<!-- Модалка Своего Упражнения -->
+<div id="custom-ex-modal" class="modal-overlay" onclick="closeModal('custom-ex-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0">Свое упражнение</h2>
+    <input type="text" id="custom-ex-name" placeholder="Название (напр. Тяга к подбородку)">
+    <select id="custom-ex-group">
+      <option value="Ноги">Ноги</option>
+      <option value="Грудь">Грудь</option>
+      <option value="Спина">Спина</option>
+      <option value="Плечи">Плечи</option>
+      <option value="Руки">Руки</option>
+      <option value="Пресс">Пресс</option>
+    </select>
+    <button onclick="saveCustomExercise()" style="margin-top:10px;">Добавить</button>
+    <button class="secondary" onclick="closeModal('custom-ex-modal')">Отмена</button>
   </div>
 </div>
 
@@ -176,22 +192,22 @@
 </nav>
 
 <div id="app"></div>
+<div id="export-area"></div>
 
 <script>
-const STORAGE = { profile: 'fit_p6', workouts: 'fit_w6', bodyLog: 'fit_b6', daily: 'fit_d6', runs: 'fit_r6', sleepLog: 'fit_s6' };
+const STORAGE = { profile: 'fit_p7', workouts: 'fit_w7', bodyLog: 'fit_b7', daily: 'fit_d7', runs: 'fit_r7', sleepLog: 'fit_s7', themeColor: 'fit_color7', customEx: 'fit_custom7' };
 
-const EXERCISE_DB = {
+const BASE_EXERCISES_DB = {
   'Приседания со штангой': 'Ноги', 'Жим лёжа': 'Грудь', 'Становая тяга': 'Спина', 
   'Жим стоя': 'Плечи', 'Подтягивания': 'Спина', 'Тяга штанги в наклоне': 'Спина', 
   'Жим гантелей лёжа': 'Грудь', 'Тяга верхнего блока': 'Спина', 'Жим ногами': 'Ноги', 
   'Выпады с гантелями': 'Ноги', 'Подъём штанги на бицепс': 'Руки', 'Французский жим': 'Руки'
 };
-const BASE_EXERCISES = Object.keys(EXERCISE_DB);
 
 const TEMPLATES = {
   'Full Body': ['Приседания со штангой', 'Жим лёжа', 'Тяга штанги в наклоне'],
-  'Верх тела': ['Жим лёжа', 'Подтягивания', 'Махи гантелями в стороны', 'Подъём штанги на бицепс'],
-  'Низ тела': ['Приседания со штангой', 'Становая тяга', 'Жим ногами', 'Выпады с гантелями']
+  'Верх тела': ['Жим лёжа', 'Подтягивания', 'Подъём штанги на бицепс'],
+  'Низ тела': ['Приседания со штангой', 'Становая тяга', 'Жим ногами']
 };
 
 const MEAL_DB = {
@@ -207,13 +223,23 @@ const MEAL_DB = {
   ]
 };
 
+const COLORS = [
+  { id: 'green', hex: '#a2ff00' },
+  { id: 'pink', hex: '#fa114f' },
+  { id: 'blue', hex: '#00d4ff' },
+  { id: 'orange', hex: '#ff9f0a' },
+  { id: 'purple', hex: '#bf5af2' }
+];
+
 let state = {
   profile: load(STORAGE.profile), 
   workouts: load(STORAGE.workouts) || [], 
   bodyLog: load(STORAGE.bodyLog) || [],
   runs: load(STORAGE.runs) || [],
   sleepLog: load(STORAGE.sleepLog) || [],
-  daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, sleep: null, mood: null },
+  customExercises: load(STORAGE.customEx) || {},
+  themeColor: load(STORAGE.themeColor) || '#a2ff00',
+  daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, sleep: null, mood: null, steps: 0 },
   screen: 'home', currentWorkout: null, chartInstance: null,
   tempMood: null
 };
@@ -226,77 +252,49 @@ function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { r
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 function today() { return new Date().toISOString().slice(0, 10); }
 
+// Применяем сохраненный цвет
+document.documentElement.style.setProperty('--accent', state.themeColor);
+
 if (state.daily.date !== today()) { 
-  // Сохраняем в историю сна, если были данные
-  if (state.daily.sleep) {
-    state.sleepLog.push({ date: state.daily.date, sleep: state.daily.sleep, mood: state.daily.mood });
-    save(STORAGE.sleepLog, state.sleepLog);
-  }
-  state.daily = { date: today(), water: 0, calories: 0, sleep: null, mood: null }; 
+  if (state.daily.sleep) { state.sleepLog.push({ date: state.daily.date, sleep: state.daily.sleep, mood: state.daily.mood }); save(STORAGE.sleepLog, state.sleepLog); }
+  state.daily = { date: today(), water: 0, calories: 0, sleep: null, mood: null, steps: 0 }; 
   save(STORAGE.daily, state.daily); 
 }
 
 // --- МАТЕМАТИКА ---
-function calcTonnage(workout) {
-  if (!workout || !workout.exercises) return 0;
-  return workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).reduce((sSum, s) => sSum + (s.weight * s.reps), 0), 0);
-}
-
-function calcBodyFat(profile) {
-  if (!profile || !profile.weight || !profile.height || !profile.age) return 0;
-  const bmi = profile.weight / Math.pow(profile.height / 100, 2);
-  const sex = profile.sex === 'male' ? 1 : 0;
-  let fat = (1.20 * bmi) + (0.23 * profile.age) - (10.8 * sex) - 5.4;
-  return Math.max(3, Math.min(50, Math.round(fat)));
-}
-
+function getAllExercises() { return { ...BASE_EXERCISES_DB, ...state.customExercises }; }
+function calcTonnage(workout) { return (!workout || !workout.exercises) ? 0 : workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).reduce((sSum, s) => sSum + (s.weight * s.reps), 0), 0); }
+function calcBodyFat(p) { if (!p || !p.weight) return 0; const bmi = p.weight / Math.pow(p.height / 100, 2); let fat = (1.20 * bmi) + (0.23 * p.age) - (10.8 * (p.sex === 'male' ? 1 : 0)) - 5.4; return Math.max(3, Math.min(50, Math.round(fat))); }
 function calcRecovery() {
-  let baseRecovery = 100;
-  
-  // Учитываем тренировки
+  let r = 100;
   if (state.workouts.length > 0) {
     const last = [...state.workouts].sort((a,b) => b.date.localeCompare(a.date))[0];
-    const daysSince = Math.floor((new Date(today()) - new Date(last.date)) / (1000 * 60 * 60 * 24));
-    if (daysSince === 0) baseRecovery = 30;
-    else if (daysSince === 1) baseRecovery = last.tonnage > 5000 ? 50 : 70;
+    const days = Math.floor((new Date(today()) - new Date(last.date)) / (1000 * 60 * 60 * 24));
+    if (days === 0) r = 30; else if (days === 1) r = last.tonnage > 5000 ? 50 : 70;
   }
-
-  // Учитываем сон
-  if (state.daily.sleep) {
-    if (state.daily.sleep <= 4) baseRecovery -= 30;
-    else if (state.daily.sleep <= 6) baseRecovery -= 15;
-  }
-  
-  return Math.max(10, Math.min(100, baseRecovery));
+  if (state.daily.sleep) { if (state.daily.sleep <= 4) r -= 30; else if (state.daily.sleep <= 6) r -= 15; }
+  return Math.max(10, Math.min(100, r));
 }
-
 function getPRs() {
   let prs = { 'Жим лёжа': 0, 'Приседания со штангой': 0, 'Становая тяга': 0 };
-  state.workouts.forEach(w => {
-    w.exercises.forEach(ex => {
-      if (prs[ex.name] !== undefined) {
-        const maxWeight = Math.max(...ex.sets.filter(s => !s.isWarmup).map(s => s.weight), 0);
-        if (maxWeight > prs[ex.name]) prs[ex.name] = maxWeight;
-      }
-    });
-  });
+  state.workouts.forEach(w => w.exercises.forEach(ex => {
+    if (prs[ex.name] !== undefined) {
+      const max = Math.max(...ex.sets.filter(s => !s.isWarmup).map(s => s.weight), 0);
+      if (max > prs[ex.name]) prs[ex.name] = max;
+    }
+  }));
   return prs;
 }
-
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-  const R = 6371; 
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  const R = 6371; const dLat = (lat2 - lat1) * (Math.PI / 180); const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 
 // --- РЕНДЕР ---
 function render() {
   const app = document.getElementById('app');
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.screen === state.screen));
-  
   if (!state.profile) { app.innerHTML = renderOnboarding(); return; }
   
   if (state.screen === 'home') app.innerHTML = renderHome();
@@ -341,18 +339,18 @@ function completeOnboarding() {
 function renderHome() {
   const done = state.workouts.some(w => w.date === today());
   const waterPct = Math.min((state.daily.water / 8) * 100, 100);
+  const stepsPct = Math.min((state.daily.steps / 10000) * 100, 100);
   const wPct = done ? 100 : 0;
   
-  const size = 100, stroke = 10, r = (size-stroke)/2, circ = 2*Math.PI*r;
+  const size = 90, stroke = 8, r = (size-stroke)/2, circ = 2*Math.PI*r;
 
-  // Карточка сна (показывается, если не заполнена сегодня)
   const sleepCard = !state.daily.sleep ? `
     <div class="card span-2" style="background: linear-gradient(145deg, #1c1c1e, #0a0a0a); border: 1px solid var(--stand);">
       <h2 style="color:var(--stand);"><i class="ph ph-moon"></i> Как спалось?</h2>
       <div style="display:flex; gap:10px; margin-bottom:16px;">
-        <button class="sleep-btn" onclick="setSleep(4, this)">4 часа</button>
-        <button class="sleep-btn" onclick="setSleep(6, this)">6 часов</button>
-        <button class="sleep-btn" onclick="setSleep(8, this)">8+ часов</button>
+        <button class="sleep-btn secondary" onclick="setSleep(4, this)">4 часа</button>
+        <button class="sleep-btn secondary" onclick="setSleep(6, this)">6 часов</button>
+        <button class="sleep-btn secondary" onclick="setSleep(8, this)">8+ часов</button>
       </div>
       <div style="display:flex; justify-content:center; gap:16px; font-size:32px;">
         <div onclick="setMood('😴', this)" style="cursor:pointer; opacity:0.5; transition:0.2s;" onmouseover="this.style.opacity=1" onmouseout="if(!this.classList.contains('active-mood'))this.style.opacity=0.5">😴</div>
@@ -367,20 +365,25 @@ function renderHome() {
     <div class="bento-grid">
       ${sleepCard}
 
-      <div class="card span-2" style="padding: 30px 20px;">
+      <div class="card span-2" style="padding: 30px 15px;">
         <div class="rings-container">
           <div class="ring-wrap">
-            <svg class="ring-svg" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="${r}"></circle><circle class="ring-progress" cx="50" cy="50" r="${r}" style="stroke:var(--exercise); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (wPct/100)*circ};"></circle></svg>
+            <svg class="ring-svg" viewBox="0 0 90 90"><circle class="ring-bg" cx="45" cy="45" r="${r}"></circle><circle class="ring-progress" cx="45" cy="45" r="${r}" style="stroke:var(--exercise); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (wPct/100)*circ};"></circle></svg>
             <div class="ring-content"><i class="ph ph-barbell ring-icon" style="color:var(--exercise)"></i><span class="ring-val">${done ? '100%' : '0%'}</span></div>
           </div>
           <div class="ring-wrap">
-            <svg class="ring-svg" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="${r}"></circle><circle class="ring-progress" cx="50" cy="50" r="${r}" style="stroke:var(--stand); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (waterPct/100)*circ};"></circle></svg>
+            <svg class="ring-svg" viewBox="0 0 90 90"><circle class="ring-bg" cx="45" cy="45" r="${r}"></circle><circle class="ring-progress" cx="45" cy="45" r="${r}" style="stroke:var(--stand); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (waterPct/100)*circ};"></circle></svg>
             <div class="ring-content"><i class="ph ph-drop ring-icon" style="color:var(--stand)"></i><span class="ring-val">${state.daily.water}/8</span></div>
           </div>
+          <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 90 90"><circle class="ring-bg" cx="45" cy="45" r="${r}"></circle><circle class="ring-progress" cx="45" cy="45" r="${r}" style="stroke:var(--move); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (stepsPct/100)*circ};"></circle></svg>
+            <div class="ring-content"><i class="ph ph-sneaker ring-icon" style="color:var(--move)"></i><span class="ring-val">${state.daily.steps}</span></div>
+          </div>
         </div>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-          <button class="secondary" onclick="addWater()" style="margin:0; font-size:14px; padding:12px;"><i class="ph ph-plus"></i> Вода</button>
-          <button class="secondary" onclick="addCalories()" style="margin:0; font-size:14px; padding:12px;"><i class="ph ph-fork-knife"></i> Еда (${state.daily.calories})</button>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:20px;">
+          <button class="secondary" onclick="addWater()" style="margin:0; font-size:12px; padding:10px;"><i class="ph ph-plus"></i> Вода</button>
+          <button class="secondary" onclick="addCalories()" style="margin:0; font-size:12px; padding:10px;"><i class="ph ph-fork-knife"></i> ${state.daily.calories}</button>
+          <button class="secondary" onclick="addSteps()" style="margin:0; font-size:12px; padding:10px;"><i class="ph ph-sneaker"></i> Шаги</button>
         </div>
       </div>
 
@@ -404,23 +407,19 @@ function renderHome() {
 }
 
 function setSleep(hours, btn) {
-  state.daily.sleep = hours;
-  save(STORAGE.daily, state.daily);
-  document.querySelectorAll('.sleep-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  state.daily.sleep = hours; save(STORAGE.daily, state.daily);
+  document.querySelectorAll('.sleep-btn').forEach(b => { b.classList.remove('active'); b.style.borderColor = 'transparent'; });
+  btn.style.borderColor = 'var(--stand)'; btn.style.color = 'var(--stand)';
   if(state.daily.mood) render();
 }
-
 function setMood(mood, el) {
-  state.daily.mood = mood;
-  save(STORAGE.daily, state.daily);
-  el.classList.add('active-mood');
-  el.style.opacity = 1;
+  state.daily.mood = mood; save(STORAGE.daily, state.daily);
+  el.classList.add('active-mood'); el.style.opacity = 1;
   setTimeout(render, 300);
 }
-
 function addWater() { state.daily.water = Math.min((state.daily.water || 0) + 1, 8); save(STORAGE.daily, state.daily); render(); }
 function addCalories() { const c = prompt('Сколько калорий съел?'); if(c && !isNaN(c)) { state.daily.calories = (state.daily.calories || 0) + +c; save(STORAGE.daily, state.daily); render(); } }
+function addSteps() { const s = prompt('Сколько шагов добавить?'); if(s && !isNaN(s)) { state.daily.steps = (state.daily.steps || 0) + +s; save(STORAGE.daily, state.daily); render(); } }
 
 // --- ТРЕНИРОВКА ---
 function startWorkout() {
@@ -437,7 +436,7 @@ function renderNewWorkout() {
   return `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
       <h1 style="margin:0;">Зал</h1>
-      <div style="background: var(--card); color: var(--exercise); padding:10px 20px; border-radius:99px; font-weight:800; font-size:18px;">${tonnage} КГ</div>
+      <div style="background: var(--card); color: var(--accent); padding:10px 20px; border-radius:99px; font-weight:800; font-size:18px;">${tonnage} КГ</div>
       <button class="danger" style="width:auto; padding:10px 20px; margin:0; border-radius:99px;" onclick="cancelWorkout()">Отмена</button>
     </div>
 
@@ -473,27 +472,27 @@ function renderNewWorkout() {
 
       <div>
         <div class="card" style="padding:20px; margin-bottom:16px;">
-          <h2>Шаблоны</h2>
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            ${Object.entries(TEMPLATES).map(([name, exs]) => `
-              <button class="secondary" style="justify-content:space-between; padding:14px; margin:0;" onclick='applyTemplate(${JSON.stringify(exs).replace(/'/g, "&#39;")})'>
-                <span>${name}</span> <i class="ph ph-caret-right"></i>
-              </button>
-            `).join('')}
-          </div>
-        </div>
-
-        <div class="card" style="padding:20px;">
           <h2>Все упражнения</h2>
+          <button class="secondary" onclick="openCustomExModal()" style="margin-bottom:12px; color:var(--accent);"><i class="ph ph-plus"></i> Свое упражнение</button>
           <div style="max-height:300px; overflow-y:auto; padding-right:5px;">
-            ${BASE_EXERCISES.map(ex => `<button class="secondary" style="justify-content:flex-start; padding:16px; margin-bottom:8px;" onclick="addExercise('${ex}')">${ex}</button>`).join('')}
+            ${Object.keys(getAllExercises()).map(ex => `<button class="secondary" style="justify-content:flex-start; padding:16px; margin-bottom:8px;" onclick="addExercise('${ex}')">${ex}</button>`).join('')}
           </div>
         </div>
       </div>
     </div>`;
 }
 
-function applyTemplate(exs) { exs.forEach(ex => addExercise(ex, false)); render(); }
+function openCustomExModal() { document.getElementById('custom-ex-modal').classList.add('active'); }
+function saveCustomExercise() {
+  const name = document.getElementById('custom-ex-name').value.trim();
+  const group = document.getElementById('custom-ex-group').value;
+  if(!name) return;
+  state.customExercises[name] = group;
+  save(STORAGE.customEx, state.customExercises);
+  closeModal('custom-ex-modal');
+  render();
+}
+
 function addExercise(name, reRender = true) { state.currentWorkout.exercises.push({ name, sets: [{ weight: 0, reps: 8, isWarmup: false }] }); if (reRender) render(); }
 function removeExercise(i) { state.currentWorkout.exercises.splice(i, 1); render(); }
 function addSet(i) { const ex = state.currentWorkout.exercises[i]; const l = ex.sets.filter(s=>!s.isWarmup).pop() || {weight:0,reps:8}; ex.sets.push({ weight: l.weight, reps: l.reps, isWarmup: false }); render(); }
@@ -517,16 +516,107 @@ function selectMood(emoji) {
 function saveWorkoutWithFeedback() {
   const note = document.getElementById('workout-note').value;
   const total = calcTonnage(state.currentWorkout);
-  
   state.workouts.push({ ...state.currentWorkout, id: Date.now(), tonnage: total, mood: state.tempMood || '😐', note: note });
   save(STORAGE.workouts, state.workouts);
   closeModal('feedback-modal');
+  
+  // Сразу предлагаем экспорт
+  setTimeout(() => showExportModal(state.workouts[state.workouts.length - 1]), 300);
+  
   state.currentWorkout = null; state.screen = 'home'; render();
 }
 
 function cancelWorkout() { if(confirm('Отменить тренировку?')) { state.currentWorkout = null; state.screen = 'home'; render(); } }
 
-// --- БЕГ (С GPS) ---
+// --- ЭКСПОРТ В STRAVA STYLE ---
+function showExportModal(workout) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `
+    <div class="modal-content">
+      <div style="font-size:64px; margin-bottom:16px">🏆</div>
+      <h1 style="margin:0 0 8px 0; font-size:28px;">Тренировка сохранена!</h1>
+      <p class="muted" style="margin-bottom:24px;">Общий тоннаж: ${workout.tonnage} кг</p>
+      <button onclick="generateStravaCard(${workout.id})" style="background:linear-gradient(90deg, #fc4c02, #ff8c00); color:#fff; font-weight:800; font-size:18px;"><i class="ph ph-download-simple"></i> Сохранить картинку</button>
+      <button class="secondary" onclick="this.closest('.modal-overlay').remove(); go('home');">Пропустить</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function generateStravaCard(id) {
+  const w = state.workouts.find(x => x.id === id);
+  if(!w) return;
+  
+  // Сортируем упражнения по тоннажу и берем топ-3
+  const topEx = [...w.exercises].map(ex => {
+    const ton = ex.sets.filter(s=>!s.isWarmup).reduce((sum, s) => sum + (s.weight*s.reps), 0);
+    return { name: ex.name, ton };
+  }).sort((a,b) => b.ton - a.ton).slice(0, 3);
+
+  const dateStr = new Date(w.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  const area = document.getElementById('export-area');
+  
+  // Генерируем красивую карточку (вертикальная, 400x700)
+  area.innerHTML = `
+    <div style="width: 400px; height: 700px; background: linear-gradient(150deg, #1c1c1e 0%, #000000 100%); border-radius: 30px; padding: 40px 30px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #333; position: relative; overflow: hidden;">
+      
+      <!-- Фоновый паттерн -->
+      <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: ${state.themeColor}; filter: blur(100px); opacity: 0.3;"></div>
+      
+      <!-- Хедер -->
+      <div style="display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width: 32px; height: 32px; background: ${state.themeColor}; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <i class="ph-bold ph-barbell" style="color: #000; font-size: 18px;"></i>
+          </div>
+          <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.5px;">Fitness Pro</div>
+        </div>
+        <div style="color: #8e8e93; font-size: 14px; font-weight: 600;">${dateStr}</div>
+      </div>
+
+      <!-- Основная инфа -->
+      <div style="text-align: center; z-index: 10; margin-top: 20px;">
+        <div style="color: ${state.themeColor}; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Тоннаж</div>
+        <div style="font-size: 72px; font-weight: 900; line-height: 0.9; letter-spacing: -3px;">${w.tonnage.toLocaleString('ru-RU')}</div>
+        <div style="color: #8e8e93; font-size: 18px; font-weight: 600; margin-top: 5px;">КГ</div>
+      </div>
+
+      <!-- Топ упражнений -->
+      <div style="background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; z-index: 10;">
+        <div style="color: #8e8e93; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Лучшие упражнения</div>
+        ${topEx.map((ex, i) => `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: ${i === 2 ? '0' : '12px'};">
+            <div style="font-size: 16px; font-weight: 600;">${ex.name}</div>
+            <div style="font-size: 14px; font-weight: 800; color: #fff; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 8px;">${ex.ton} кг</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Футер -->
+      <div style="display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="font-size: 32px;">${w.mood || '😐'}</div>
+          <div>
+            <div style="font-size: 12px; color: #8e8e93; font-weight: 600;">Настроение</div>
+            <div style="font-size: 14px; font-weight: 700;">${w.note ? w.note.slice(0, 15) + '...' : 'Отличная работа!'}</div>
+          </div>
+        </div>
+        <div style="font-size: 24px; color: #8e8e93;"><i class="ph-fill ph-lightning"></i></div>
+      </div>
+    </div>
+  `;
+
+  html2canvas(area, { scale: 2, backgroundColor: '#000000' }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = `strava_workout_${w.date}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    document.querySelector('.modal-overlay').remove(); // Закрываем окно после скачивания
+  });
+}
+
+// --- БЕГ ---
 function renderRunning() {
   const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); 
   const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0;
@@ -535,7 +625,6 @@ function renderRunning() {
   return `
     <div class="run-screen">
       <div class="run-time-big" id="run-time">${formatTime(runTime)}</div>
-      
       <div class="run-metrics">
         <div class="run-metric-box">
           <div class="run-metric-val" id="run-dist">${gpsDistance.toFixed(2)}</div>
@@ -546,15 +635,13 @@ function renderRunning() {
           <div class="stat-label">ТЕМП</div>
         </div>
         <div class="run-metric-box" style="grid-column: span 2;">
-          <div class="run-metric-val" id="run-cal" style="color:var(--move);">${cal}</div>
+          <div class="run-metric-val" id="run-cal" style="color:var(--accent);">${cal}</div>
           <div class="stat-label">СОЖЖЕНО ККАЛ</div>
         </div>
       </div>
-
-      <button onclick="toggleRun()" id="run-btn" style="border-radius:99px; padding:24px; font-size:22px; background:${runActive ? 'var(--move)' : 'var(--exercise)'}; color:${runActive ? '#fff' : '#000'};">
+      <button onclick="toggleRun()" id="run-btn" style="border-radius:99px; padding:24px; font-size:22px; background:${runActive ? 'var(--move)' : 'var(--accent)'}; color:${runActive ? '#fff' : '#000'};">
         <i class="ph ${runActive ? 'ph-pause' : 'ph-play'}"></i> ${runActive ? 'ПАУЗА' : 'СТАРТ'}
       </button>
-      
       <button class="secondary" id="run-save-btn" style="display:${runActive || runTime === 0 ? 'none' : 'flex'};" onclick="saveRun(${cal})">
         Сохранить результат
       </button>
@@ -566,52 +653,29 @@ function formatTime(sec) { return `${Math.floor(sec/3600).toString().padStart(2,
 
 function toggleRun() {
   runActive = !runActive;
-  
   if(runActive) {
-    runInt = setInterval(() => {
-      runTime++;
-      document.getElementById('run-time').innerText = formatTime(runTime);
-      updateRunUI();
-    }, 1000);
-
+    runInt = setInterval(() => { runTime++; document.getElementById('run-time').innerText = formatTime(runTime); updateRunUI(); }, 1000);
     if (navigator.geolocation) {
-      gpsWatchId = navigator.geolocation.watchPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          if (lastPos) {
-            const dist = getDistanceFromLatLonInKm(lastPos.lat, lastPos.lon, latitude, longitude);
-            if (dist > 0.003) {
-              gpsDistance += dist;
-              lastPos = { lat: latitude, lon: longitude };
-              updateRunUI();
-            }
-          } else {
-            lastPos = { lat: latitude, lon: longitude };
-          }
-        },
-        (err) => { console.warn('GPS error:', err); },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-      );
+      gpsWatchId = navigator.geolocation.watchPosition((pos) => {
+        const { latitude, longitude } = pos.coords;
+        if (lastPos) {
+          const dist = getDistanceFromLatLonInKm(lastPos.lat, lastPos.lon, latitude, longitude);
+          if (dist > 0.003) { gpsDistance += dist; lastPos = { lat: latitude, lon: longitude }; updateRunUI(); }
+        } else { lastPos = { lat: latitude, lon: longitude }; }
+      }, (err) => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
     }
   } else {
-    clearInterval(runInt);
-    if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+    clearInterval(runInt); if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
   }
   renderRunningUI();
 }
 
 function updateRunUI() {
-  const elTime = document.getElementById('run-time');
-  const elDist = document.getElementById('run-dist');
-  const elCal = document.getElementById('run-cal');
-  const elPace = document.getElementById('run-pace');
-
+  const elTime = document.getElementById('run-time'), elDist = document.getElementById('run-dist'), elCal = document.getElementById('run-cal'), elPace = document.getElementById('run-pace');
   if(elTime) elTime.innerText = formatTime(runTime);
   if(elDist) elDist.innerText = gpsDistance.toFixed(2);
-  
   const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600));
   if(elCal) elCal.innerText = cal;
-  
   if (runTime > 0 && gpsDistance > 0) {
     const paceMin = (runTime / 60) / gpsDistance;
     if(elPace) elPace.innerText = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`;
@@ -623,20 +687,16 @@ function renderRunningUI() { document.getElementById('app').innerHTML = renderRu
 function saveRun(cal) {
   if (gpsDistance === 0) return alert('Нет данных GPS. Пройдись немного!');
   const paceMin = (runTime / 60) / gpsDistance;
-  const paceStr = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`;
-  
-  state.runs.unshift({ date: today(), distance: +gpsDistance.toFixed(2), time: formatTime(runTime), calories: cal, pace: paceStr });
+  state.runs.unshift({ date: today(), distance: +gpsDistance.toFixed(2), time: formatTime(runTime), calories: cal, pace: `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` });
   save(STORAGE.runs, state.runs);
   runTime = 0; runActive = false; gpsDistance = 0; lastPos = null;
   render();
 }
 
-// --- ТРЕНДЫ (С челленджами) ---
+// --- ТРЕНДЫ ---
 function renderProgress() {
   setTimeout(drawWeightChart, 50);
-  const fat = calcBodyFat(state.profile);
-  const recovery = calcRecovery();
-  const prs = getPRs();
+  const fat = calcBodyFat(state.profile), recovery = calcRecovery(), prs = getPRs();
   
   let deltaText = '';
   if (state.bodyLog.length > 1) {
@@ -646,103 +706,69 @@ function renderProgress() {
     else if (diff < 0) deltaText = `<span style="color:var(--accent)">${diff.toFixed(1)} кг</span>`;
   }
 
-  // Челленджи
   const totalDist = state.runs.reduce((sum, r) => sum + r.distance, 0);
-  const totalWorkouts = state.workouts.length;
   const goodSleepDays = state.sleepLog.filter(s => s.sleep >= 7).length + (state.daily.sleep >= 7 ? 1 : 0);
 
   const challenges = [
-    { name: "Марафонец", desc: "Пробеги 20 км", current: totalDist, max: 20, unit: "км", icon: "ph-figure-run", color: "var(--stand)" },
-    { name: "Железный", desc: "10 тренировок в зале", current: totalWorkouts, max: 10, unit: "шт", icon: "ph-barbell", color: "var(--exercise)" },
-    { name: "Сплюшка", desc: "5 дней сна по 8 часов", current: goodSleepDays, max: 5, unit: "дн", icon: "ph-moon", color: "var(--move)" }
+    { name: "Марафонец", current: totalDist, max: 20, unit: "км", icon: "ph-figure-run", color: "var(--stand)" },
+    { name: "Железный", current: state.workouts.length, max: 10, unit: "шт", icon: "ph-barbell", color: "var(--accent)" },
+    { name: "Сплюшка", current: goodSleepDays, max: 5, unit: "дн", icon: "ph-moon", color: "var(--move)" }
   ];
 
   return `
     <h1>Тренды</h1>
     <div class="bento-grid">
-      <!-- График -->
       <div class="card span-2">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
-          <div>
-            <h2 style="margin:0;">Вес тела</h2>
-            <div style="font-size:18px; font-weight:700; margin-top:8px;">${deltaText}</div>
-          </div>
+          <div><h2 style="margin:0;">Вес тела</h2><div style="font-size:18px; font-weight:700; margin-top:8px;">${deltaText}</div></div>
           <div style="display:flex; gap:10px;">
             <input id="bw" type="number" placeholder="Вес" style="width:100px; margin:0; padding:10px;">
             <button style="width:44px; height:44px; margin:0; padding:0; border-radius:12px;" onclick="logBodyWeight()"><i class="ph ph-plus"></i></button>
           </div>
         </div>
-        <div style="position:relative; height:220px; width:100%; background:var(--card-light); border-radius:16px; padding:10px;">
-          <canvas id="weightChart"></canvas>
-        </div>
+        <div style="position:relative; height:220px; width:100%; background:var(--card-light); border-radius:16px; padding:10px;"><canvas id="weightChart"></canvas></div>
       </div>
 
-      <!-- Челленджи -->
       <div class="card span-2">
         <h2>Испытания</h2>
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:16px; margin-top:16px;">
           ${challenges.map(c => {
-            const pct = Math.min((c.current / c.max) * 100, 100);
-            const isDone = c.current >= c.max;
+            const pct = Math.min((c.current / c.max) * 100, 100); const isDone = c.current >= c.max;
             return `
-              <div class="challenge-card" style="${isDone ? 'border: 1px solid var(--accent)' : ''}">
+              <div style="background: var(--card-light); border-radius: 20px; padding: 20px; ${isDone ? 'border: 1px solid var(--accent)' : ''}">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <i class="ph ${c.icon}" style="font-size:24px; color:${c.color}"></i>
-                    <div style="font-weight:700; font-size:16px;">${c.name}</div>
-                  </div>
+                  <div style="display:flex; align-items:center; gap:10px;"><i class="ph ${c.icon}" style="font-size:24px; color:${c.color}"></i><div style="font-weight:700; font-size:16px;">${c.name}</div></div>
                   ${isDone ? '<i class="ph-fill ph-check-circle" style="color:var(--accent); font-size:20px;"></i>' : ''}
                 </div>
-                <div class="muted" style="font-size:13px; margin-top:4px;">${c.desc}</div>
-                <div class="progress-bar-bg">
-                  <div class="progress-bar-fill" style="width: ${pct}%; background:${isDone ? 'var(--accent)' : c.color}"></div>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:12px; font-weight:700;">
-                  <span>${c.current.toFixed(1)} / ${c.max} ${c.unit}</span>
-                  <span class="muted">${Math.round(pct)}%</span>
-                </div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${pct}%; background:${isDone ? 'var(--accent)' : c.color}"></div></div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:12px; font-weight:700;"><span>${c.current.toFixed(1)} / ${c.max} ${c.unit}</span><span class="muted">${Math.round(pct)}%</span></div>
               </div>
             `;
           }).join('')}
         </div>
       </div>
 
-      <!-- Состав и Восстановление -->
       <div style="display:flex; flex-direction:column; gap:16px;">
         <div class="card" style="padding:20px;">
           <div style="display:flex; justify-content:space-between;">
-            <div>
-              <div class="muted">Процент жира</div>
-              <div class="stat-num" style="color:var(--stand); font-size:32px;">${fat}%</div>
-            </div>
+            <div><div class="muted">Процент жира</div><div class="stat-num" style="color:var(--stand); font-size:32px;">${fat}%</div></div>
             <i class="ph ph-body" style="font-size:32px; color:var(--stand);"></i>
           </div>
         </div>
-        
         <div class="card" style="padding:20px;">
           <div style="display:flex; justify-content:space-between;">
-            <div>
-              <div class="muted">Восстановление</div>
-              <div class="stat-num" style="color:${recovery > 70 ? 'var(--accent)' : 'var(--move)'}; font-size:32px;">${recovery}%</div>
-            </div>
+            <div><div class="muted">Восстановление</div><div class="stat-num" style="color:${recovery > 70 ? 'var(--accent)' : 'var(--move)'}; font-size:32px;">${recovery}%</div></div>
             <i class="ph ph-battery-full" style="font-size:32px; color:${recovery > 70 ? 'var(--accent)' : 'var(--move)'};"></i>
           </div>
         </div>
       </div>
 
-      <!-- Рекорды -->
       <div class="card span-2">
         <h2>Личные рекорды (1ПМ)</h2>
         <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-top:16px;">
-          ${Object.entries(prs).map(([name, weight]) => `
-            <div style="background:var(--card-light); padding:16px; border-radius:16px; text-align:center;">
-              <div style="font-size:13px; font-weight:700; color:var(--muted); margin-bottom:8px;">${name}</div>
-              <div style="font-size:24px; font-weight:800; color:var(--accent);">${weight > 0 ? weight + ' кг' : '—'}</div>
-            </div>
-          `).join('')}
+          ${Object.entries(prs).map(([name, weight]) => `<div style="background:var(--card-light); padding:16px; border-radius:16px; text-align:center;"><div style="font-size:13px; font-weight:700; color:var(--muted); margin-bottom:8px;">${name}</div><div style="font-size:24px; font-weight:800; color:var(--accent);">${weight > 0 ? weight + ' кг' : '—'}</div></div>`).join('')}
         </div>
       </div>
-
     </div>`;
 }
 
@@ -751,13 +777,13 @@ function drawWeightChart() {
   if (state.chartInstance) state.chartInstance.destroy(); 
   const sorted = [...state.bodyLog].sort((a, b) => a.date.localeCompare(b.date));
   let gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 250);
-  gradient.addColorStop(0, 'rgba(0, 212, 255, 0.5)');
-  gradient.addColorStop(1, 'rgba(0, 212, 255, 0.0)');
+  gradient.addColorStop(0, state.themeColor + '88');
+  gradient.addColorStop(1, state.themeColor + '00');
 
   state.chartInstance = new Chart(ctx, {
     type: 'line',
     data: { labels: sorted.length ? sorted.map(b => b.date.slice(5)) : ['Нет данных'],
-      datasets: [{ data: sorted.length ? sorted.map(b => b.weight) : [state.profile.weight], borderColor: '#00d4ff', backgroundColor: gradient, borderWidth: 4, tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#fff' }] },
+      datasets: [{ data: sorted.length ? sorted.map(b => b.weight) : [state.profile.weight], borderColor: state.themeColor, backgroundColor: gradient, borderWidth: 4, tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#fff' }] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93' } }, x: { grid: { display: false }, ticks: { color: '#8e8e93' } } } }
   });
 }
@@ -768,11 +794,18 @@ function renderProfile() {
   return `
     <h1>Профиль</h1>
     <div class="card" style="text-align:center; padding:40px 24px;">
-      <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, var(--move), var(--exercise)); display:flex; align-items:center; justify-content:center; font-size:48px; color:#fff; margin:0 auto 20px;">
+      <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, var(--move), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:48px; color:#fff; margin:0 auto 20px;">
         <i class="ph ph-user"></i>
       </div>
       <h2 style="margin-bottom:8px;">Атлет</h2>
       <p class="muted" style="margin-bottom:16px;">Исключения: ${state.profile.foodPrefs?.length ? state.profile.foodPrefs.join(', ') : 'Нет'}</p>
+      
+      <div style="margin-top:20px;">
+        <label>Цвет интерфейса</label>
+        <div style="display:flex; justify-content:center; gap:12px; margin-top:10px;">
+          ${COLORS.map(c => `<div class="color-swatch ${state.themeColor === c.hex ? 'active' : ''}" style="background:${c.hex}" onclick="changeThemeColor('${c.hex}')"></div>`).join('')}
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -780,14 +813,8 @@ function renderProfile() {
       ${state.workouts.length === 0 ? '<p class="muted">Пока нет данных</p>' : ''}
       ${[...state.workouts].sort((a,b)=>b.id-a.id).slice(0,8).map(w => `
         <div style="padding:16px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showHistoryDetails(${w.id})">
-          <div>
-            <div style="font-weight:700;">${w.date}</div>
-            <div class="muted" style="font-size:13px; margin-top:4px;">${w.exercises.map(e => e.name).join(', ').slice(0, 30)}...</div>
-          </div>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span style="font-size:24px;">${w.mood || '😐'}</span>
-            <i class="ph ph-caret-right muted"></i>
-          </div>
+          <div><div style="font-weight:700;">${w.date}</div><div class="muted" style="font-size:13px; margin-top:4px;">${w.exercises.map(e => e.name).join(', ').slice(0, 30)}...</div></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:24px;">${w.mood || '😐'}</span><i class="ph ph-caret-right muted"></i></div>
         </div>
       `).join('')}
     </div>
@@ -797,60 +824,41 @@ function renderProfile() {
     </div>`;
 }
 
+function changeThemeColor(hex) {
+  state.themeColor = hex;
+  save(STORAGE.themeColor, hex);
+  document.documentElement.style.setProperty('--accent', hex);
+  render();
+}
+
 function showHistoryDetails(id) {
-  const w = state.workouts.find(x => x.id === id);
-  if (!w) return;
+  const w = state.workouts.find(x => x.id === id); if (!w) return;
   document.getElementById('history-title').innerText = `Тренировка от ${w.date}`;
   document.getElementById('history-content').innerHTML = `
     <div style="text-align:center; font-size:36px; margin-bottom:20px;">${w.mood || '😐'}</div>
     ${w.note ? `<div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:20px; font-style:italic;">"${w.note}"</div>` : ''}
     <div style="margin-bottom:16px; font-weight:700; color:var(--accent);">Тоннаж: ${w.tonnage} кг</div>
-    ${w.exercises.map(ex => `
-      <div style="margin-bottom:16px;">
-        <div style="font-weight:700; margin-bottom:8px;">${ex.name}</div>
-        <div style="display:flex; flex-wrap:wrap; gap:8px;">
-          ${ex.sets.map((s, i) => `<div style="background:var(--card-light); padding:8px 12px; border-radius:8px; font-size:14px; ${s.isWarmup ? 'color:var(--move)' : ''}">${s.isWarmup ? 'W' : i+1}: ${s.weight}кг × ${s.reps}</div>`).join('')}
-        </div>
-      </div>
-    `).join('')}
+    ${w.exercises.map(ex => `<div style="margin-bottom:16px;"><div style="font-weight:700; margin-bottom:8px;">${ex.name}</div><div style="display:flex; flex-wrap:wrap; gap:8px;">${ex.sets.map((s, i) => `<div style="background:var(--card-light); padding:8px 12px; border-radius:8px; font-size:14px; ${s.isWarmup ? 'color:var(--move)' : ''}">${s.isWarmup ? 'W' : i+1}: ${s.weight}кг × ${s.reps}</div>`).join('')}</div></div>`).join('')}
   `;
   document.getElementById('history-modal').classList.add('active');
 }
 
 // --- ПЛАНЫ ---
 function showPlan(type) {
-  const title = document.getElementById('plan-title');
-  const content = document.getElementById('plan-content');
-  
+  const title = document.getElementById('plan-title'), content = document.getElementById('plan-content');
   if (type === 'workout') {
     title.innerText = "План тренировок (3 дня)";
     content.innerHTML = `
       <div style="margin-bottom:16px;"><b>День 1: Верх тела (Push)</b><br><span class="muted">Жим лёжа 4х8, Жим гантелей 3х10, Махи в стороны 3х15, Французский жим 3х12</span></div>
       <div style="margin-bottom:16px;"><b>День 2: Низ тела</b><br><span class="muted">Приседания 4х8, Жим ногами 3х10, Выпады 3х12, Икры 4х15</span></div>
-      <div><b>День 3: Верх тела (Pull)</b><br><span class="muted">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10, Бицепс 3х12</span></div>
-    `;
+      <div><b>День 3: Верх тела (Pull)</b><br><span class="muted">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10, Бицепс 3х12</span></div>`;
   } else {
-    const dayIndex = new Date().getDay() % 3; 
-    const goal = state.profile.goal;
-    const meals = MEAL_DB[goal][dayIndex];
-    
-    let mealText = `<div style="margin-bottom:10px;"><b>Завтрак:</b> ${meals.b}</div>
-                    <div style="margin-bottom:10px;"><b>Обед:</b> ${meals.l}</div>
-                    <div style="margin-bottom:10px;"><b>Перекус:</b> ${meals.s}</div>
-                    <div><b>Ужин:</b> ${meals.d}</div>`;
-                    
+    const dayIndex = new Date().getDay() % 3; const meals = MEAL_DB[state.profile.goal][dayIndex];
+    let mealText = `<div style="margin-bottom:10px;"><b>Завтрак:</b> ${meals.b}</div><div style="margin-bottom:10px;"><b>Обед:</b> ${meals.l}</div><div style="margin-bottom:10px;"><b>Перекус:</b> ${meals.s}</div><div><b>Ужин:</b> ${meals.d}</div>`;
     const prefs = state.profile.foodPrefs || [];
-    if (prefs.length > 0) {
-      prefs.forEach(pref => {
-        if(pref) mealText = mealText.replace(new RegExp(pref, 'gi'), `<span style="text-decoration:line-through;color:var(--move)">${pref}</span> (замени на курицу/индейку)`);
-      });
-    }
-
-    title.innerText = goal === 'mass' ? "План питания (Набор)" : "План питания (Похудение)";
-    content.innerHTML = `
-      <div style="margin-bottom:16px; color:var(--muted); font-size:14px;">Меню на сегодня с учетом твоих предпочтений:</div>
-      ${mealText}
-    `;
+    prefs.forEach(pref => { if(pref) mealText = mealText.replace(new RegExp(pref, 'gi'), `<span style="text-decoration:line-through;color:var(--move)">${pref}</span>`); });
+    title.innerText = state.profile.goal === 'mass' ? "План питания (Набор)" : "План питания (Похудение)";
+    content.innerHTML = `<div style="margin-bottom:16px; color:var(--muted); font-size:14px;">Меню на сегодня:</div>${mealText}`;
   }
   document.getElementById('plan-modal').classList.add('active');
 }
@@ -864,7 +872,6 @@ function showPlates(totalWeight) {
   document.getElementById('plates-result').innerHTML = res.length ? res.join('<br>') : "Гриф";
   document.getElementById('plates-modal').classList.add('active');
 }
-
 function startTimer() {
   document.getElementById('timer-modal').classList.add('active');
   timerTime = 90; document.getElementById('timer-display').innerText = "01:30";
@@ -875,7 +882,6 @@ function startTimer() {
     if (timerTime <= 0) { clearInterval(timerInt); document.getElementById('timer-display').innerText = "СТАРТ!"; }
   }, 1000);
 }
-
 function resetApp() { if (confirm('Удалить все данные?')) { localStorage.clear(); location.reload(); } }
 function go(screen) { if (screen === 'newWorkout' && !state.currentWorkout) { startWorkout(); return; } state.screen = screen; render(); window.scrollTo(0,0); }
 
