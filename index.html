@@ -93,6 +93,14 @@
   .mood-btn { font-size: 36px; background: var(--card-light); border-radius: 16px; padding: 10px; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; }
   .mood-btn.selected { border-color: var(--accent); background: rgba(162,255,0,0.1); }
 
+  .sleep-btn { background: var(--card-light); color: var(--text); border: 2px solid transparent; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; flex: 1; }
+  .sleep-btn.active { border-color: var(--stand); background: rgba(0,212,255,0.1); color: var(--stand); }
+
+  /* Челенджи */
+  .challenge-card { background: var(--card-light); border-radius: 20px; padding: 20px; margin-bottom: 16px; }
+  .progress-bar-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 12px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.5s ease; }
+
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px 24px 40px 24px; }
     .bottom-nav { position: static; max-width: 700px; margin: 0 auto 30px auto; border-radius: 99px; border: 1px solid var(--border); padding: 8px; }
@@ -170,7 +178,7 @@
 <div id="app"></div>
 
 <script>
-const STORAGE = { profile: 'fit_p5', workouts: 'fit_w5', bodyLog: 'fit_b5', daily: 'fit_d5', runs: 'fit_r5' };
+const STORAGE = { profile: 'fit_p6', workouts: 'fit_w6', bodyLog: 'fit_b6', daily: 'fit_d6', runs: 'fit_r6', sleepLog: 'fit_s6' };
 
 const EXERCISE_DB = {
   'Приседания со штангой': 'Ноги', 'Жим лёжа': 'Грудь', 'Становая тяга': 'Спина', 
@@ -186,7 +194,6 @@ const TEMPLATES = {
   'Низ тела': ['Приседания со штангой', 'Становая тяга', 'Жим ногами', 'Выпады с гантелями']
 };
 
-// База блюд (разная для целей)
 const MEAL_DB = {
   mass: [
     { b: "Овсянка + 3 яйца + банан", l: "Гречка + Куриная грудка 200г", d: "Рыба 200г + рис", s: "Творог 200г + орехи" },
@@ -205,7 +212,8 @@ let state = {
   workouts: load(STORAGE.workouts) || [], 
   bodyLog: load(STORAGE.bodyLog) || [],
   runs: load(STORAGE.runs) || [],
-  daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0 },
+  sleepLog: load(STORAGE.sleepLog) || [],
+  daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, sleep: null, mood: null },
   screen: 'home', currentWorkout: null, chartInstance: null,
   tempMood: null
 };
@@ -218,7 +226,15 @@ function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { r
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 function today() { return new Date().toISOString().slice(0, 10); }
 
-if (state.daily.date !== today()) { state.daily = { date: today(), water: 0, calories: 0 }; save(STORAGE.daily, state.daily); }
+if (state.daily.date !== today()) { 
+  // Сохраняем в историю сна, если были данные
+  if (state.daily.sleep) {
+    state.sleepLog.push({ date: state.daily.date, sleep: state.daily.sleep, mood: state.daily.mood });
+    save(STORAGE.sleepLog, state.sleepLog);
+  }
+  state.daily = { date: today(), water: 0, calories: 0, sleep: null, mood: null }; 
+  save(STORAGE.daily, state.daily); 
+}
 
 // --- МАТЕМАТИКА ---
 function calcTonnage(workout) {
@@ -235,12 +251,23 @@ function calcBodyFat(profile) {
 }
 
 function calcRecovery() {
-  if (state.workouts.length === 0) return 100;
-  const last = [...state.workouts].sort((a,b) => b.date.localeCompare(a.date))[0];
-  const daysSince = Math.floor((new Date(today()) - new Date(last.date)) / (1000 * 60 * 60 * 24));
-  if (daysSince >= 2) return 100;
-  if (daysSince === 1) return last.tonnage > 5000 ? 50 : 70;
-  return 30;
+  let baseRecovery = 100;
+  
+  // Учитываем тренировки
+  if (state.workouts.length > 0) {
+    const last = [...state.workouts].sort((a,b) => b.date.localeCompare(a.date))[0];
+    const daysSince = Math.floor((new Date(today()) - new Date(last.date)) / (1000 * 60 * 60 * 24));
+    if (daysSince === 0) baseRecovery = 30;
+    else if (daysSince === 1) baseRecovery = last.tonnage > 5000 ? 50 : 70;
+  }
+
+  // Учитываем сон
+  if (state.daily.sleep) {
+    if (state.daily.sleep <= 4) baseRecovery -= 30;
+    else if (state.daily.sleep <= 6) baseRecovery -= 15;
+  }
+  
+  return Math.max(10, Math.min(100, baseRecovery));
 }
 
 function getPRs() {
@@ -256,14 +283,11 @@ function getPRs() {
   return prs;
 }
 
-// Формула гаверсинусов для GPS
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   const R = 6371; 
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -292,7 +316,7 @@ function renderOnboarding() {
       <label>Вес (кг)</label><input id="weight" type="number" placeholder="75">
       <label>Рост (см)</label><input id="height" type="number" placeholder="180">
       <label>Возраст</label><input id="age" type="number" placeholder="25">
-      <label>Исключения в еде (через запятую)</label><input id="food_prefs" type="text" placeholder="например: рыба, молоко">
+      <label>Исключения в еде</label><input id="food_prefs" type="text" placeholder="например: рыба, молоко">
       <button onclick="completeOnboarding()" style="margin-top:20px;">Начать</button>
     </div>
   </div>`;
@@ -321,9 +345,28 @@ function renderHome() {
   
   const size = 100, stroke = 10, r = (size-stroke)/2, circ = 2*Math.PI*r;
 
+  // Карточка сна (показывается, если не заполнена сегодня)
+  const sleepCard = !state.daily.sleep ? `
+    <div class="card span-2" style="background: linear-gradient(145deg, #1c1c1e, #0a0a0a); border: 1px solid var(--stand);">
+      <h2 style="color:var(--stand);"><i class="ph ph-moon"></i> Как спалось?</h2>
+      <div style="display:flex; gap:10px; margin-bottom:16px;">
+        <button class="sleep-btn" onclick="setSleep(4, this)">4 часа</button>
+        <button class="sleep-btn" onclick="setSleep(6, this)">6 часов</button>
+        <button class="sleep-btn" onclick="setSleep(8, this)">8+ часов</button>
+      </div>
+      <div style="display:flex; justify-content:center; gap:16px; font-size:32px;">
+        <div onclick="setMood('😴', this)" style="cursor:pointer; opacity:0.5; transition:0.2s;" onmouseover="this.style.opacity=1" onmouseout="if(!this.classList.contains('active-mood'))this.style.opacity=0.5">😴</div>
+        <div onclick="setMood('😐', this)" style="cursor:pointer; opacity:0.5; transition:0.2s;" onmouseover="this.style.opacity=1" onmouseout="if(!this.classList.contains('active-mood'))this.style.opacity=0.5">😐</div>
+        <div onclick="setMood('⚡', this)" style="cursor:pointer; opacity:0.5; transition:0.2s;" onmouseover="this.style.opacity=1" onmouseout="if(!this.classList.contains('active-mood'))this.style.opacity=0.5">⚡</div>
+      </div>
+    </div>
+  ` : '';
+
   return `
     <h1>Сводка</h1>
     <div class="bento-grid">
+      ${sleepCard}
+
       <div class="card span-2" style="padding: 30px 20px;">
         <div class="rings-container">
           <div class="ring-wrap">
@@ -358,6 +401,22 @@ function renderHome() {
       </div>
     </div>
   `;
+}
+
+function setSleep(hours, btn) {
+  state.daily.sleep = hours;
+  save(STORAGE.daily, state.daily);
+  document.querySelectorAll('.sleep-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if(state.daily.mood) render();
+}
+
+function setMood(mood, el) {
+  state.daily.mood = mood;
+  save(STORAGE.daily, state.daily);
+  el.classList.add('active-mood');
+  el.style.opacity = 1;
+  setTimeout(render, 300);
 }
 
 function addWater() { state.daily.water = Math.min((state.daily.water || 0) + 1, 8); save(STORAGE.daily, state.daily); render(); }
@@ -469,7 +528,7 @@ function cancelWorkout() { if(confirm('Отменить тренировку?'))
 
 // --- БЕГ (С GPS) ---
 function renderRunning() {
-  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); // Примерный расчет калорий по времени
+  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); 
   const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0;
   const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` : '0:00';
   
@@ -509,21 +568,18 @@ function toggleRun() {
   runActive = !runActive;
   
   if(runActive) {
-    // Запуск таймера
     runInt = setInterval(() => {
       runTime++;
       document.getElementById('run-time').innerText = formatTime(runTime);
       updateRunUI();
     }, 1000);
 
-    // Запуск GPS
     if (navigator.geolocation) {
       gpsWatchId = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           if (lastPos) {
             const dist = getDistanceFromLatLonInKm(lastPos.lat, lastPos.lon, latitude, longitude);
-            // Фильтр шума GPS (игнорируем прыжки меньше 3 метров)
             if (dist > 0.003) {
               gpsDistance += dist;
               lastPos = { lat: latitude, lon: longitude };
@@ -536,14 +592,11 @@ function toggleRun() {
         (err) => { console.warn('GPS error:', err); },
         { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
       );
-    } else {
-      alert("GPS не поддерживается на этом устройстве. Будут использоваться примерные данные.");
     }
   } else {
     clearInterval(runInt);
     if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
   }
-  
   renderRunningUI();
 }
 
@@ -565,29 +618,26 @@ function updateRunUI() {
   }
 }
 
-function renderRunningUI() {
-  document.getElementById('app').innerHTML = renderRunning();
-}
+function renderRunningUI() { document.getElementById('app').innerHTML = renderRunning(); }
 
 function saveRun(cal) {
   if (gpsDistance === 0) return alert('Нет данных GPS. Пройдись немного!');
   const paceMin = (runTime / 60) / gpsDistance;
   const paceStr = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`;
   
-  state.runs.unshift({ date: today(), distance: gpsDistance.toFixed(2), time: formatTime(runTime), calories: cal, pace: paceStr });
+  state.runs.unshift({ date: today(), distance: +gpsDistance.toFixed(2), time: formatTime(runTime), calories: cal, pace: paceStr });
   save(STORAGE.runs, state.runs);
   runTime = 0; runActive = false; gpsDistance = 0; lastPos = null;
   render();
 }
 
-// --- ТРЕНДЫ ---
+// --- ТРЕНДЫ (С челленджами) ---
 function renderProgress() {
   setTimeout(drawWeightChart, 50);
   const fat = calcBodyFat(state.profile);
   const recovery = calcRecovery();
   const prs = getPRs();
   
-  // Разница в весе
   let deltaText = '';
   if (state.bodyLog.length > 1) {
     const sorted = [...state.bodyLog].sort((a, b) => a.date.localeCompare(b.date));
@@ -596,24 +646,21 @@ function renderProgress() {
     else if (diff < 0) deltaText = `<span style="color:var(--accent)">${diff.toFixed(1)} кг</span>`;
   }
 
-  // Календарь
-  const now = new Date();
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
-  const workoutDates = state.workouts.map(w => w.date);
-  let calHTML = '';
-  
-  for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) calHTML += `<div></div>`;
-  for (let i = 1; i <= daysInMonth; i++) {
-    const dateStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
-    const isDone = workoutDates.includes(dateStr);
-    const isToday = i === now.getDate();
-    calHTML += `<div class="cal-day ${isDone ? 'done' : ''} ${isToday ? 'today' : ''}">${i}</div>`;
-  }
+  // Челленджи
+  const totalDist = state.runs.reduce((sum, r) => sum + r.distance, 0);
+  const totalWorkouts = state.workouts.length;
+  const goodSleepDays = state.sleepLog.filter(s => s.sleep >= 7).length + (state.daily.sleep >= 7 ? 1 : 0);
+
+  const challenges = [
+    { name: "Марафонец", desc: "Пробеги 20 км", current: totalDist, max: 20, unit: "км", icon: "ph-figure-run", color: "var(--stand)" },
+    { name: "Железный", desc: "10 тренировок в зале", current: totalWorkouts, max: 10, unit: "шт", icon: "ph-barbell", color: "var(--exercise)" },
+    { name: "Сплюшка", desc: "5 дней сна по 8 часов", current: goodSleepDays, max: 5, unit: "дн", icon: "ph-moon", color: "var(--move)" }
+  ];
 
   return `
     <h1>Тренды</h1>
     <div class="bento-grid">
+      <!-- График -->
       <div class="card span-2">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
           <div>
@@ -630,16 +677,37 @@ function renderProgress() {
         </div>
       </div>
 
-      <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-          <h2 style="margin:0;">Календарь</h2>
-        </div>
-        <div class="calendar-grid">
-          ${['П','В','С','Ч','П','С','В'].map(d => `<div class="muted" style="font-size:12px; font-weight:700;">${d}</div>`).join('')}
-          ${calHTML}
+      <!-- Челленджи -->
+      <div class="card span-2">
+        <h2>Испытания</h2>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:16px; margin-top:16px;">
+          ${challenges.map(c => {
+            const pct = Math.min((c.current / c.max) * 100, 100);
+            const isDone = c.current >= c.max;
+            return `
+              <div class="challenge-card" style="${isDone ? 'border: 1px solid var(--accent)' : ''}">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <i class="ph ${c.icon}" style="font-size:24px; color:${c.color}"></i>
+                    <div style="font-weight:700; font-size:16px;">${c.name}</div>
+                  </div>
+                  ${isDone ? '<i class="ph-fill ph-check-circle" style="color:var(--accent); font-size:20px;"></i>' : ''}
+                </div>
+                <div class="muted" style="font-size:13px; margin-top:4px;">${c.desc}</div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" style="width: ${pct}%; background:${isDone ? 'var(--accent)' : c.color}"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:12px; font-weight:700;">
+                  <span>${c.current.toFixed(1)} / ${c.max} ${c.unit}</span>
+                  <span class="muted">${Math.round(pct)}%</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
         </div>
       </div>
 
+      <!-- Состав и Восстановление -->
       <div style="display:flex; flex-direction:column; gap:16px;">
         <div class="card" style="padding:20px;">
           <div style="display:flex; justify-content:space-between;">
@@ -662,6 +730,7 @@ function renderProgress() {
         </div>
       </div>
 
+      <!-- Рекорды -->
       <div class="card span-2">
         <h2>Личные рекорды (1ПМ)</h2>
         <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-top:16px;">
@@ -703,7 +772,7 @@ function renderProfile() {
         <i class="ph ph-user"></i>
       </div>
       <h2 style="margin-bottom:8px;">Атлет</h2>
-      <p class="muted" style="margin-bottom:16px;">Исключения в еде: ${state.profile.foodPrefs?.length ? state.profile.foodPrefs.join(', ') : 'Нет'}</p>
+      <p class="muted" style="margin-bottom:16px;">Исключения: ${state.profile.foodPrefs?.length ? state.profile.foodPrefs.join(', ') : 'Нет'}</p>
     </div>
 
     <div class="card">
@@ -735,7 +804,7 @@ function showHistoryDetails(id) {
   document.getElementById('history-content').innerHTML = `
     <div style="text-align:center; font-size:36px; margin-bottom:20px;">${w.mood || '😐'}</div>
     ${w.note ? `<div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:20px; font-style:italic;">"${w.note}"</div>` : ''}
-    <div style="margin-bottom:16px; font-weight:700; color:var(--accent);">Общий тоннаж: ${w.tonnage} кг</div>
+    <div style="margin-bottom:16px; font-weight:700; color:var(--accent);">Тоннаж: ${w.tonnage} кг</div>
     ${w.exercises.map(ex => `
       <div style="margin-bottom:16px;">
         <div style="font-weight:700; margin-bottom:8px;">${ex.name}</div>
@@ -748,7 +817,7 @@ function showHistoryDetails(id) {
   document.getElementById('history-modal').classList.add('active');
 }
 
-// --- ПЛАНЫ (Умные) ---
+// --- ПЛАНЫ ---
 function showPlan(type) {
   const title = document.getElementById('plan-title');
   const content = document.getElementById('plan-content');
@@ -761,12 +830,10 @@ function showPlan(type) {
       <div><b>День 3: Верх тела (Pull)</b><br><span class="muted">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10, Бицепс 3х12</span></div>
     `;
   } else {
-    // Генерация меню на сегодня (зависит от дня недели)
     const dayIndex = new Date().getDay() % 3; 
     const goal = state.profile.goal;
     const meals = MEAL_DB[goal][dayIndex];
     
-    // Фильтр по исключениям
     let mealText = `<div style="margin-bottom:10px;"><b>Завтрак:</b> ${meals.b}</div>
                     <div style="margin-bottom:10px;"><b>Обед:</b> ${meals.l}</div>
                     <div style="margin-bottom:10px;"><b>Перекус:</b> ${meals.s}</div>
