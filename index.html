@@ -74,7 +74,6 @@
   .set-row.warmup input { color: var(--move); }
   .btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 12px; background: var(--card-light); color: var(--text); border: none; display: flex; align-items: center; justify-content: center; font-size: 20px; }
 
-  /* Календарь */
   .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
   .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px; font-weight: 600; color: var(--muted); }
   .cal-day.done { background: var(--accent); color: #000; font-weight: 800; }
@@ -114,17 +113,13 @@
 <div id="feedback-modal" class="modal-overlay">
   <div class="modal-content">
     <h2 style="margin-top:0">Как прошла тренировка?</h2>
-    <p class="muted" style="margin-bottom:20px;">Это поможет отслеживать твое состояние</p>
-    
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;" id="mood-container">
       <div class="mood-btn" onclick="selectMood('🔥')">🔥</div>
       <div class="mood-btn" onclick="selectMood('💪')">💪</div>
       <div class="mood-btn" onclick="selectMood('🥵')">🥵</div>
       <div class="mood-btn" onclick="selectMood('😴')">😴</div>
     </div>
-
     <input type="text" id="workout-note" placeholder="Заметка (например: болела спина)" style="text-align:left;">
-    
     <button onclick="saveWorkoutWithFeedback()" style="margin-top:10px;">Сохранить тренировку</button>
   </div>
 </div>
@@ -144,20 +139,6 @@
     <h2 id="history-title" style="text-align:center;">Детали тренировки</h2>
     <div id="history-content" style="margin-top:20px;"></div>
     <button class="secondary" style="margin-top:24px;" onclick="closeModal('history-modal')">Закрыть</button>
-  </div>
-</div>
-
-<!-- Модалка Замеров -->
-<div id="measure-modal" class="modal-overlay" onclick="closeModal('measure-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-top:0">Замеры тела (см)</h2>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
-      <div><label>Грудь</label><input type="number" id="m_chest" placeholder="0"></div>
-      <div><label>Талия</label><input type="number" id="m_waist" placeholder="0"></div>
-      <div><label>Бицепс</label><input type="number" id="m_bicep" placeholder="0"></div>
-      <div><label>Бедро</label><input type="number" id="m_thigh" placeholder="0"></div>
-    </div>
-    <button onclick="saveMeasurements()">Сохранить</button>
   </div>
 </div>
 
@@ -189,7 +170,7 @@
 <div id="app"></div>
 
 <script>
-const STORAGE = { profile: 'fit_p4', workouts: 'fit_w4', bodyLog: 'fit_b4', daily: 'fit_d4', runs: 'fit_r4', measurements: 'fit_m4' };
+const STORAGE = { profile: 'fit_p5', workouts: 'fit_w5', bodyLog: 'fit_b5', daily: 'fit_d5', runs: 'fit_r5' };
 
 const EXERCISE_DB = {
   'Приседания со штангой': 'Ноги', 'Жим лёжа': 'Грудь', 'Становая тяга': 'Спина', 
@@ -205,12 +186,25 @@ const TEMPLATES = {
   'Низ тела': ['Приседания со штангой', 'Становая тяга', 'Жим ногами', 'Выпады с гантелями']
 };
 
+// База блюд (разная для целей)
+const MEAL_DB = {
+  mass: [
+    { b: "Овсянка + 3 яйца + банан", l: "Гречка + Куриная грудка 200г", d: "Рыба 200г + рис", s: "Творог 200г + орехи" },
+    { b: "Омлет из 4 яиц + тост с сыром", l: "Макароны + Говядина 150г", d: "Картофель + Индейка 200г", s: "Протеиновый коктейль + банан" },
+    { b: "Блины с творогом", l: "Рис + Свинина 150г + овощи", d: "Омлет + Салат с тунцом", s: "Йогурт + гранола" }
+  ],
+  cut: [
+    { b: "Омлет из 2 яиц + шпинат", l: "Куриная грудка 150г + салат", d: "Треска 150г + брокколи", s: "Яблоко или кефир" },
+    { b: "Творог 150г + ягоды", l: "Индейка 150г + гречка 50г", d: "Овощной суп + куриное филе", s: "Горсть миндаля" },
+    { b: "Греческий йогурт + семена чиа", l: "Салат с тунцом и яйцом", d: "Запеченная рыба + спаржа", s: "Протеиновый батончик" }
+  ]
+};
+
 let state = {
   profile: load(STORAGE.profile), 
   workouts: load(STORAGE.workouts) || [], 
   bodyLog: load(STORAGE.bodyLog) || [],
   runs: load(STORAGE.runs) || [],
-  measurements: load(STORAGE.measurements) || [],
   daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0 },
   screen: 'home', currentWorkout: null, chartInstance: null,
   tempMood: null
@@ -218,6 +212,7 @@ let state = {
 
 let timerInt = null, timerTime = 90;
 let runInt = null, runTime = 0, runActive = false;
+let gpsWatchId = null, lastPos = null, gpsDistance = 0;
 
 function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
@@ -248,7 +243,6 @@ function calcRecovery() {
   return 30;
 }
 
-// Получение личных рекордов (PR)
 function getPRs() {
   let prs = { 'Жим лёжа': 0, 'Приседания со штангой': 0, 'Становая тяга': 0 };
   state.workouts.forEach(w => {
@@ -260,6 +254,18 @@ function getPRs() {
     });
   });
   return prs;
+}
+
+// Формула гаверсинусов для GPS
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; 
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 // --- РЕНДЕР ---
@@ -286,6 +292,7 @@ function renderOnboarding() {
       <label>Вес (кг)</label><input id="weight" type="number" placeholder="75">
       <label>Рост (см)</label><input id="height" type="number" placeholder="180">
       <label>Возраст</label><input id="age" type="number" placeholder="25">
+      <label>Исключения в еде (через запятую)</label><input id="food_prefs" type="text" placeholder="например: рыба, молоко">
       <button onclick="completeOnboarding()" style="margin-top:20px;">Начать</button>
     </div>
   </div>`;
@@ -297,7 +304,8 @@ function completeOnboarding() {
     sex: document.getElementById('sex').value,
     weight: +document.getElementById('weight').value, 
     height: +document.getElementById('height').value, 
-    age: +document.getElementById('age').value 
+    age: +document.getElementById('age').value,
+    foodPrefs: document.getElementById('food_prefs').value.toLowerCase().split(',').map(s=>s.trim())
   };
   if (!p.weight || !p.height || !p.age) { alert('Заполни все поля'); return; }
   state.profile = p; save(STORAGE.profile, p);
@@ -353,10 +361,7 @@ function renderHome() {
 }
 
 function addWater() { state.daily.water = Math.min((state.daily.water || 0) + 1, 8); save(STORAGE.daily, state.daily); render(); }
-function addCalories() { 
-  const c = prompt('Сколько калорий съел?'); 
-  if(c && !isNaN(c)) { state.daily.calories = (state.daily.calories || 0) + +c; save(STORAGE.daily, state.daily); render(); }
-}
+function addCalories() { const c = prompt('Сколько калорий съел?'); if(c && !isNaN(c)) { state.daily.calories = (state.daily.calories || 0) + +c; save(STORAGE.daily, state.daily); render(); } }
 
 // --- ТРЕНИРОВКА ---
 function startWorkout() {
@@ -436,7 +441,6 @@ function addSet(i) { const ex = state.currentWorkout.exercises[i]; const l = ex.
 function updateSet(i, j, f, v) { state.currentWorkout.exercises[i].sets[j][f] = +v; render(); }
 function addWarmup(i) { const ex = state.currentWorkout.exercises[i]; const w = ex.sets[0]?.weight || 20; ex.sets.unshift({ weight: Math.round((w*0.5)/2.5)*2.5, reps: 10, isWarmup: true }, { weight: Math.round((w*0.7)/2.5)*2.5, reps: 8, isWarmup: true }); render(); }
 
-// --- ОЦЕНКА ТРЕНИРОВКИ ---
 function promptFinishWorkout() {
   if (state.currentWorkout.exercises.length === 0) return;
   state.tempMood = null;
@@ -455,37 +459,28 @@ function saveWorkoutWithFeedback() {
   const note = document.getElementById('workout-note').value;
   const total = calcTonnage(state.currentWorkout);
   
-  state.workouts.push({ 
-    ...state.currentWorkout, 
-    id: Date.now(), 
-    tonnage: total,
-    mood: state.tempMood || '😐',
-    note: note
-  });
-  
+  state.workouts.push({ ...state.currentWorkout, id: Date.now(), tonnage: total, mood: state.tempMood || '😐', note: note });
   save(STORAGE.workouts, state.workouts);
   closeModal('feedback-modal');
-  state.currentWorkout = null; 
-  state.screen = 'home'; 
-  render();
+  state.currentWorkout = null; state.screen = 'home'; render();
 }
 
 function cancelWorkout() { if(confirm('Отменить тренировку?')) { state.currentWorkout = null; state.screen = 'home'; render(); } }
 
-// --- БЕГ ---
+// --- БЕГ (С GPS) ---
 function renderRunning() {
-  const dist = ((runTime / 3600) * 9.5).toFixed(2);
-  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600));
-  const paceMin = runTime > 0 ? (runTime / 60) / (dist || 0.1) : 0;
-  const paceStr = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`;
+  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); // Примерный расчет калорий по времени
+  const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0;
+  const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` : '0:00';
   
   return `
     <div class="run-screen">
       <div class="run-time-big" id="run-time">${formatTime(runTime)}</div>
+      
       <div class="run-metrics">
         <div class="run-metric-box">
-          <div class="run-metric-val" id="run-dist">${dist}</div>
-          <div class="stat-label">КМ</div>
+          <div class="run-metric-val" id="run-dist">${gpsDistance.toFixed(2)}</div>
+          <div class="stat-label">КМ (GPS)</div>
         </div>
         <div class="run-metric-box">
           <div class="run-metric-val" id="run-pace" style="color:var(--stand);">${paceStr}</div>
@@ -496,38 +491,93 @@ function renderRunning() {
           <div class="stat-label">СОЖЖЕНО ККАЛ</div>
         </div>
       </div>
+
       <button onclick="toggleRun()" id="run-btn" style="border-radius:99px; padding:24px; font-size:22px; background:${runActive ? 'var(--move)' : 'var(--exercise)'}; color:${runActive ? '#fff' : '#000'};">
         <i class="ph ${runActive ? 'ph-pause' : 'ph-play'}"></i> ${runActive ? 'ПАУЗА' : 'СТАРТ'}
       </button>
-      <button class="secondary" id="run-save-btn" style="display:${runActive || runTime === 0 ? 'none' : 'flex'};" onclick="saveRun(${dist}, ${cal})">
-        Сохранить
+      
+      <button class="secondary" id="run-save-btn" style="display:${runActive || runTime === 0 ? 'none' : 'flex'};" onclick="saveRun(${cal})">
+        Сохранить результат
       </button>
     </div>
   `;
 }
+
 function formatTime(sec) { return `${Math.floor(sec/3600).toString().padStart(2,'0')}:${Math.floor((sec%3600)/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
+
 function toggleRun() {
   runActive = !runActive;
+  
   if(runActive) {
+    // Запуск таймера
     runInt = setInterval(() => {
       runTime++;
       document.getElementById('run-time').innerText = formatTime(runTime);
-      const d = (runTime / 3600) * 9.5;
-      document.getElementById('run-dist').innerText = d.toFixed(2);
-      document.getElementById('run-cal').innerText = Math.round(9.8 * state.profile.weight * (runTime / 3600));
-      const p = (runTime / 60) / (d || 0.1);
-      document.getElementById('run-pace').innerText = `${Math.floor(p)}:${Math.round((p%1)*60).toString().padStart(2,'0')}`;
+      updateRunUI();
     }, 1000);
-  } else clearInterval(runInt);
-  document.getElementById('run-btn').innerHTML = `<i class="ph ${runActive ? 'ph-pause' : 'ph-play'}"></i> ${runActive ? 'ПАУЗА' : 'СТАРТ'}`;
-  document.getElementById('run-btn').style.background = runActive ? 'var(--move)' : 'var(--exercise)';
-  document.getElementById('run-btn').style.color = runActive ? '#fff' : '#000';
-  document.getElementById('run-save-btn').style.display = runActive || runTime === 0 ? 'none' : 'flex';
+
+    // Запуск GPS
+    if (navigator.geolocation) {
+      gpsWatchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          if (lastPos) {
+            const dist = getDistanceFromLatLonInKm(lastPos.lat, lastPos.lon, latitude, longitude);
+            // Фильтр шума GPS (игнорируем прыжки меньше 3 метров)
+            if (dist > 0.003) {
+              gpsDistance += dist;
+              lastPos = { lat: latitude, lon: longitude };
+              updateRunUI();
+            }
+          } else {
+            lastPos = { lat: latitude, lon: longitude };
+          }
+        },
+        (err) => { console.warn('GPS error:', err); },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+      );
+    } else {
+      alert("GPS не поддерживается на этом устройстве. Будут использоваться примерные данные.");
+    }
+  } else {
+    clearInterval(runInt);
+    if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+  }
+  
+  renderRunningUI();
 }
-function saveRun(dist, cal) {
-  state.runs.unshift({ date: today(), distance: dist, time: formatTime(runTime), calories: cal });
+
+function updateRunUI() {
+  const elTime = document.getElementById('run-time');
+  const elDist = document.getElementById('run-dist');
+  const elCal = document.getElementById('run-cal');
+  const elPace = document.getElementById('run-pace');
+
+  if(elTime) elTime.innerText = formatTime(runTime);
+  if(elDist) elDist.innerText = gpsDistance.toFixed(2);
+  
+  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600));
+  if(elCal) elCal.innerText = cal;
+  
+  if (runTime > 0 && gpsDistance > 0) {
+    const paceMin = (runTime / 60) / gpsDistance;
+    if(elPace) elPace.innerText = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`;
+  }
+}
+
+function renderRunningUI() {
+  document.getElementById('app').innerHTML = renderRunning();
+}
+
+function saveRun(cal) {
+  if (gpsDistance === 0) return alert('Нет данных GPS. Пройдись немного!');
+  const paceMin = (runTime / 60) / gpsDistance;
+  const paceStr = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`;
+  
+  state.runs.unshift({ date: today(), distance: gpsDistance.toFixed(2), time: formatTime(runTime), calories: cal, pace: paceStr });
   save(STORAGE.runs, state.runs);
-  runTime = 0; runActive = false; render();
+  runTime = 0; runActive = false; gpsDistance = 0; lastPos = null;
+  render();
 }
 
 // --- ТРЕНДЫ ---
@@ -537,15 +587,23 @@ function renderProgress() {
   const recovery = calcRecovery();
   const prs = getPRs();
   
-  // Календарь текущего месяца
+  // Разница в весе
+  let deltaText = '';
+  if (state.bodyLog.length > 1) {
+    const sorted = [...state.bodyLog].sort((a, b) => a.date.localeCompare(b.date));
+    const diff = sorted[sorted.length - 1].weight - sorted[sorted.length - 2].weight;
+    if (diff > 0) deltaText = `<span style="color:var(--move)">+${diff.toFixed(1)} кг</span>`;
+    else if (diff < 0) deltaText = `<span style="color:var(--accent)">${diff.toFixed(1)} кг</span>`;
+  }
+
+  // Календарь
   const now = new Date();
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay(); // 0 - Вс
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
   const workoutDates = state.workouts.map(w => w.date);
   let calHTML = '';
   
-  for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) calHTML += `<div></div>`; // Пустые дни
-  
+  for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) calHTML += `<div></div>`;
   for (let i = 1; i <= daysInMonth; i++) {
     const dateStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
     const isDone = workoutDates.includes(dateStr);
@@ -556,10 +614,12 @@ function renderProgress() {
   return `
     <h1>Тренды</h1>
     <div class="bento-grid">
-      <!-- График веса -->
       <div class="card span-2">
-        <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-          <h2>Вес тела</h2>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+          <div>
+            <h2 style="margin:0;">Вес тела</h2>
+            <div style="font-size:18px; font-weight:700; margin-top:8px;">${deltaText}</div>
+          </div>
           <div style="display:flex; gap:10px;">
             <input id="bw" type="number" placeholder="Вес" style="width:100px; margin:0; padding:10px;">
             <button style="width:44px; height:44px; margin:0; padding:0; border-radius:12px;" onclick="logBodyWeight()"><i class="ph ph-plus"></i></button>
@@ -570,11 +630,9 @@ function renderProgress() {
         </div>
       </div>
 
-      <!-- Календарь -->
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
           <h2 style="margin:0;">Календарь</h2>
-          <span class="muted">${now.toLocaleString('ru', {month: 'long'})}</span>
         </div>
         <div class="calendar-grid">
           ${['П','В','С','Ч','П','С','В'].map(d => `<div class="muted" style="font-size:12px; font-weight:700;">${d}</div>`).join('')}
@@ -582,12 +640,11 @@ function renderProgress() {
         </div>
       </div>
 
-      <!-- Состав тела + Восстановление -->
       <div style="display:flex; flex-direction:column; gap:16px;">
         <div class="card" style="padding:20px;">
           <div style="display:flex; justify-content:space-between;">
             <div>
-              <div class="muted">Состав тела</div>
+              <div class="muted">Процент жира</div>
               <div class="stat-num" style="color:var(--stand); font-size:32px;">${fat}%</div>
             </div>
             <i class="ph ph-body" style="font-size:32px; color:var(--stand);"></i>
@@ -605,7 +662,6 @@ function renderProgress() {
         </div>
       </div>
 
-      <!-- Личные рекорды -->
       <div class="card span-2">
         <h2>Личные рекорды (1ПМ)</h2>
         <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-top:16px;">
@@ -647,7 +703,7 @@ function renderProfile() {
         <i class="ph ph-user"></i>
       </div>
       <h2 style="margin-bottom:8px;">Атлет</h2>
-      <button class="secondary" onclick="openMeasureModal()" style="margin-top:10px; font-size:14px; padding:10px;"><i class="ph ph-ruler"></i> Добавить замеры тела</button>
+      <p class="muted" style="margin-bottom:16px;">Исключения в еде: ${state.profile.foodPrefs?.length ? state.profile.foodPrefs.join(', ') : 'Нет'}</p>
     </div>
 
     <div class="card">
@@ -672,11 +728,9 @@ function renderProfile() {
     </div>`;
 }
 
-// --- МОДАЛКИ ИСТОРИИ И ЗАМЕРОВ ---
 function showHistoryDetails(id) {
   const w = state.workouts.find(x => x.id === id);
   if (!w) return;
-  
   document.getElementById('history-title').innerText = `Тренировка от ${w.date}`;
   document.getElementById('history-content').innerHTML = `
     <div style="text-align:center; font-size:36px; margin-bottom:20px;">${w.mood || '😐'}</div>
@@ -694,28 +748,7 @@ function showHistoryDetails(id) {
   document.getElementById('history-modal').classList.add('active');
 }
 
-function openMeasureModal() {
-  document.getElementById('m_chest').value = '';
-  document.getElementById('m_waist').value = '';
-  document.getElementById('m_bicep').value = '';
-  document.getElementById('m_thigh').value = '';
-  document.getElementById('measure-modal').classList.add('active');
-}
-
-function saveMeasurements() {
-  const m = {
-    date: today(),
-    chest: +document.getElementById('m_chest').value || null,
-    waist: +document.getElementById('m_waist').value || null,
-    bicep: +document.getElementById('m_bicep').value || null,
-    thigh: +document.getElementById('m_thigh').value || null
-  };
-  state.measurements.push(m); save(STORAGE.measurements, state.measurements);
-  closeModal('measure-modal');
-  alert('Замеры сохранены!');
-}
-
-// --- ПЛАНЫ ---
+// --- ПЛАНЫ (Умные) ---
 function showPlan(type) {
   const title = document.getElementById('plan-title');
   const content = document.getElementById('plan-content');
@@ -728,13 +761,28 @@ function showPlan(type) {
       <div><b>День 3: Верх тела (Pull)</b><br><span class="muted">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10, Бицепс 3х12</span></div>
     `;
   } else {
-    title.innerText = "План питания";
+    // Генерация меню на сегодня (зависит от дня недели)
+    const dayIndex = new Date().getDay() % 3; 
+    const goal = state.profile.goal;
+    const meals = MEAL_DB[goal][dayIndex];
+    
+    // Фильтр по исключениям
+    let mealText = `<div style="margin-bottom:10px;"><b>Завтрак:</b> ${meals.b}</div>
+                    <div style="margin-bottom:10px;"><b>Обед:</b> ${meals.l}</div>
+                    <div style="margin-bottom:10px;"><b>Перекус:</b> ${meals.s}</div>
+                    <div><b>Ужин:</b> ${meals.d}</div>`;
+                    
+    const prefs = state.profile.foodPrefs || [];
+    if (prefs.length > 0) {
+      prefs.forEach(pref => {
+        if(pref) mealText = mealText.replace(new RegExp(pref, 'gi'), `<span style="text-decoration:line-through;color:var(--move)">${pref}</span> (замени на курицу/индейку)`);
+      });
+    }
+
+    title.innerText = goal === 'mass' ? "План питания (Набор)" : "План питания (Похудение)";
     content.innerHTML = `
-      <div style="margin-bottom:16px;"><b>Твоя норма (набор массы):</b><br><span class="muted">~3000 ккал, Белки: 150г, Жиры: 80г, Углеводы: 350г</span></div>
-      <div style="margin-bottom:10px;"><b>Завтрак:</b> Овсянка + 3 яйца + банан</div>
-      <div style="margin-bottom:10px;"><b>Обед:</b> Гречка + Куриная грудка 200г + овощи</div>
-      <div style="margin-bottom:10px;"><b>Перекус:</b> Творог 200г + орехи</div>
-      <div><b>Ужин:</b> Рыба 200г + рис + салат</div>
+      <div style="margin-bottom:16px; color:var(--muted); font-size:14px;">Меню на сегодня с учетом твоих предпочтений:</div>
+      ${mealText}
     `;
   }
   document.getElementById('plan-modal').classList.add('active');
@@ -742,7 +790,6 @@ function showPlan(type) {
 
 // --- УТИЛИТЫ ---
 function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id==='timer-modal') clearInterval(timerInt); }
-
 function showPlatesFromRow(btn) { showPlates(+btn.parentElement.querySelector('input').value); }
 function showPlates(totalWeight) {
   let target = (totalWeight - 20) / 2; const plates = [25, 20, 15, 10, 5, 2.5, 1.25]; let res = [];
