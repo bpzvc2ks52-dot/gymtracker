@@ -790,3 +790,89 @@ function openInjuries() {
     html += `<label style="display:flex; justify-content:space-between; align-items:center; background:var(--card-light); padding:16px; border-radius:12px; margin-bottom:10px; text-transform:none; font-size:16px; cursor:pointer;">
       <span>${opt}</span>
       <input type="checkbox" ${current.includes(opt) ? 'checked' : ''} onchange="toggleInjury('${opt}')" style="width:24
+      px; height:24px; margin:0;">
+    </label>`;
+  });
+
+  html += `
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <input type="text" id="custom-injury" placeholder="Своя травма..." style="margin:0; text-align:left;">
+      <button class="secondary" style="width:60px; margin:0; padding:0;" onclick="addCustomInjury()"><i class="ph ph-plus"></i></button>
+    </div>
+    <button class="secondary" style="margin-top:20px;" onclick="closeModal('history-modal')">Закрыть</button>
+  `;
+
+  document.getElementById('history-title').innerText = "Настройки здоровья";
+  document.getElementById('history-content').innerHTML = html;
+  document.getElementById('history-modal').classList.add('active');
+}
+
+function toggleInjury(inj) {
+  let curr = state.profile.injuries || [];
+  if(curr.includes(inj)) curr = curr.filter(i => i !== inj);
+  else curr.push(inj);
+  state.profile.injuries = curr;
+  save(STORAGE.profile, state.profile);
+}
+
+function addCustomInjury() {
+  const val = document.getElementById('custom-injury').value.trim();
+  if(!val) return;
+  let curr = state.profile.injuries || [];
+  if(!curr.includes(val)) curr.push(val);
+  state.profile.injuries = curr;
+  save(STORAGE.profile, state.profile);
+  document.getElementById('custom-injury').value = '';
+  openInjuries(); // Перерисовываем окно
+}
+
+function changeThemeColor(hex) { state.themeColor = hex; save(STORAGE.themeColor, hex); document.documentElement.style.setProperty('--accent', hex); render(); }
+function showHistoryDetails(id) {
+  const w = state.workouts.find(x => x.id === id); if (!w) return;
+  document.getElementById('history-title').innerText = `Тренировка от ${w.date}`;
+  document.getElementById('history-content').innerHTML = `<div style="text-align:center; font-size:36px; margin-bottom:20px;">${w.mood || '😐'}</div>${w.note ? `<div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:20px; font-style:italic;">"${w.note}"</div>` : ''}<div style="margin-bottom:16px; font-weight:700; color:var(--accent);">Тоннаж: ${w.tonnage} кг</div>${w.exercises.map(ex => `<div style="margin-bottom:16px;"><div style="font-weight:700; margin-bottom:8px;">${ex.name}</div><div style="display:flex; flex-wrap:wrap; gap:8px;">${ex.sets.map((s, i) => `<div style="background:var(--card-light); padding:8px 12px; border-radius:8px; font-size:14px; ${s.isWarmup ? 'color:var(--move)' : ''}">${s.isWarmup ? 'W' : i+1}: ${s.weight}кг × ${s.reps}</div>`).join('')}</div></div>`).join('')}`;
+  document.getElementById('history-modal').classList.add('active');
+}
+function downloadReport() {
+  const area = document.getElementById('report-area');
+  const fat = calcBodyFat(state.profile);
+  const totalTon = state.workouts.reduce((sum, w) => sum + w.tonnage, 0);
+  area.innerHTML = `<div style="text-align:center; margin-bottom:30px;"><div style="width:50px; height:50px; background:${state.themeColor}; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:10px;"><i class="ph-bold ph-barbell" style="color:#000; font-size:28px;"></i></div><h1 style="color:#fff; margin:0; font-size:28px; font-weight:800;">Fitness Pro Отчет</h1><p style="color:#8e8e93; margin:5px 0 0 0;">Дата: ${today()}</p></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:30px;"><div style="background:#1c1c1e; padding:20px; border-radius:16px; text-align:center;"><div style="color:#8e8e93; font-size:12px; font-weight:700; text-transform:uppercase;">Тоннаж</div><div style="font-size:32px; font-weight:800; color:${state.themeColor};">${totalTon.toLocaleString('ru')}</div><div style="color:#8e8e93; font-size:12px;">КГ</div></div><div style="background:#1c1c1e; padding:20px; border-radius:16px; text-align:center;"><div style="color:#8e8e93; font-size:12px; font-weight:700; text-transform:uppercase;">% Жира</div><div style="font-size:32px; font-weight:800; color:#00d4ff;">${fat}%</div><div style="color:#8e8e93; font-size:12px;">ПРИМЕРНО</div></div></div><h2 style="color:#fff; font-size:20px; margin-bottom:15px;">Последние тренировки</h2>${state.workouts.slice(0, 5).map(w => `<div style="background:#1c1c1e; padding:16px; border-radius:16px; margin-bottom:12px;"><div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span style="color:#fff; font-weight:700;">${w.date}</span><span style="color:${state.themeColor}; font-weight:800;">${w.tonnage} кг</span></div><div style="color:#8e8e93; font-size:13px;">${w.exercises.map(e => e.name).join(', ')}</div></div>`).join('')}<div style="text-align:center; margin-top:30px; color:#8e8e93; font-size:12px;">Сгенерировано в приложении Fitness Pro</div>`;
+  html2canvas(area, { scale: 2, backgroundColor: '#111111' }).then(canvas => { const link = document.createElement('a'); link.download = `fitness_report_${today()}.png`; link.href = canvas.toDataURL('image/png'); link.click(); });
+}
+function showPlan(type) {
+  const title = document.getElementById('plan-title'), content = document.getElementById('plan-content');
+  if (type === 'food') { 
+    const t = state.profile.targets || {calories: 2000, p: 150, f: 60, cb: 200};
+    const meals = [{ b: "Овсянка + 3 яйца + банан", l: "Гречка + Куриная грудка 200г", d: "Рыба 200г + рис", s: "Творог 200г + орехи" }];
+    
+    title.innerText = "План питания"; 
+    content.innerHTML = `
+      <div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:20px;">
+        <div style="font-weight:700; margin-bottom:10px;">Твоя норма на день:</div>
+        <div style="display:flex; justify-content:space-between; font-size:14px;">
+          <span>Ккал: <b>${t.calories}</b></span>
+          <span>Б: <b>${t.p}г</b></span>
+          <span>Ж: <b>${t.f}г</b></span>
+          <span>У: <b>${t.cb}г</b></span>
+        </div>
+      </div>
+      <div style="margin-bottom:10px;"><b>Завтрак:</b> ${meals[0].b}</div>
+      <div style="margin-bottom:10px;"><b>Обед:</b> ${meals[0].l}</div>
+      <div style="margin-bottom:10px;"><b>Перекус:</b> ${meals[0].s}</div>
+      <div><b>Ужин:</b> ${meals[0].d}</div>
+    `; 
+  }
+  document.getElementById('plan-modal').classList.add('active');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('active'); if(id==='timer-modal') clearInterval(timerInt); }
+function showPlatesFromRow(btn) { showPlates(+btn.parentElement.querySelector('input').value); }
+function showPlates(totalWeight) { let target = (totalWeight - 20) / 2; const plates = [25, 20, 15, 10, 5, 2.5, 1.25]; let res = []; plates.forEach(p => { let count = Math.floor(target / p); if (count > 0) { res.push(`${count} × ${p} кг`); target -= count * p; } }); document.getElementById('plates-result').innerHTML = res.length ? res.join('<br>') : "Гриф"; document.getElementById('plates-modal').classList.add('active'); }
+function startTimer() { document.getElementById('timer-modal').classList.add('active'); timerTime = 90; document.getElementById('timer-display').innerText = "01:30"; clearInterval(timerInt); timerInt = setInterval(() => { timerTime--; document.getElementById('timer-display').innerText = `${Math.floor(timerTime/60).toString().padStart(2,'0')}:${(timerTime%60).toString().padStart(2,'0')}`; if (timerTime <= 0) { clearInterval(timerInt); document.getElementById('timer-display').innerText = "СТАРТ!"; } }, 1000); }
+function resetApp() { if (confirm('Удалить все данные?')) { localStorage.clear(); location.reload(); } }
+function go(screen) { if (screen === 'newWorkout' && !state.currentWorkout) { startWorkout(); return; } state.screen = screen; render(); window.scrollTo(0,0); }
+
+initApp();
+</script>
+</body>
+</html>
