@@ -96,27 +96,18 @@
 
   #export-area, #report-area { position: absolute; left: -9999px; top: -9999px; width: 400px; background: #111; padding: 30px; border-radius: 30px; color: #fff; font-family: -apple-system, sans-serif; }
 
-  /* --- СТИЛИ ДЛЯ ЗАСТАВКИ --- */
+  /* --- ЗАСТАВКА --- */
   .splash-screen {
     position: fixed; inset: 0; background: var(--bg); z-index: 9999;
     display: flex; flex-direction: column; justify-content: space-between;
     padding: 40px 24px; align-items: center; transition: opacity 0.5s ease;
   }
   .splash-content { display: flex; flex-direction: column; align-items: center; margin-top: 25vh; text-align: center; }
-  .splash-logo { 
-    width: 90px; height: 90px; background: var(--accent); border-radius: 24px; 
-    display: flex; align-items: center; justify-content: center; font-size: 44px; color: #000; 
-    margin-bottom: 24px; animation: pulse 2s infinite; 
-  }
+  .splash-logo { width: 90px; height: 90px; background: var(--accent); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 44px; color: #000; margin-bottom: 24px; animation: pulse 2s infinite; }
   .splash-footer { width: 100%; max-width: 400px; text-align: center; }
   .legal { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 24px; padding: 0 10px; }
   .studio { font-size: 12px; color: var(--muted); font-weight: 800; letter-spacing: 2px; text-transform: uppercase; opacity: 0.6;}
-  
-  @keyframes pulse { 
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(162,255,0,0.4); } 
-    50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(162,255,0,0); } 
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(162,255,0,0); } 
-  }
+  @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(162,255,0,0.4); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(162,255,0,0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(162,255,0,0); } }
 
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px 24px 40px 24px; }
@@ -134,14 +125,13 @@
 </head>
 <body>
 
-<!-- ЭКРАН ЗАГРУЗКИ (SPLASH SCREEN) -->
+<!-- ЭКРАН ЗАГРУЗКИ -->
 <div id="splash-screen" class="splash-screen">
   <div class="splash-content">
     <div class="splash-logo"><i class="ph-bold ph-barbell"></i></div>
     <h1 style="margin-bottom:8px;">Fitness Pro</h1>
     <p class="muted">Твой персональный фитнес-трекер</p>
   </div>
-  
   <div class="splash-footer">
     <button onclick="acceptCookies()">Продолжить</button>
     <p class="legal">Нажимая «Продолжить», вы соглашаетесь с политикой конфиденциальности и даете согласие на обработку файлов cookie и персональных данных.</p>
@@ -149,15 +139,14 @@
   </div>
 </div>
 
-<!-- Модалки -->
 <div id="food-modal" class="modal-overlay" onclick="closeModal('food-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Добавить еду</h2>
-    <p class="muted" style="font-size:14px; margin-bottom:20px;">Напиши название и вес (в граммах).<br>Например: <b>творог 180</b> или <b>курица 200</b></p>
+    <p class="muted" style="font-size:14px; margin-bottom:20px;">Напиши название и вес.<br>Например: <b>шаурма 200</b> или <b>творог 180</b></p>
     <input type="text" id="food-input" placeholder="Название и вес..." style="text-align:center; margin-bottom:20px;">
     <button onclick="processFoodInput()"><i class="ph ph-check"></i> Добавить в дневник</button>
     <div style="margin-top:20px; font-size:12px; color:var(--muted);">
-      В базе: курица, творог, яйцо, овсянка, банан, рис, гречка, макароны.
+      В базе: супы, фастфуд, гарниры, мясо, овощи, фрукты и многое другое.
     </div>
   </div>
 </div>
@@ -247,11 +236,45 @@ const BASE_EXERCISES_DB = {
   'Выпады с гантелями': 'Ноги', 'Подъём штанги на бицепс': 'Руки', 'Французский жим': 'Руки'
 };
 
+// --- ОГРОМНАЯ БАЗА ЕДЫ ---
 const FOOD_DB = {
-  'курица': { c: 165, p: 31, f: 3.6, cb: 0 }, 'творог': { c: 180, p: 18, f: 2, cb: 2 },
-  'яйцо': { c: 155, p: 13, f: 11, cb: 1.1 }, 'овсянка': { c: 350, p: 12, f: 6, cb: 60 },
-  'банан': { c: 89, p: 1.1, f: 0.3, cb: 22.8 }, 'рис': { c: 344, p: 6.7, f: 0.7, cb: 78 },
-  'гречка': { c: 343, p: 12.6, f: 3.3, cb: 62 }, 'макароны': { c: 350, p: 12, f: 1.5, cb: 70 }
+  // Мясо и птица
+  'курица': { c: 165, p: 31, f: 3.6, cb: 0 }, 'куриная грудка': { c: 165, p: 31, f: 3.6, cb: 0 },
+  'куриное бедро': { c: 210, p: 26, f: 11, cb: 0 }, 'индейка': { c: 150, p: 29, f: 3, cb: 0 },
+  'говядина': { c: 250, p: 26, f: 15, cb: 0 }, 'свинина': { c: 260, p: 27, f: 16, cb: 0 },
+  // Рыба
+  'рыба': { c: 120, p: 20, f: 4, cb: 0 }, 'лосось': { c: 208, p: 20, f: 13, cb: 0 },
+  'тунец': { c: 130, p: 29, f: 1, cb: 0 }, 'треска': { c: 82, p: 18, f: 0.7, cb: 0 },
+  // Молочка и яйца
+  'творог': { c: 180, p: 18, f: 2, cb: 2 }, 'яйцо': { c: 155, p: 13, f: 11, cb: 1.1 },
+  'сыр': { c: 350, p: 25, f: 27, cb: 0 }, 'молоко': { c: 52, p: 3, f: 2.5, cb: 4.7 },
+  'йогурт': { c: 60, p: 5, f: 3, cb: 3 }, 'кефир': { c: 40, p: 3, f: 1, cb: 4 },
+  // Гарниры и крупы
+  'рис': { c: 344, p: 6.7, f: 0.7, cb: 78 }, 'гречка': { c: 343, p: 12.6, f: 3.3, cb: 62 },
+  'макароны': { c: 350, p: 12, f: 1.5, cb: 70 }, 'овсянка': { c: 350, p: 12, f: 6, cb: 60 },
+  'картофель': { c: 77, p: 2, f: 0.1, cb: 17 }, 'пюре': { c: 100, p: 2, f: 3, cb: 15 },
+  'хлеб': { c: 265, p: 9, f: 3, cb: 49 }, 'батон': { c: 270, p: 8, f: 2, cb: 52 },
+  // Фастфуд и рестораны
+  'шаурма': { c: 250, p: 12, f: 15, cb: 20 }, 'бургер': { c: 295, p: 15, f: 14, cb: 27 },
+  'чизбургер': { c: 320, p: 17, f: 16, cb: 28 }, 'картошка фри': { c: 312, p: 3.4, f: 15, cb: 41 },
+  'пицца': { c: 266, p: 11, f: 10, cb: 33 }, 'хот-дог': { c: 290, p: 10, f: 17, cb: 24 },
+  'наггетсы': { c: 296, p: 15, f: 18, cb: 18 }, 'суши': { c: 150, p: 6, f: 2, cb: 26 },
+  'роллы': { c: 180, p: 7, f: 5, cb: 28 },
+  // Домашняя еда
+  'борщ': { c: 50, p: 2, f: 2, cb: 6 }, 'суп': { c: 40, p: 2, f: 1.5, cb: 5 },
+  'котлета': { c: 260, p: 15, f: 18, cb: 8 }, 'пельмени': { c: 275, p: 11, f: 12, cb: 30 },
+  'омлет': { c: 150, p: 10, f: 11, cb: 2 }, 'блины': { c: 230, p: 6, f: 10, cb: 30 },
+  'сырники': { c: 220, p: 14, f: 10, cb: 20 }, 'салат': { c: 80, p: 2, f: 5, cb: 6 },
+  // Овощи и фрукты
+  'банан': { c: 89, p: 1.1, f: 0.3, cb: 22.8 }, 'яблоко': { c: 52, p: 0.3, f: 0.2, cb: 14 },
+  'апельсин': { c: 47, p: 0.9, f: 0.1, cb: 12 }, 'огурец': { c: 15, p: 0.6, f: 0.1, cb: 3.6 },
+  'помидор': { c: 18, p: 0.9, f: 0.2, cb: 3.9 }, 'авокадо': { c: 160, p: 2, f: 15, cb: 9 },
+  // Сладкое и снеки
+  'шоколад': { c: 546, p: 5, f: 31, cb: 61 }, 'печенье': { c: 450, p: 5, f: 20, cb: 65 },
+  'орехи': { c: 600, p: 20, f: 55, cb: 15 }, 'чипсы': { c: 536, p: 7, f: 35, cb: 53 },
+  // Напитки
+  'кофе': { c: 2, p: 0.1, f: 0, cb: 0 }, 'чай': { c: 1, p: 0, f: 0, cb: 0 },
+  'сок': { c: 45, p: 0.5, f: 0, cb: 10 }, 'кола': { c: 42, p: 0, f: 0, cb: 10.6 }
 };
 
 const MEAL_DB = {
@@ -281,7 +304,6 @@ if (state.daily.date !== today()) {
   state.daily = { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0 }; save(STORAGE.daily, state.daily); 
 }
 
-// --- ЛОГИКА ЗАСТАВКИ ---
 function acceptCookies() {
   save(STORAGE.consent, true);
   const splash = document.getElementById('splash-screen');
@@ -331,9 +353,6 @@ function render() {
   else if (state.screen === 'progress') app.innerHTML = renderProgress();
   else if (state.screen === 'profile') app.innerHTML = renderProfile();
 }
-
-// ... (ВСЕ ОСТАЛЬНЫЕ ФУНКЦИИ РЕНДЕРА И ЛОГИКИ БЕЗ ИЗМЕНЕНИЙ, ОНИ УЖЕ БЫЛИ В ПРЕДЫДУЩЕМ КОДЕ)
-// ВСТАВЬ СЮДА ВСЕ ФУНКЦИИ ОТ renderOnboarding ДО go
 
 function renderOnboarding() {
   document.getElementById('nav').style.display = 'none';
@@ -423,20 +442,41 @@ function setSleep(hours, btn) { state.daily.sleep = hours; save(STORAGE.daily, s
 function setMood(mood, el) { state.daily.mood = mood; save(STORAGE.daily, state.daily); el.classList.add('active-mood'); el.style.opacity = 1; setTimeout(render, 300); }
 function addWater() { state.daily.water = Math.min((state.daily.water || 0) + 1, 8); save(STORAGE.daily, state.daily); render(); }
 function openFoodModal() { document.getElementById('food-input').value = ''; document.getElementById('food-modal').classList.add('active'); }
+
+// --- УМНЫЙ ПОИСК ЕДЫ ---
 function processFoodInput() {
   const input = document.getElementById('food-input').value.toLowerCase().trim();
   if(!input) return;
-  let foundProduct = null, weight = 100;
-  for (const key in FOOD_DB) { if (input.includes(key)) { foundProduct = key; const match = input.match(/(\d+)/); if (match) weight = parseInt(match[1]); break; } }
+  
+  // Ищем самое длинное совпадение (чтобы "куриная грудка" находилась раньше "курица")
+  let foundProduct = null;
+  let sortedKeys = Object.keys(FOOD_DB).sort((a, b) => b.length - a.length);
+  
+  for (const key of sortedKeys) {
+    if (input.includes(key)) { foundProduct = key; break; }
+  }
+
   if (foundProduct) {
-    const p = FOOD_DB[foundProduct]; const multiplier = weight / 100;
+    // Ищем вес (число в строке)
+    const match = input.match(/(\d+)/);
+    const weight = match ? parseInt(match[1]) : 100; // Если вес не указан, считаем за 100г
+    
+    const p = FOOD_DB[foundProduct]; 
+    const multiplier = weight / 100;
+    
     state.daily.calories = (state.daily.calories || 0) + Math.round(p.c * multiplier);
     state.daily.p = (state.daily.p || 0) + Math.round(p.p * multiplier);
     state.daily.f = (state.daily.f || 0) + Math.round(p.f * multiplier);
     state.daily.cb = (state.daily.cb || 0) + Math.round(p.cb * multiplier);
-    save(STORAGE.daily, state.daily); closeModal('food-modal'); render();
-  } else { alert(`Продукт "${input}" не найден.\nПопробуйте: курица, творог, яйцо, овсянка, банан, рис.`); }
+    
+    save(STORAGE.daily, state.daily); 
+    closeModal('food-modal'); 
+    render();
+  } else { 
+    alert(`Продукт "${input}" не найден.\nВведите название точнее или укажите вес (например: шаурма 200).`); 
+  }
 }
+
 function generateAIPlan() {
   const goal = state.profile.goal === 'mass' ? 'Набор массы' : 'Похудение';
   document.getElementById('ai-content').innerHTML = `<p style="margin-bottom:16px; color:var(--muted);">На основе твоей цели (<b>${goal}</b>) AI сгенерировал сплит:</p><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 1: Push (Верх тела)</b><br><span class="muted" style="font-size:14px;">Жим лёжа 4х8, Жим гантелей 3х10, Махи в стороны 3х15</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 2: Pull (Спина)</b><br><span class="muted" style="font-size:14px;">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 3: Legs (Ноги)</b><br><span class="muted" style="font-size:14px;">Приседания 4х8, Жим ногами 3х10, Выпады 3х12</span></div><button onclick="applyAIPlan()" style="margin-top:10px;">Применить план</button>`;
@@ -534,6 +574,18 @@ function saveRun(cal) { if (gpsDistance === 0) return alert('Нет данных
 
 function renderProgress() {
   setTimeout(drawWeightChart, 50);
+  
+  // Считаем разницу в весе
+  let deltaText = '';
+  let deltaColor = 'var(--muted)';
+  if (state.bodyLog.length > 1) {
+    const sorted = [...state.bodyLog].sort((a, b) => a.date.localeCompare(b.date));
+    const diff = sorted[sorted.length - 1].weight - sorted[sorted.length - 2].weight;
+    if (diff > 0) { deltaText = `+${diff.toFixed(1)} кг`; deltaColor = 'var(--move)'; }
+    else if (diff < 0) { deltaText = `${diff.toFixed(1)} кг`; deltaColor = 'var(--accent)'; }
+    else { deltaText = '0 кг'; }
+  }
+
   let muscleLoad = { 'Грудь': 0, 'Спина': 0, 'Ноги': 0, 'Руки': 0, 'Плечи': 0 };
   const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
   state.workouts.filter(w => new Date(w.date) >= weekAgo).forEach(w => { w.exercises.forEach(ex => { const group = getAllExercises()[ex.name] || 'Другое'; if (muscleLoad[group] !== undefined) { muscleLoad[group] += ex.sets.filter(s=>!s.isWarmup).reduce((sum, s) => sum + (s.weight * s.reps), 0); } }); });
@@ -557,10 +609,22 @@ function renderProgress() {
         <h2>Лидерборд</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Тоннаж за месяц</p>
         ${friends.map((f, i) => `<div class="leaderboard-item"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:800; color:${i===0?'#ffd700':'var(--muted)'}">${i+1}</span><div class="avatar" style="background:${f.me ? 'var(--accent)' : 'var(--card-light)'}; color:${f.me ? '#000' : '#fff'}">${f.name[0]}</div><span style="font-weight:${f.me ? '800' : '500'}; color:${f.me ? 'var(--accent)' : 'var(--text)'}">${f.name}</span></div><span style="font-weight:700;">${f.ton.toLocaleString('ru')} кг</span></div>`).join('')}
       </div>
+      
+      <!-- ГРАФИК ВЕСА С РАЗНИЦЕЙ -->
       <div class="card span-2">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;"><div><h2 style="margin:0;">Вес тела</h2></div><div style="display:flex; gap:10px;"><input id="bw" type="number" placeholder="Вес" style="width:100px; margin:0; padding:10px;"><button style="width:44px; height:44px; margin:0; padding:0; border-radius:12px;" onclick="logBodyWeight()"><i class="ph ph-plus"></i></button></div></div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+          <div>
+            <h2 style="margin:0;">Вес тела</h2>
+            <div style="font-size:18px; font-weight:800; margin-top:8px; color:${deltaColor};">${deltaText}</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <input id="bw" type="number" placeholder="Вес" style="width:100px; margin:0; padding:10px;">
+            <button style="width:44px; height:44px; margin:0; padding:0; border-radius:12px;" onclick="logBodyWeight()"><i class="ph ph-plus"></i></button>
+          </div>
+        </div>
         <div class="chart-container"><canvas id="weightChart"></canvas></div>
       </div>
+      
       <div class="card span-2" style="text-align:center; padding:30px;"><h2>PDF Отчет для тренера</h2><p class="muted" style="margin-bottom:20px;">Скачай полную статистику тренировок</p><button onclick="downloadReport()"><i class="ph ph-file-pdf"></i> Скачать PDF</button></div>
     </div>`;
 }
@@ -619,7 +683,6 @@ function startTimer() { document.getElementById('timer-modal').classList.add('ac
 function resetApp() { if (confirm('Удалить все данные?')) { localStorage.clear(); location.reload(); } }
 function go(screen) { if (screen === 'newWorkout' && !state.currentWorkout) { startWorkout(); return; } state.screen = screen; render(); window.scrollTo(0,0); }
 
-// Инициализация
 initApp();
 </script>
 </body>
