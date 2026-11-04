@@ -8,25 +8,27 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
-  :root { --bg: #000; --card: #1c1c1e; --card-light: #2c2c2e; --text: #fff; --muted: #8e8e93; --move: #fa114f; --exercise: #a2ff00; --stand: #00d4ff; --accent: #a2ff00; --border: #38383a; }
+  :root { --bg: #000000; --card: #1c1c1e; --card-light: #2c2c2e; --text: #ffffff; --muted: #8e8e93; --move: #fa114f; --exercise: #a2ff00; --stand: #00d4ff; --accent: #a2ff00; --radius: 28px; --border: #38383a; --nav-bg: rgba(28,28,30,0.9); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; background: var(--bg); color: var(--text); margin: 0 auto; padding: 16px 16px 100px 16px; max-width: 100%; overflow-x: hidden; }
-  h1 { font-size: 34px; margin: 0 0 20px; font-weight: 800; letter-spacing: -1px; }
-  h2 { font-size: 20px; margin: 0 0 16px; font-weight: 700; }
-  button { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 16px; font-size: 17px; font-weight: 700; cursor: pointer; width: 100%; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; background: var(--bg); color: var(--text); margin: 0 auto; padding: 16px 16px 110px 16px; max-width: 100%; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+  h1 { font-size: 36px; margin: 0 0 20px; font-weight: 800; letter-spacing: -1px; }
+  h2 { font-size: 22px; margin: 0 0 16px; font-weight: 700; letter-spacing: -0.5px; }
+  button { background: var(--accent); color: #000; border: none; padding: 18px; border-radius: 20px; font-size: 18px; font-weight: 700; cursor: pointer; width: 100%; margin-bottom: 12px; display: flex; justify-content: center; align-items: center; gap: 10px; transition: opacity 0.2s; }
+  button:active { opacity: 0.7; }
   button.secondary { background: var(--card-light); color: var(--text); }
   button.danger { background: rgba(250,17,79,0.15); color: var(--move); }
-  input, select { width: 100%; padding: 16px; border-radius: 12px; border: none; background: var(--card-light); color: var(--text); font-size: 16px; margin-bottom: 12px; outline: none; text-align: center; font-family: inherit; }
-  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; text-align: left; }
-  .card { background: var(--card); border-radius: 24px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-  .muted { color: var(--muted); font-size: 14px; font-weight: 500; }
-  .bento-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .span-2 { grid-column: span 2; }
-  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(28,28,30,0.95); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 0 20px; z-index: 9999; }
-  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 10px; font-weight: 600; cursor: pointer; width: 20%; }
-  .nav-item.active { color: var(--accent); }
-  .nav-item i { font-size: 24px; }
-  .rings-container { display: flex; justify-content: center; gap: 20px; padding: 10px 0; }
+  input, select { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--card-light); color: var(--text); font-size: 17px; margin-bottom: 12px; outline: none; font-family: inherit; font-weight: 600; text-align: center; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 4px; }
+  .bento-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  .card { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); overflow: hidden; position: relative; }
+  .muted { color: var(--muted); font-size: 15px; font-weight: 500; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); z-index: 9999; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 10px; font-weight: 600; cursor: pointer; transition: color 0.2s; width: 20%; z-index: 10000; }
+  .nav-item.active { color: var(--text); }
+  .nav-item.active i { color: var(--accent); }
+  .nav-item i { font-size: 26px; pointer-events: none; }
+  .nav-item span { pointer-events: none; }
+  .rings-container { display: flex; justify-content: center; gap: 15px; padding: 10px 0; }
   .ring-wrap { position: relative; width: 90px; height: 90px; display: flex; align-items: center; justify-content: center; }
   .ring-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
   .ring-bg { fill: none; stroke: var(--card-light); stroke-width: 8; opacity: 0.3; }
@@ -34,37 +36,51 @@
   .ring-content { z-index: 10; text-align: center; display: flex; flex-direction: column; align-items: center; }
   .ring-icon { font-size: 18px; margin-bottom: 2px; }
   .ring-val { font-size: 12px; font-weight: 800; }
-  .set-row { display: grid; grid-template-columns: 35px 1fr 1fr 40px; gap: 8px; align-items: center; margin-bottom: 8px; }
-  .set-num { width: 35px; height: 35px; background: var(--card-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--muted); }
-  .set-row input { margin-bottom: 0; padding: 10px; }
-  .btn-icon { width: 40px; height: 40px; padding: 0; border-radius: 10px; background: var(--card-light); color: var(--text); border: none; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(5px); }
-  .modal-overlay.active { display: flex; }
-  .modal-content { background: var(--card); padding: 24px; border-radius: 24px 24px 0 0; max-width: 480px; width: 100%; text-align: center; }
+  .set-row { display: grid; grid-template-columns: 40px 1fr 1fr 44px; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .set-num { width: 40px; height: 40px; background: var(--card-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--muted); }
+  .set-row input { margin-bottom: 0; padding: 14px; font-size: 17px; border-radius: 12px; text-align: center; font-weight: 700; }
+  .btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 12px; background: var(--card-light); color: var(--text); border: none; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(10px); }
+  .modal-overlay.active { display: flex; animation: slideUp 0.3s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-content { background: var(--card); padding: 32px 24px; border-radius: 32px 32px 0 0; max-width: 480px; width: 100%; text-align: center; max-height: 90vh; overflow-y: auto; }
+  .tag-btn { background: var(--card-light); color: var(--text); padding: 8px 12px; border-radius: 12px; font-size: 14px; font-weight: 600; border: 2px solid transparent; cursor: pointer; }
+  .tag-btn.active { border-color: var(--accent); background: rgba(162,255,0,0.1); }
+  .chart-container { position:relative; height:220px; width:100%; background:var(--card-light); border-radius:16px; padding:10px; }
+  .muscle-svg { width: 100px; height: 200px; fill: #2c2c2e; transition: fill 0.5s; }
+  .full-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; margin-top: 15px; }
+  .cal-day-full { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--muted); background: var(--card-light); }
+  .cal-day-full.today { border: 2px solid var(--text); }
+  .cal-day-full.done { background: var(--accent); color: #000; }
+  .xp-container { background: var(--card-light); border-radius: 99px; height: 12px; width: 100%; overflow: hidden; margin-top: 10px; }
+  .xp-fill { height: 100%; background: linear-gradient(90deg, var(--stand), var(--accent)); border-radius: 99px; }
   .habit-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--card-light); border-radius: 12px; margin-bottom: 8px; cursor: pointer; }
   .habit-item.done { opacity: 0.5; text-decoration: line-through; }
   .habit-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--muted); display: flex; align-items: center; justify-content: center; }
   .habit-item.done .habit-check { background: var(--accent); border-color: var(--accent); color: #000; }
-  .chart-container { position:relative; height:200px; width:100%; background:var(--card-light); border-radius:16px; padding:10px; }
-  .xp-container { background: var(--card-light); border-radius: 99px; height: 12px; width: 100%; overflow: hidden; margin-top: 10px; }
-  .xp-fill { height: 100%; background: linear-gradient(90deg, var(--stand), var(--accent)); border-radius: 99px; transition: width 0.5s ease; }
   .splash-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; flex-direction: column; justify-content: space-between; padding: 40px 24px; align-items: center; }
   .splash-content { display: flex; flex-direction: column; align-items: center; margin-top: 25vh; text-align: center; }
   .splash-logo { width: 90px; height: 90px; background: var(--accent); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 44px; color: #000; margin-bottom: 24px; }
   .splash-footer { width: 100%; max-width: 400px; text-align: center; }
-  .legal { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 20px; }
+  .legal { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 24px; }
   .studio { font-size: 12px; color: var(--muted); font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
-  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; margin-top: 10px; }
-  .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--muted); background: var(--card-light); }
-  .cal-day.done { background: var(--accent); color: #000; }
-  .cal-day.today { border: 2px solid var(--text); }
+  .run-screen { display: flex; flex-direction: column; height: calc(100vh - 160px); justify-content: center; }
+  .run-time-big { font-size: 70px; font-weight: 800; line-height: 1; letter-spacing: -3px; font-variant-numeric: tabular-nums; text-align: center; margin-bottom: 20px; }
+  .run-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 40px; }
+  .run-metric-box { background: var(--card); padding: 24px; border-radius: var(--radius); text-align: center; }
+  .run-metric-val { font-size: 32px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 4px; }
+  #report-area { position: absolute; left: -9999px; top: -9999px; width: 400px; background: #111; padding: 30px; border-radius: 30px; color: #fff; font-family: -apple-system, sans-serif; }
   @media (min-width: 768px) {
-    body { max-width: 800px; }
-    .bottom-nav { position: static; max-width: 600px; margin: 0 auto 30px auto; border-radius: 99px; padding: 8px; border: 1px solid var(--border); }
-    .nav-item { flex-direction: row; width: auto; padding: 12px 24px; border-radius: 99px; gap: 8px; font-size: 16px; }
+    body { max-width: 900px; padding: 24px; }
+    .bottom-nav { position: static; max-width: 700px; margin: 0 auto 30px auto; border-radius: 99px; padding: 8px; border: 1px solid var(--border); }
+    .nav-item { flex-direction: row; width: auto; padding: 14px 28px; border-radius: 99px; gap: 10px; font-size: 16px; }
     .nav-item.active { background: var(--card); }
+    .bento-grid { grid-template-columns: 1fr 1fr; gap: 20px; }
+    .span-2 { grid-column: span 2; }
     .modal-overlay { align-items: center; }
-    .modal-content { border-radius: 24px; max-width: 400px; }
+    .modal-content { border-radius: 32px; max-width: 450px; }
+    .run-time-big { font-size: 110px; }
+    .workout-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
   }
 </style>
 </head>
@@ -74,11 +90,11 @@
   <div class="splash-content">
     <div class="splash-logo"><i class="ph-bold ph-barbell"></i></div>
     <h1 style="margin-bottom:8px;">Fitness Pro</h1>
-    <p class="muted">Твой фитнес-трекер</p>
+    <p class="muted">Твой персональный фитнес-трекер</p>
   </div>
   <div class="splash-footer">
     <button onclick="startApp()">Продолжить</button>
-    <p class="legal">Нажимая «Продолжить», вы соглашаетесь с обработкой персональных данных.</p>
+    <p class="legal">Нажимая «Продолжить», вы соглашаетесь с политикой конфиденциальности и обработкой персональных данных.</p>
     <p class="studio">Dikov studio</p>
   </div>
 </div>
@@ -86,8 +102,21 @@
 <div id="food-modal" class="modal-overlay" onclick="this.classList.remove('active')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Добавить еду</h2>
+    <p class="muted" style="font-size:14px; margin-bottom:20px;">Введи название и вес (напр: творог 180)</p>
     <input type="text" id="food-input" placeholder="Название и вес...">
     <button onclick="processFood()">Добавить</button>
+  </div>
+</div>
+
+<div id="feedback-modal" class="modal-overlay">
+  <div class="modal-content">
+    <h2 style="margin-top:0">Как прошла тренировка?</h2>
+    <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-bottom:20px;" id="mood-container">
+      <div class="tag-btn" onclick="selectMood('Легко')">Легко</div>
+      <div class="tag-btn" onclick="selectMood('Тяжело')">Тяжело</div>
+      <div class="tag-btn" onclick="selectMood('Отлично')">Отлично</div>
+    </div>
+    <button onclick="saveWorkout()">Сохранить</button>
   </div>
 </div>
 
@@ -116,11 +145,10 @@
 </nav>
 
 <div id="app" style="display:none;"></div>
-<div id="export-area"></div>
 <div id="report-area"></div>
 
 <script>
-  // БАЗА ДАННЫХ ПРОДУКТОВ (ОГРОМНАЯ)
+  // БАЗА ДАННЫХ ПРОДУКТОВ
 const FOOD_DB = {
   'курица': 165, 'грудка': 165, 'индейка': 150, 'говядина': 250, 'свинина': 260, 'рыба': 120, 'лосось': 208, 'тунец': 130, 'треска': 82,
   'творог': 180, 'яйцо': 155, 'сыр': 350, 'молоко': 52, 'йогурт': 60, 'кефир': 40,
@@ -132,20 +160,20 @@ const FOOD_DB = {
 };
 
 const EX_DB = { 'Приседания': 'Ноги', 'Жим лёжа': 'Грудь', 'Становая': 'Спина', 'Подтягивания': 'Спина', 'Жим гантелей': 'Грудь', 'Тяга блока': 'Спина' };
+const INJURY_MAP = { 'Колено': ['Приседания'], 'Поясница': ['Становая'], 'Плечо': ['Жим лёжа', 'Жим гантелей'] };
 
 let state = {
-  profile: JSON.parse(localStorage.getItem('p')) || { weight: 75, height: 180, age: 25, goal: 'mass', xp: 0, level: 1 },
+  profile: JSON.parse(localStorage.getItem('p')) || { weight: 75, height: 180, age: 25, goal: 'mass', xp: 0, level: 1, injuries: [] },
   daily: JSON.parse(localStorage.getItem('d')) || { date: new Date().toISOString().slice(0,10), calories: 0, water: 0, habits: { water: false, steps: false, sleep: false } },
   workouts: JSON.parse(localStorage.getItem('w')) || [],
   bodyLog: JSON.parse(localStorage.getItem('b')) || [],
   measurements: JSON.parse(localStorage.getItem('m')) || [],
-  runs: JSON.parse(localStorage.getItem('r')) || [],
   currentWorkout: null,
   screen: 'home',
   chart: null
 };
 
-let runInt = null, runTime = 0, runActive = false, gpsWatchId = null, lastPos = null, gpsDistance = 0;
+let timerInt = null, timerTime = 90, runInt = null, runTime = 0, runActive = false, gpsWatchId = null, lastPos = null, gpsDistance = 0;
 
 function save() {
   localStorage.setItem('p', JSON.stringify(state.profile));
@@ -153,7 +181,6 @@ function save() {
   localStorage.setItem('w', JSON.stringify(state.workouts));
   localStorage.setItem('b', JSON.stringify(state.bodyLog));
   localStorage.setItem('m', JSON.stringify(state.measurements));
-  localStorage.setItem('r', JSON.stringify(state.runs));
 }
 
 function today() { return new Date().toISOString().slice(0, 10); }
@@ -320,18 +347,20 @@ function renderWorkout() {
       </div>
     </div>
 
-    ${w.exercises.length > 0 ? `<button onclick="finishWorkout()"><i class="ph ph-check"></i> Завершить</button>` : ''}
+    ${w.exercises.length > 0 ? `<button onclick="document.getElementById('feedback-modal').classList.add('active')"><i class="ph ph-check"></i> Завершить</button>` : ''}
   `;
 }
 
 function addEx(name) { state.currentWorkout.exercises.push({ name, sets: [{ weight: 0, reps: 8 }] }); render(); }
 function addSet(i) { const l = state.currentWorkout.exercises[i].sets.slice(-1)[0]; state.currentWorkout.exercises[i].sets.push({ weight: l.weight, reps: l.reps }); render(); }
 function updSet(i, j, f, v) { state.currentWorkout.exercises[i].sets[j][f] = +v; }
-function finishWorkout() {
+function selectMood(m) { state.tempMood = m; }
+
+function saveWorkout() {
   let ton = 0;
   state.currentWorkout.exercises.forEach(ex => ex.sets.forEach(s => ton += s.weight * s.reps));
   state.workouts.push({ ...state.currentWorkout, id: Date.now(), tonnage: ton });
-  addXP(100); save(); state.currentWorkout = null; state.screen = 'home'; render();
+  addXP(100); save(); document.getElementById('feedback-modal').classList.remove('active'); state.currentWorkout = null; state.screen = 'home'; render();
 }
 
 function showPlates(w) {
@@ -343,47 +372,7 @@ function showPlates(w) {
 }
 
 function renderRunning() {
-  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); 
-  const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0;
-  const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` : '0:00';
-  
-  return `
-    <div style="text-align:center; padding-top:40px;">
-      <h1>Бег</h1>
-      <div style="font-size:64px; font-weight:800; margin:20px 0;" id="run-time">${formatTime(runTime)}</div>
-      <div style="display:flex; justify-content:space-around; margin-bottom:40px;">
-        <div><div style="font-size:24px; font-weight:800; color:var(--accent);" id="run-dist">${gpsDistance.toFixed(2)}</div><div class="muted">КМ</div></div>
-        <div><div style="font-size:24px; font-weight:800; color:var(--stand);" id="run-pace">${paceStr}</div><div class="muted">ТЕМП</div></div>
-        <div><div style="font-size:24px; font-weight:800; color:var(--move);" id="run-cal">${cal}</div><div class="muted">ККАЛ</div></div>
-      </div>
-      <button onclick="toggleRun()" id="run-btn" style="border-radius:99px; padding:24px; font-size:22px; background:${runActive ? 'var(--move)' : 'var(--accent)'}; color:${runActive ? '#fff' : '#000'};">
-        <i class="ph ${runActive ? 'ph-pause' : 'ph-play'}"></i> ${runActive ? 'ПАУЗА' : 'СТАРТ'}
-      </button>
-    </div>
-  `;
-}
-
-function formatTime(sec) { return `${Math.floor(sec/3600).toString().padStart(2,'0')}:${Math.floor((sec%3600)/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
-function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-  const R = 6371; const dLat = (lat2 - lat1) * (Math.PI / 180); const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-}
-
-function toggleRun() {
-  runActive = !runActive;
-  if(runActive) {
-    runInt = setInterval(() => { runTime++; document.getElementById('run-time').innerText = formatTime(runTime); updateRunUI(); }, 1000);
-    if (navigator.geolocation) { gpsWatchId = navigator.geolocation.watchPosition((pos) => { const { latitude, longitude } = pos.coords; if (lastPos) { const dist = getDistanceFromLatLonInKm(lastPos.lat, lastPos.lon, latitude, longitude); if (dist > 0.003) { gpsDistance += dist; lastPos = { lat: latitude, lon: longitude }; updateRunUI(); } } else { lastPos = { lat: latitude, lon: longitude }; } }, (err) => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }); }
-  } else { clearInterval(runInt); if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId); }
-  document.getElementById('app').innerHTML = renderRunning();
-}
-
-function updateRunUI() {
-  const elTime = document.getElementById('run-time'), elDist = document.getElementById('run-dist'), elCal = document.getElementById('run-cal'), elPace = document.getElementById('run-pace');
-  if(elTime) elTime.innerText = formatTime(runTime); if(elDist) elDist.innerText = gpsDistance.toFixed(2);
-  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); if(elCal) elCal.innerText = cal;
-  if (runTime > 0 && gpsDistance > 0) { const paceMin = (runTime / 60) / gpsDistance; if(elPace) elPace.innerText = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`; }
+  return `<h1>Бег</h1><div class="card"><p class="muted">GPS-трекер в разработке...</p></div>`;
 }
 
 function renderProgress() {
@@ -404,7 +393,7 @@ function renderProgress() {
   for (let i = 1; i <= daysInMonth; i++) {
     const dStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
     const isW = state.workouts.some(w => w.date === dStr);
-    calHTML += `<div class="cal-day ${isW ? 'done' : ''} ${i === now.getDate() ? 'today' : ''}">${i}</div>`;
+    calHTML += `<div class="cal-day-full ${isW ? 'done' : ''} ${i === now.getDate() ? 'today' : ''}">${i}</div>`;
   }
 
   return `
@@ -412,7 +401,7 @@ function renderProgress() {
     <div class="bento-grid">
       <div class="card span-2">
         <h2>Календарь тренировок</h2>
-        <div class="calendar-grid">
+        <div class="full-calendar">
           ${['П','В','С','Ч','П','С','В'].map(d => `<div class="muted" style="font-size:11px; font-weight:700;">${d}</div>`).join('')}
           ${calHTML}
         </div>
