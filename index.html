@@ -148,8 +148,7 @@
 <div id="report-area"></div>
 
 <script>
-  // БАЗА ДАННЫХ ПРОДУКТОВ
-const FOOD_DB = {
+  const FOOD_DB = {
   'курица': 165, 'грудка': 165, 'индейка': 150, 'говядина': 250, 'свинина': 260, 'рыба': 120, 'лосось': 208, 'тунец': 130, 'треска': 82,
   'творог': 180, 'яйцо': 155, 'сыр': 350, 'молоко': 52, 'йогурт': 60, 'кефир': 40,
   'рис': 344, 'гречка': 343, 'макароны': 350, 'овсянка': 350, 'картофель': 77, 'пюре': 100, 'хлеб': 265,
@@ -359,7 +358,7 @@ function selectMood(m) { state.tempMood = m; }
 function saveWorkout() {
   let ton = 0;
   state.currentWorkout.exercises.forEach(ex => ex.sets.forEach(s => ton += s.weight * s.reps));
-  state.workouts.push({ ...state.currentWorkout, id: Date.now(), tonnage: ton });
+  state.workouts.push({ ...state.currentWorkout, id: Date.now(), tonnage: ton, mood: state.tempMood || 'Без тегов' });
   addXP(100); save(); document.getElementById('feedback-modal').classList.remove('active'); state.currentWorkout = null; state.screen = 'home'; render();
 }
 
@@ -370,30 +369,90 @@ function showPlates(w) {
   document.getElementById('plates-result').innerHTML = res.join('<br>') || 'Гриф';
   document.getElementById('plates-modal').classList.add('active');
 }
+  function renderRunning() {
+  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); 
+  const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0;
+  const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` : '0:00';
+  
+  return `
+    <div style="text-align:center; padding-top:40px;">
+      <h1>Бег</h1>
+      <div style="font-size:64px; font-weight:800; margin:20px 0;" id="run-time">${formatTime(runTime)}</div>
+      <div style="display:flex; justify-content:space-around; margin-bottom:40px;">
+        <div><div style="font-size:24px; font-weight:800; color:var(--accent);" id="run-dist">${gpsDistance.toFixed(2)}</div><div class="muted">КМ</div></div>
+        <div><div style="font-size:24px; font-weight:800; color:var(--stand);" id="run-pace">${paceStr}</div><div class="muted">ТЕМП</div></div>
+        <div><div style="font-size:24px; font-weight:800; color:var(--move);" id="run-cal">${cal}</div><div class="muted">ККАЛ</div></div>
+      </div>
+      <button onclick="toggleRun()" id="run-btn" style="border-radius:99px; padding:24px; font-size:22px; background:${runActive ? 'var(--move)' : 'var(--accent)'}; color:${runActive ? '#fff' : '#000'};">
+        <i class="ph ${runActive ? 'ph-pause' : 'ph-play'}"></i> ${runActive ? 'ПАУЗА' : 'СТАРТ'}
+      </button>
+    </div>
+  `;
+}
 
-function renderRunning() {
-  return `<h1>Бег</h1><div class="card"><p class="muted">GPS-трекер в разработке...</p></div>`;
+function formatTime(sec) { return `${Math.floor(sec/3600).toString().padStart(2,'0')}:${Math.floor((sec%3600)/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; const dLat = (lat2 - lat1) * (Math.PI / 180); const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+function toggleRun() {
+  runActive = !runActive;
+  if(runActive) {
+    runInt = setInterval(() => { runTime++; document.getElementById('run-time').innerText = formatTime(runTime); updateRunUI(); }, 1000);
+    if (navigator.geolocation) { 
+      gpsWatchId = navigator.geolocation.watchPosition((pos) => { 
+        const { latitude, longitude } = pos.coords; 
+        if (lastPos) { 
+          const dist = getDistanceFromLatLonInKm(lastPos.lat, lastPos.lon, latitude, longitude); 
+          if (dist > 0.003) { gpsDistance += dist; lastPos = { lat: latitude, lon: longitude }; updateRunUI(); } 
+        } else { 
+          lastPos = { lat: latitude, lon: longitude }; 
+        } 
+      }, (err) => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }); 
+    }
+  } else { 
+    clearInterval(runInt); 
+    if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId); 
+  }
+  document.getElementById('app').innerHTML = renderRunning();
+}
+
+function updateRunUI() {
+  const elTime = document.getElementById('run-time'), elDist = document.getElementById('run-dist'), elCal = document.getElementById('run-cal'), elPace = document.getElementById('run-pace');
+  if(elTime) elTime.innerText = formatTime(runTime); if(elDist) elDist.innerText = gpsDistance.toFixed(2);
+  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); if(elCal) elCal.innerText = cal;
+  if (runTime > 0 && gpsDistance > 0) { const paceMin = (runTime / 60) / gpsDistance; if(elPace) elPace.innerText = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`; }
 }
 
 function renderProgress() {
-  setTimeout(drawChart, 50);
-  let delta = '';
+  setTimeout(drawWeightChart, 50);
+  let deltaText = ''; let deltaColor = 'var(--muted)';
   if (state.bodyLog.length > 1) {
-    const s = [...state.bodyLog].sort((a,b)=>a.date.localeCompare(b.date));
-    const diff = s[s.length-1].weight - s[s.length-2].weight;
-    delta = diff > 0 ? `<span style="color:var(--move)">+${diff.toFixed(1)} кг</span>` : `<span style="color:var(--accent)">${diff.toFixed(1)} кг</span>`;
+    const sorted = [...state.bodyLog].sort((a, b) => a.date.localeCompare(b.date));
+    const diff = sorted[sorted.length - 1].weight - sorted[sorted.length - 2].weight;
+    if (diff > 0) { deltaText = `+${diff.toFixed(1)} кг`; deltaColor = 'var(--move)'; }
+    else if (diff < 0) { deltaText = `${diff.toFixed(1)} кг`; deltaColor = 'var(--accent)'; }
+    else { deltaText = '0 кг'; }
   }
+
+  let muscleLoad = { 'Грудь': 0, 'Спина': 0, 'Ноги': 0, 'Руки': 0, 'Плечи': 0 };
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+  state.workouts.filter(w => new Date(w.date) >= weekAgo).forEach(w => { w.exercises.forEach(ex => { const group = EX_DB[ex.name] || 'Другое'; if (muscleLoad[group] !== undefined) { muscleLoad[group] += ex.sets.reduce((sum, s) => sum + (s.weight * s.reps), 0); } }); });
+  const getColor = (group) => { const load = muscleLoad[group]; if (load === 0) return '#2c2c2e'; if (load > 1000) return '#fa114f'; return '#a2ff00'; };
 
   const now = new Date();
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
-  const offset = firstDay === 0 ? 6 : firstDay - 1;
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1;
   let calHTML = '';
-  for (let i = 0; i < offset; i++) calHTML += `<div></div>`;
+  for (let i = 0; i < startOffset; i++) calHTML += `<div></div>`;
   for (let i = 1; i <= daysInMonth; i++) {
     const dStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
-    const isW = state.workouts.some(w => w.date === dStr);
-    calHTML += `<div class="cal-day-full ${isW ? 'done' : ''} ${i === now.getDate() ? 'today' : ''}">${i}</div>`;
+    const isWorkout = state.workouts.some(w => w.date === dStr);
+    const isToday = i === now.getDate();
+    calHTML += `<div class="cal-day-full ${isWorkout ? 'done' : ''} ${isToday ? 'today' : ''}">${i}</div>`;
   }
 
   return `
@@ -402,36 +461,39 @@ function renderProgress() {
       <div class="card span-2">
         <h2>Календарь тренировок</h2>
         <div class="full-calendar">
-          ${['П','В','С','Ч','П','С','В'].map(d => `<div class="muted" style="font-size:11px; font-weight:700;">${d}</div>`).join('')}
+          ${['П','В','С','Ч','П','С','В'].map(d => `<div class="muted" style="font-size:12px; font-weight:700;">${d}</div>`).join('')}
           ${calHTML}
         </div>
       </div>
       
-      <div class="card span-2">
-        <h2>Вес тела ${delta}</h2>
-        <div style="display:flex; gap:10px; margin-bottom:20px;">
-          <input type="number" id="bw" placeholder="Вес (кг)" style="margin:0;">
-          <button style="width:50px; margin:0; padding:0;" onclick="addWeight()"><i class="ph ph-plus"></i></button>
+      <div class="card" style="display:flex; align-items:center; gap:20px; padding:20px;">
+        <div style="flex:1;">
+          <h2 style="margin-bottom:8px;">Карта мышц</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Нагрузка за 7 дней</p>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#fa114f;"></div><span style="font-size:12px;">Восстановление</span></div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#a2ff00;"></div><span style="font-size:12px;">Готово</span></div>
         </div>
-        <div class="chart-container"><canvas id="wChart"></canvas></div>
+        <svg viewBox="0 0 100 200" class="muscle-svg"><circle cx="50" cy="20" r="12" fill="#2c2c2e"></circle><rect x="25" y="35" width="15" height="15" rx="5" fill="${getColor('Плечи')}"></rect><rect x="60" y="35" width="15" height="15" rx="5" fill="${getColor('Плечи')}"></rect><rect x="30" y="45" width="40" height="25" rx="5" fill="${getColor('Грудь')}"></rect><rect x="15" y="55" width="12" height="35" rx="5" fill="${getColor('Руки')}"></rect><rect x="73" y="55" width="12" height="35" rx="5" fill="${getColor('Руки')}"></rect><rect x="38" y="75" width="24" height="30" rx="5" fill="#2c2c2e"></rect><rect x="30" y="110" width="16" height="60" rx="5" fill="${getColor('Ноги')}"></rect><rect x="54" y="110" width="16" height="60" rx="5" fill="${getColor('Ноги')}"></rect></svg>
       </div>
 
       <div class="card span-2">
-        <h2>Замеры тела</h2>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+          <div><h2 style="margin:0;">Вес тела</h2><div style="font-size:18px; font-weight:800; margin-top:8px; color:${deltaColor};">${deltaText}</div></div>
+          <div style="display:flex; gap:10px;"><input id="bw" type="number" placeholder="Вес" style="width:100px; margin:0; padding:10px;"><button style="width:44px; height:44px; margin:0; padding:0; border-radius:12px;" onclick="logBodyWeight()"><i class="ph ph-plus"></i></button></div>
+        </div>
+        <div class="chart-container"><canvas id="weightChart"></canvas></div>
+      </div>
+      
+      <div class="card span-2">
+        <h2>Замеры тела (см)</h2>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
-          <div><label>Грудь</label><input type="number" id="m_chest" placeholder="см"></div>
-          <div><label>Талия</label><input type="number" id="m_waist" placeholder="см"></div>
-          <div><label>Бицепс</label><input type="number" id="m_bicep" placeholder="см"></div>
-          <div><label>Бедро</label><input type="number" id="m_thigh" placeholder="см"></div>
+          <div><label>Грудь</label><input type="number" id="m_chest" placeholder="0"></div>
+          <div><label>Талия</label><input type="number" id="m_waist" placeholder="0"></div>
+          <div><label>Бицепс</label><input type="number" id="m_bicep" placeholder="0"></div>
+          <div><label>Бедро</label><input type="number" id="m_thigh" placeholder="0"></div>
         </div>
         <button class="secondary" onclick="saveMeasurements()">Сохранить замеры</button>
-        <div style="margin-top:20px;">
-          ${state.measurements.length > 0 ? `<div style="font-size:14px; font-weight:700; margin-bottom:8px;">История:</div>` : ''}
-          ${state.measurements.map(m => `<div style="font-size:14px; border-bottom:1px solid var(--border); padding:8px 0; display:flex; justify-content:space-between;"><span>${m.date}</span><span>Г:${m.chest||'-'} Т:${m.waist||'-'} Б:${m.bicep||'-'} Бд:${m.thigh||'-'}</span></div>`).join('')}
-        </div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 function saveMeasurements() {
@@ -442,41 +504,37 @@ function saveMeasurements() {
     bicep: +document.getElementById('m_bicep').value || null,
     thigh: +document.getElementById('m_thigh').value || null
   };
-  if (!m.chest && !m.waist && !m.bicep && !m.thigh) return alert('Введи хотя бы один замер');
   state.measurements.push(m);
   addXP(20); save(); render();
 }
 
-function drawChart() {
-  const ctx = document.getElementById('wChart'); if(!ctx) return;
-  if (state.chart) state.chart.destroy();
-  const s = [...state.bodyLog].sort((a,b)=>a.date.localeCompare(b.date));
-  state.chart = new Chart(ctx, {
-    type: 'line',
-    data: { labels: s.map(x=>x.date.slice(5)), datasets: [{ data: s.map(x=>x.weight), borderColor: '#a2ff00', backgroundColor: 'rgba(162,255,0,0.1)', fill: true, tension: 0.4 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+function drawWeightChart() {
+  const ctx = document.getElementById('weightChart'); if (!ctx) return;
+  if (state.chart) state.chart.destroy(); 
+  const sorted = [...state.bodyLog].sort((a, b) => a.date.localeCompare(b.date));
+  state.chart = new Chart(ctx, { 
+    type: 'line', 
+    data: { labels: sorted.map(b => b.date.slice(5)), datasets: [{ data: sorted.map(b => b.weight), borderColor: '#a2ff00', backgroundColor: 'rgba(162,255,0,0.1)', fill: true, tension: 0.4 }] }, 
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } 
   });
 }
 
-function addWeight() {
-  const w = +document.getElementById('bw').value;
-  if(w) { state.bodyLog.push({ date: today(), weight: w }); addXP(20); save(); render(); }
-}
+function logBodyWeight() { const w = +document.getElementById('bw').value; if (w) { state.bodyLog.push({ date: today(), weight: w }); addXP(20); save(); render(); } }
 
 function renderProfile() {
+  const p = state.profile;
   return `
     <h1>Профиль</h1>
     <div class="card" style="text-align:center; padding:30px;">
       <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, var(--move), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:36px; color:#fff; margin:0 auto 20px;"><i class="ph ph-user"></i></div>
-      <h2 style="margin:0;">Атлет <span style="color:var(--accent); font-size:16px;">Ур. ${state.profile.level}</span></h2>
-      <div class="xp-container"><div class="xp-fill" style="width: ${(state.profile.xp % 500) / 5}%;"></div></div>
-      <p class="muted" style="margin-top:8px;">XP: ${state.profile.xp}</p>
+      <h2 style="margin:0;">Атлет <span style="color:var(--accent); font-size:16px;">Ур. ${p.level || 1}</span></h2>
+      <div class="xp-container"><div class="xp-fill" style="width: ${(p.xp % 500) / 5}%;"></div></div>
     </div>
     <div class="card">
       <label>Цель</label>
       <select onchange="state.profile.goal = this.value; save(); render();">
-        <option value="mass" ${state.profile.goal === 'mass' ? 'selected' : ''}>Набор массы</option>
-        <option value="cut" ${state.profile.goal === 'cut' ? 'selected' : ''}>Похудение</option>
+        <option value="mass" ${p.goal === 'mass' ? 'selected' : ''}>Набор массы</option>
+        <option value="cut" ${p.goal === 'cut' ? 'selected' : ''}>Похудение</option>
       </select>
     </div>
     <button class="danger" onclick="if(confirm('Удалить все данные?')) { localStorage.clear(); location.reload(); }">Сбросить данные</button>
