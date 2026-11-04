@@ -753,4 +753,211 @@ function renderProgress() {
     const dStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
     const isWorkout = state.workouts.some(w => w.date === dStr);
     const isToday = i === now.getDate();
-    calHTML += `<div class="cal-day-full ${isWorkout ? 'done' :
+       calHTML += `<div class="cal-day-full ${isWorkout ? 'done' : ''} ${isToday ? 'today' : ''}">${i}</div>`;
+  }
+
+  const lastM = state.measurements[state.measurements.length - 1] || {};
+
+  return `
+    <h1>Тренды</h1>
+    <div class="bento-grid">
+      <div class="card span-2">
+        <h2>Календарь тренировок</h2>
+        <div class="full-calendar">
+          ${['П','В','С','Ч','П','С','В'].map(d => `<div class="muted" style="font-size:12px; font-weight:700;">${d}</div>`).join('')}
+          ${calHTML}
+        </div>
+      </div>
+
+      <div class="card" style="display:flex; align-items:center; gap:20px; padding:20px;">
+        <div style="flex:1;">
+          <h2 style="margin-bottom:8px;">Карта мышц</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Нагрузка за 7 дней</p>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#fa114f;"></div><span style="font-size:12px;">Восстановление</span></div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#a2ff00;"></div><span style="font-size:12px;">Готово</span></div>
+        </div>
+        <svg viewBox="0 0 100 200" class="muscle-svg"><circle cx="50" cy="20" r="12" fill="#2c2c2e"></circle><rect x="25" y="35" width="15" height="15" rx="5" fill="${getColor('Плечи')}"></rect><rect x="60" y="35" width="15" height="15" rx="5" fill="${getColor('Плечи')}"></rect><rect x="30" y="45" width="40" height="25" rx="5" fill="${getColor('Грудь')}"></rect><rect x="15" y="55" width="12" height="35" rx="5" fill="${getColor('Руки')}"></rect><rect x="73" y="55" width="12" height="35" rx="5" fill="${getColor('Руки')}"></rect><rect x="38" y="75" width="24" height="30" rx="5" fill="#2c2c2e"></rect><rect x="30" y="110" width="16" height="60" rx="5" fill="${getColor('Ноги')}"></rect><rect x="54" y="110" width="16" height="60" rx="5" fill="${getColor('Ноги')}"></rect></svg>
+      </div>
+
+      <div class="card span-2">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+          <div><h2 style="margin:0;">Вес тела</h2><div style="font-size:18px; font-weight:800; margin-top:8px; color:${deltaColor};">${deltaText}</div></div>
+          <div style="display:flex; gap:10px;"><input id="bw" type="number" placeholder="Вес" style="width:100px; margin:0; padding:10px;"><button style="width:44px; height:44px; margin:0; padding:0; border-radius:12px;" onclick="logBodyWeight()"><i class="ph ph-plus"></i></button></div>
+        </div>
+        <div class="chart-container"><canvas id="weightChart"></canvas></div>
+      </div>
+
+      <div class="card span-2">
+        <h2>Замеры тела (см)</h2>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+          <div><label>Грудь</label><input type="number" id="m_chest" placeholder="${lastM.chest || '0'}"></div>
+          <div><label>Талия</label><input type="number" id="m_waist" placeholder="${lastM.waist || '0'}"></div>
+          <div><label>Бицепс</label><input type="number" id="m_bicep" placeholder="${lastM.bicep || '0'}"></div>
+          <div><label>Бедро</label><input type="number" id="m_thigh" placeholder="${lastM.thigh || '0'}"></div>
+        </div>
+        <button class="secondary" onclick="saveMeasurements()">Сохранить замеры</button>
+      </div>
+
+      <div class="card span-2">
+        <h2>История тренировок</h2>
+        ${renderWorkoutHistory(10)}
+      </div>
+    </div>`;
+}
+
+function renderWorkoutHistory(limit = 10) {
+  if (!state.workouts.length) {
+    return `<div class="empty-state"><i class="ph ph-barbell"></i><p>Пока нет тренировок</p></div>`;
+  }
+  return [...state.workouts]
+    .sort((a,b) => b.date.localeCompare(a.date))
+    .slice(0, limit)
+    .map(w => {
+      const exCount = w.exercises?.length || 0;
+      const sets = (w.exercises || []).reduce((s, e) => s + e.sets.length, 0);
+      return `
+        <div class="history-item">
+          <div>
+            <div style="font-weight:700;">${w.date}</div>
+            <div class="muted" style="font-size:12px; margin-top:2px;">${exCount} упр · ${sets} подх · ${w.tonnage || 0} кг</div>
+          </div>
+          <div style="font-size:12px; color:var(--accent); font-weight:700;">${w.mood || ''}</div>
+        </div>
+      `;
+    }).join('');
+}
+
+function saveMeasurements() {
+  const m = {
+    date: today(),
+    chest: +document.getElementById('m_chest').value || null,
+    waist: +document.getElementById('m_waist').value || null,
+    bicep: +document.getElementById('m_bicep').value || null,
+    thigh: +document.getElementById('m_thigh').value || null
+  };
+  state.measurements.push(m);
+  addXP(20); save();
+  toast('Замеры сохранены');
+  render();
+}
+
+function drawWeightChart() {
+  const ctx = document.getElementById('weightChart'); if (!ctx) return;
+  if (state.chart) state.chart.destroy();
+  const sorted = [...state.bodyLog].sort((a, b) => a.date.localeCompare(b.date));
+  state.chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: sorted.map(b => b.date.slice(5)), datasets: [{ data: sorted.map(b => b.weight), borderColor: '#a2ff00', backgroundColor: 'rgba(162,255,0,0.1)', fill: true, tension: 0.4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+  });
+}
+
+function logBodyWeight() {
+  const w = +document.getElementById('bw').value;
+  if (!w) return;
+  state.bodyLog.push({ date: today(), weight: w });
+  addXP(20); save();
+  toast(`Вес ${w} кг записан`);
+  render();
+}
+
+// === Профиль ===
+function renderProfile() {
+  const p = state.profile;
+  const injuries = p.injuries || [];
+  return `
+    <h1>Профиль</h1>
+    <div class="card" style="text-align:center; padding:30px;">
+      <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, var(--move), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:36px; color:#fff; margin:0 auto 20px;"><i class="ph ph-user"></i></div>
+      <h2 style="margin:0;">Атлет <span style="color:var(--accent); font-size:16px;">Ур. ${p.level || 1}</span></h2>
+      <div class="xp-container"><div class="xp-fill" style="width: ${(p.xp % 500) / 5}%;"></div></div>
+      <div class="muted" style="font-size:12px; margin-top:8px;">${p.xp || 0} XP · до след. уровня ${500 - ((p.xp || 0) % 500)} XP</div>
+    </div>
+
+    <div class="card">
+      <label>Цель</label>
+      <select onchange="state.profile.goal = this.value; save(); render();">
+        <option value="mass" ${p.goal === 'mass' ? 'selected' : ''}>Набор массы</option>
+        <option value="cut" ${p.goal === 'cut' ? 'selected' : ''}>Похудение</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <label>Травмы / ограничения</label>
+      <p class="muted" style="font-size:12px; margin-bottom:12px;">Приложение предупредит перед опасным упражнением</p>
+      <div class="chip-row">
+        ${['Колено','Поясница','Плечо'].map(inj => `
+          <div class="chip ${injuries.includes(inj) ? 'active' : ''}" onclick="toggleInjury('${inj}')">${inj}</div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:12px;">Данные</h2>
+      <button class="secondary" style="margin-bottom:10px;" onclick="exportData()"><i class="ph ph-download"></i> Экспорт в JSON</button>
+      <button class="danger" onclick="if(confirm('Удалить все данные? Это действие необратимо.')) { localStorage.clear(); location.reload(); }"><i class="ph ph-trash"></i> Сбросить всё</button>
+    </div>
+  `;
+}
+
+function toggleInjury(inj) {
+  if (!state.profile.injuries) state.profile.injuries = [];
+  const idx = state.profile.injuries.indexOf(inj);
+  if (idx > -1) state.profile.injuries.splice(idx, 1);
+  else state.profile.injuries.push(inj);
+  save(); render();
+}
+
+function exportData() {
+  const data = {
+    profile: state.profile,
+    workouts: state.workouts,
+    bodyLog: state.bodyLog,
+    measurements: state.measurements,
+    exportDate: new Date().toISOString(),
+    app: 'Fitness Pro by Dikov Studio'
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fitness-pro-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Данные экспортированы');
+}
+
+// === Навигация и запуск ===
+function go(screen) {
+  state.screen = screen;
+  render();
+  window.scrollTo(0, 0);
+}
+
+function startApp() {
+  document.getElementById('splash-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('nav').style.display = 'flex';
+  render();
+}
+
+function render() {
+  const app = document.getElementById('app');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.screen === state.screen));
+
+  if (state.screen === 'home') app.innerHTML = renderHome();
+  else if (state.screen === 'workout') app.innerHTML = renderWorkout();
+  else if (state.screen === 'running') app.innerHTML = renderRunning();
+  else if (state.screen === 'progress') app.innerHTML = renderProgress();
+  else if (state.screen === 'profile') app.innerHTML = renderProfile();
+}
+
+// Инициализация
+render();
+
+// Сохранить бег перед закрытием
+window.addEventListener('beforeunload', () => {
+  if (runActive) saveRun();
+});
+</script>
+</body>
+</html>
