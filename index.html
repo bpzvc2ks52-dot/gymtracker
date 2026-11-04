@@ -93,15 +93,20 @@
   .muscle-svg { width: 100px; height: 200px; fill: #2c2c2e; transition: fill 0.5s; }
   .leaderboard-item { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
   .avatar { width:32px; height:32px; border-radius:50%; background:var(--card-light); display:flex; align-items:center; justify-content:center; font-weight:bold; color:var(--accent); }
+  
+  /* Стили для Календаря и Привычек */
+  .full-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; margin-top: 15px; }
+  .cal-day-full { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--muted); background: var(--card-light); }
+  .cal-day-full.today { border: 2px solid var(--text); }
+  .cal-day-full.done { background: var(--accent); color: #000; }
+  .habit-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--card-light); border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: 0.2s; }
+  .habit-item.done { opacity: 0.5; text-decoration: line-through; }
+  .habit-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--muted); display: flex; align-items: center; justify-content: center; }
+  .habit-item.done .habit-check { background: var(--accent); border-color: var(--accent); color: #000; }
 
   #export-area, #report-area { position: absolute; left: -9999px; top: -9999px; width: 400px; background: #111; padding: 30px; border-radius: 30px; color: #fff; font-family: -apple-system, sans-serif; }
 
-  /* --- ЗАСТАВКА --- */
-  .splash-screen {
-    position: fixed; inset: 0; background: var(--bg); z-index: 9999;
-    display: flex; flex-direction: column; justify-content: space-between;
-    padding: 40px 24px; align-items: center; transition: opacity 0.5s ease;
-  }
+  .splash-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; justify-content: space-between; padding: 40px 24px; align-items: center; transition: opacity 0.5s ease; }
   .splash-content { display: flex; flex-direction: column; align-items: center; margin-top: 25vh; text-align: center; }
   .splash-logo { width: 90px; height: 90px; background: var(--accent); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 44px; color: #000; margin-bottom: 24px; animation: pulse 2s infinite; }
   .splash-footer { width: 100%; max-width: 400px; text-align: center; }
@@ -125,7 +130,6 @@
 </head>
 <body>
 
-<!-- ЭКРАН ЗАГРУЗКИ (Показывается всегда при перезагрузке) -->
 <div id="splash-screen" class="splash-screen">
   <div class="splash-content">
     <div class="splash-logo"><i class="ph-bold ph-barbell"></i></div>
@@ -145,9 +149,6 @@
     <p class="muted" style="font-size:14px; margin-bottom:20px;">Напиши название и вес.<br>Например: <b>шаурма 200</b> или <b>творог 180</b></p>
     <input type="text" id="food-input" placeholder="Название и вес..." style="text-align:center; margin-bottom:20px;">
     <button onclick="processFoodInput()"><i class="ph ph-check"></i> Добавить в дневник</button>
-    <div style="margin-top:20px; font-size:12px; color:var(--muted);">
-      В базе: супы, фастфуд, гарниры, мясо, овощи, фрукты и многое другое.
-    </div>
   </div>
 </div>
 
@@ -227,7 +228,7 @@
 <div id="report-area"></div>
 
 <script>
-const STORAGE = { profile: 'fit_p10', workouts: 'fit_w10', bodyLog: 'fit_b10', daily: 'fit_d10', runs: 'fit_r10', sleepLog: 'fit_s10', themeColor: 'fit_color10', customEx: 'fit_custom10' };
+  const STORAGE = { profile: 'fit_p10', workouts: 'fit_w10', bodyLog: 'fit_b10', daily: 'fit_d10', runs: 'fit_r10', sleepLog: 'fit_s10', themeColor: 'fit_color10', customEx: 'fit_custom10', measurements: 'fit_m10' };
 
 const BASE_EXERCISES_DB = {
   'Приседания со штангой': 'Ноги', 'Жим лёжа': 'Грудь', 'Становая тяга': 'Спина', 
@@ -277,8 +278,9 @@ const COLORS = [{ id: 'green', hex: '#a2ff00' }, { id: 'pink', hex: '#fa114f' },
 let state = {
   profile: load(STORAGE.profile), workouts: load(STORAGE.workouts) || [], bodyLog: load(STORAGE.bodyLog) || [],
   runs: load(STORAGE.runs) || [], sleepLog: load(STORAGE.sleepLog) || [], customExercises: load(STORAGE.customEx) || {},
+  measurements: load(STORAGE.measurements) || [],
   themeColor: load(STORAGE.themeColor) || '#a2ff00',
-  daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0 },
+  daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0, habits: { water: false, steps: false, sleep: false } },
   screen: 'home', currentWorkout: null, chartInstance: null, tempMood: null
 };
 
@@ -291,10 +293,11 @@ document.documentElement.style.setProperty('--accent', state.themeColor);
 
 if (state.daily.date !== today()) { 
   if (state.daily.sleep) { state.sleepLog.push({ date: state.daily.date, sleep: state.daily.sleep, mood: state.daily.mood }); save(STORAGE.sleepLog, state.sleepLog); }
-  state.daily = { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0 }; save(STORAGE.daily, state.daily); 
+  state.daily = { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0, habits: { water: false, steps: false, sleep: false } }; 
+  save(STORAGE.daily, state.daily); 
 }
+if (!state.daily.habits) state.daily.habits = { water: false, steps: false, sleep: false };
 
-// ЗАСТАВКА ПОКАЗЫВАЕТСЯ ВСЕГДА
 function acceptCookies() {
   const splash = document.getElementById('splash-screen');
   splash.style.opacity = '0';
@@ -407,6 +410,14 @@ function renderHome() {
           <button class="secondary" onclick="openFoodModal()" style="margin:0; font-size:14px; padding:14px;"><i class="ph ph-fork-knife"></i> Добавить еду</button>
         </div>
       </div>
+
+      <div class="card span-2">
+        <h2 style="margin-bottom:16px;"><i class="ph ph-check-square-offset"></i> Привычки на сегодня</h2>
+        <div class="habit-item ${state.daily.habits.water ? 'done' : ''}" onclick="toggleHabit('water')"><span><i class="ph ph-drop" style="color:var(--stand)"></i> Выпить 2л воды</span><div class="habit-check">${state.daily.habits.water ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
+        <div class="habit-item ${state.daily.habits.steps ? 'done' : ''}" onclick="toggleHabit('steps')"><span><i class="ph ph-sneaker" style="color:var(--move)"></i> Пройти 10 000 шагов</span><div class="habit-check">${state.daily.habits.steps ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
+        <div class="habit-item ${state.daily.habits.sleep ? 'done' : ''}" onclick="toggleHabit('sleep')"><span><i class="ph ph-moon" style="color:var(--purple)"></i> Спать 8 часов</span><div class="habit-check">${state.daily.habits.sleep ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
+      </div>
+      
       <div class="card" style="min-height:180px;">
         <h2 style="margin-bottom:10px;">План тренировок</h2>
         <p class="muted">Программа на неделю</p>
@@ -422,6 +433,12 @@ function renderHome() {
       </div>
     </div>
   `;
+}
+
+function toggleHabit(habit) {
+  state.daily.habits[habit] = !state.daily.habits[habit];
+  save(STORAGE.daily, state.daily); 
+  render();
 }
 
 function setSleep(hours, btn) { state.daily.sleep = hours; save(STORAGE.daily, state.daily); document.querySelectorAll('.sleep-btn').forEach(b => { b.classList.remove('active'); b.style.borderColor = 'transparent'; }); btn.style.borderColor = 'var(--stand)'; btn.style.color = 'var(--stand)'; if(state.daily.mood) render(); }
@@ -444,9 +461,9 @@ function processFoodInput() {
     state.daily.f = (state.daily.f || 0) + Math.round(p.f * multiplier);
     state.daily.cb = (state.daily.cb || 0) + Math.round(p.cb * multiplier);
     save(STORAGE.daily, state.daily); closeModal('food-modal'); render();
-  } else { alert(`Продукт "${input}" не найден.\nВведите название точнее.`); }
+  } else { alert(`Продукт "${input}" не найден.`); }
 }
-function generateAIPlan() {
+  function generateAIPlan() {
   const goal = state.profile.goal === 'mass' ? 'Набор массы' : 'Похудение';
   document.getElementById('ai-content').innerHTML = `<p style="margin-bottom:16px; color:var(--muted);">На основе твоей цели (<b>${goal}</b>) AI сгенерировал сплит:</p><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 1: Push (Верх тела)</b><br><span class="muted" style="font-size:14px;">Жим лёжа 4х8, Жим гантелей 3х10, Махи в стороны 3х15</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 2: Pull (Спина)</b><br><span class="muted" style="font-size:14px;">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 3: Legs (Ноги)</b><br><span class="muted" style="font-size:14px;">Приседания 4х8, Жим ногами 3х10, Выпады 3х12</span></div><button onclick="applyAIPlan()" style="margin-top:10px;">Применить план</button>`;
   document.getElementById('ai-modal').classList.add('active');
@@ -559,9 +576,29 @@ function renderProgress() {
   const myTon = state.workouts.reduce((sum, w) => sum + w.tonnage, 0);
   const friends = [{ name: "Макс", ton: myTon + 1500 }, { name: "Анна", ton: myTon + 800 }, { name: "Ты", ton: myTon, me: true }, { name: "Алекс", ton: myTon - 300 }].sort((a,b) => b.ton - a.ton);
 
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+  const offset = firstDay === 0 ? 6 : firstDay - 1;
+  let calHTML = '';
+  for (let i = 0; i < offset; i++) calHTML += `<div></div>`;
+  for (let i = 1; i <= daysInMonth; i++) {
+    const dStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${i.toString().padStart(2,'0')}`;
+    const isW = state.workouts.some(w => w.date === dStr);
+    calHTML += `<div class="cal-day-full ${isW ? 'done' : ''} ${i === now.getDate() ? 'today' : ''}">${i}</div>`;
+  }
+
   return `
     <h1>Тренды</h1>
     <div class="bento-grid">
+      <div class="card span-2">
+        <h2>Календарь тренировок</h2>
+        <div class="full-calendar">
+          ${['П','В','С','Ч','П','С','В'].map(d => `<div class="muted" style="font-size:12px; font-weight:700;">${d}</div>`).join('')}
+          ${calHTML}
+        </div>
+      </div>
+
       <div class="card" style="display:flex; align-items:center; gap:20px; padding:20px;">
         <div style="flex:1;">
           <h2 style="margin-bottom:8px;">Карта мышц</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Нагрузка за 7 дней</p>
@@ -575,6 +612,7 @@ function renderProgress() {
         <h2>Лидерборд</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Тоннаж за месяц</p>
         ${friends.map((f, i) => `<div class="leaderboard-item"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:800; color:${i===0?'#ffd700':'var(--muted)'}">${i+1}</span><div class="avatar" style="background:${f.me ? 'var(--accent)' : 'var(--card-light)'}; color:${f.me ? '#000' : '#fff'}">${f.name[0]}</div><span style="font-weight:${f.me ? '800' : '500'}; color:${f.me ? 'var(--accent)' : 'var(--text)'}">${f.name}</span></div><span style="font-weight:700;">${f.ton.toLocaleString('ru')} кг</span></div>`).join('')}
       </div>
+      
       <div class="card span-2">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
           <div><h2 style="margin:0;">Вес тела</h2><div style="font-size:18px; font-weight:800; margin-top:8px; color:${deltaColor};">${deltaText}</div></div>
@@ -582,8 +620,34 @@ function renderProgress() {
         </div>
         <div class="chart-container"><canvas id="weightChart"></canvas></div>
       </div>
+
+      <div class="card span-2">
+        <h2>Замеры тела (см)</h2>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+          <div><label>Грудь</label><input type="number" id="m_chest" placeholder="0"></div>
+          <div><label>Талия</label><input type="number" id="m_waist" placeholder="0"></div>
+          <div><label>Бицепс</label><input type="number" id="m_bicep" placeholder="0"></div>
+          <div><label>Бедро</label><input type="number" id="m_thigh" placeholder="0"></div>
+        </div>
+        <button class="secondary" onclick="saveMeasurements()">Сохранить замеры</button>
+      </div>
+
       <div class="card span-2" style="text-align:center; padding:30px;"><h2>PDF Отчет для тренера</h2><p class="muted" style="margin-bottom:20px;">Скачай полную статистику тренировок</p><button onclick="downloadReport()"><i class="ph ph-file-pdf"></i> Скачать PDF</button></div>
     </div>`;
+}
+
+function saveMeasurements() {
+  const m = {
+    date: today(),
+    chest: +document.getElementById('m_chest').value || null,
+    waist: +document.getElementById('m_waist').value || null,
+    bicep: +document.getElementById('m_bicep').value || null,
+    thigh: +document.getElementById('m_thigh').value || null
+  };
+  if (!m.chest && !m.waist && !m.bicep && !m.thigh) return alert('Введи хотя бы один замер');
+  state.measurements.push(m);
+  save(STORAGE.measurements, state.measurements);
+  alert('Замеры сохранены!');
 }
 
 function drawWeightChart() {
