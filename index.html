@@ -6,7 +6,6 @@
 <title>Fitness Pro</title>
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root { --bg: #000000; --card: #1c1c1e; --card-light: #2c2c2e; --text: #ffffff; --muted: #8e8e93; --move: #fa114f; --exercise: #a2ff00; --stand: #00d4ff; --accent: #a2ff00; --radius: 28px; --border: #38383a; --nav-bg: rgba(28,28,30,0.9); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -69,7 +68,6 @@
   .run-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 40px; }
   .run-metric-box { background: var(--card); padding: 24px; border-radius: var(--radius); text-align: center; }
   .run-metric-val { font-size: 32px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 4px; }
-  #report-area { position: absolute; left: -9999px; top: -9999px; width: 400px; background: #111; padding: 30px; border-radius: 30px; color: #fff; font-family: -apple-system, sans-serif; }
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px; }
     .bottom-nav { position: static; max-width: 700px; margin: 0 auto 30px auto; border-radius: 99px; padding: 8px; border: 1px solid var(--border); }
@@ -146,9 +144,8 @@
 
 <div id="app" style="display:none;"></div>
 <div id="report-area"></div>
-
-<script>
-  const FOOD_DB = {
+  <script>
+const FOOD_DB = {
   'курица': 165, 'грудка': 165, 'индейка': 150, 'говядина': 250, 'свинина': 260, 'рыба': 120, 'лосось': 208, 'тунец': 130, 'треска': 82,
   'творог': 180, 'яйцо': 155, 'сыр': 350, 'молоко': 52, 'йогурт': 60, 'кефир': 40,
   'рис': 344, 'гречка': 343, 'макароны': 350, 'овсянка': 350, 'картофель': 77, 'пюре': 100, 'хлеб': 265,
@@ -313,8 +310,7 @@ function processFood() {
     }
   }
 }
-
-function startWorkout() { state.currentWorkout = { date: today(), exercises: [] }; state.screen = 'workout'; render(); }
+    function startWorkout() { state.currentWorkout = { date: today(), exercises: [] }; state.screen = 'workout'; render(); }
 
 function renderWorkout() {
   if (!state.currentWorkout) startWorkout();
@@ -350,7 +346,15 @@ function renderWorkout() {
   `;
 }
 
-function addEx(name) { state.currentWorkout.exercises.push({ name, sets: [{ weight: 0, reps: 8 }] }); render(); }
+function addEx(name) { 
+  const injuries = state.profile.injuries || [];
+  let warning = null;
+  injuries.forEach(inj => { if(INJURY_MAP[inj] && INJURY_MAP[inj].includes(name)) warning = inj; });
+  if (warning && !confirm(`Внимание! У вас указана травма: ${warning}.\nВсё равно добавить?`)) return;
+  
+  state.currentWorkout.exercises.push({ name, sets: [{ weight: 0, reps: 8 }] }); 
+  render(); 
+}
 function addSet(i) { const l = state.currentWorkout.exercises[i].sets.slice(-1)[0]; state.currentWorkout.exercises[i].sets.push({ weight: l.weight, reps: l.reps }); render(); }
 function updSet(i, j, f, v) { state.currentWorkout.exercises[i].sets[j][f] = +v; }
 function selectMood(m) { state.tempMood = m; }
@@ -363,13 +367,14 @@ function saveWorkout() {
 }
 
 function showPlates(w) {
-  if (w <= 20) return alert('Гриф');
+  if (w <= 20) return alert('Вес пустого грифа (20 кг)');
   let target = (w - 20) / 2, res = [];
   [25, 20, 15, 10, 5, 2.5, 1.25].forEach(p => { let c = Math.floor(target / p); if (c > 0) { res.push(`${c} × ${p} кг`); target -= c * p; } });
   document.getElementById('plates-result').innerHTML = res.join('<br>') || 'Гриф';
   document.getElementById('plates-modal').classList.add('active');
 }
-  function renderRunning() {
+
+function renderRunning() {
   const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); 
   const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0;
   const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` : '0:00';
@@ -546,7 +551,9 @@ function go(screen) {
   state.screen = screen; render(); window.scrollTo(0,0);
 }
 
+// Инициализация
 render();
+
 </script>
 </body>
 </html>
