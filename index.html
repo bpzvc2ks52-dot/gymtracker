@@ -6,6 +6,7 @@
 <title>Fitness Pro</title>
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root { --bg: #000; --card: #1c1c1e; --card-light: #2c2c2e; --text: #fff; --muted: #8e8e93; --move: #fa114f; --exercise: #a2ff00; --stand: #00d4ff; --accent: #a2ff00; --border: #38383a; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -85,7 +86,6 @@
 <div id="food-modal" class="modal-overlay" onclick="this.classList.remove('active')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Добавить еду</h2>
-    <p class="muted" style="margin-bottom:16px;">Введи название и вес (например: творог 180 или пицца 300)</p>
     <input type="text" id="food-input" placeholder="Название и вес...">
     <button onclick="processFood()">Добавить</button>
   </div>
@@ -110,11 +110,14 @@
 <nav class="bottom-nav" id="nav" style="display: none;">
   <div class="nav-item" data-screen="home" onclick="go('home')"><i class="ph ph-house"></i><span>Сводка</span></div>
   <div class="nav-item" data-screen="workout" onclick="go('workout')"><i class="ph ph-barbell"></i><span>Зал</span></div>
+  <div class="nav-item" data-screen="running" onclick="go('running')"><i class="ph ph-figure-run"></i><span>Бег</span></div>
   <div class="nav-item" data-screen="progress" onclick="go('progress')"><i class="ph ph-chart-line-up"></i><span>Тренды</span></div>
   <div class="nav-item" data-screen="profile" onclick="go('profile')"><i class="ph ph-user"></i><span>Профиль</span></div>
 </nav>
 
 <div id="app" style="display:none;"></div>
+<div id="export-area"></div>
+<div id="report-area"></div>
 
 <script>
   // БАЗА ДАННЫХ ПРОДУКТОВ (ОГРОМНАЯ)
@@ -136,10 +139,13 @@ let state = {
   workouts: JSON.parse(localStorage.getItem('w')) || [],
   bodyLog: JSON.parse(localStorage.getItem('b')) || [],
   measurements: JSON.parse(localStorage.getItem('m')) || [],
+  runs: JSON.parse(localStorage.getItem('r')) || [],
   currentWorkout: null,
   screen: 'home',
   chart: null
 };
+
+let runInt = null, runTime = 0, runActive = false, gpsWatchId = null, lastPos = null, gpsDistance = 0;
 
 function save() {
   localStorage.setItem('p', JSON.stringify(state.profile));
@@ -147,6 +153,7 @@ function save() {
   localStorage.setItem('w', JSON.stringify(state.workouts));
   localStorage.setItem('b', JSON.stringify(state.bodyLog));
   localStorage.setItem('m', JSON.stringify(state.measurements));
+  localStorage.setItem('r', JSON.stringify(state.runs));
 }
 
 function today() { return new Date().toISOString().slice(0, 10); }
@@ -182,6 +189,7 @@ function render() {
   
   if (state.screen === 'home') app.innerHTML = renderHome();
   else if (state.screen === 'workout') app.innerHTML = renderWorkout();
+  else if (state.screen === 'running') app.innerHTML = renderRunning();
   else if (state.screen === 'progress') app.innerHTML = renderProgress();
   else if (state.screen === 'profile') app.innerHTML = renderProfile();
 }
@@ -334,6 +342,50 @@ function showPlates(w) {
   document.getElementById('plates-modal').classList.add('active');
 }
 
+function renderRunning() {
+  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); 
+  const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0;
+  const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` : '0:00';
+  
+  return `
+    <div style="text-align:center; padding-top:40px;">
+      <h1>Бег</h1>
+      <div style="font-size:64px; font-weight:800; margin:20px 0;" id="run-time">${formatTime(runTime)}</div>
+      <div style="display:flex; justify-content:space-around; margin-bottom:40px;">
+        <div><div style="font-size:24px; font-weight:800; color:var(--accent);" id="run-dist">${gpsDistance.toFixed(2)}</div><div class="muted">КМ</div></div>
+        <div><div style="font-size:24px; font-weight:800; color:var(--stand);" id="run-pace">${paceStr}</div><div class="muted">ТЕМП</div></div>
+        <div><div style="font-size:24px; font-weight:800; color:var(--move);" id="run-cal">${cal}</div><div class="muted">ККАЛ</div></div>
+      </div>
+      <button onclick="toggleRun()" id="run-btn" style="border-radius:99px; padding:24px; font-size:22px; background:${runActive ? 'var(--move)' : 'var(--accent)'}; color:${runActive ? '#fff' : '#000'};">
+        <i class="ph ${runActive ? 'ph-pause' : 'ph-play'}"></i> ${runActive ? 'ПАУЗА' : 'СТАРТ'}
+      </button>
+    </div>
+  `;
+}
+
+function formatTime(sec) { return `${Math.floor(sec/3600).toString().padStart(2,'0')}:${Math.floor((sec%3600)/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; const dLat = (lat2 - lat1) * (Math.PI / 180); const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+function toggleRun() {
+  runActive = !runActive;
+  if(runActive) {
+    runInt = setInterval(() => { runTime++; document.getElementById('run-time').innerText = formatTime(runTime); updateRunUI(); }, 1000);
+    if (navigator.geolocation) { gpsWatchId = navigator.geolocation.watchPosition((pos) => { const { latitude, longitude } = pos.coords; if (lastPos) { const dist = getDistanceFromLatLonInKm(lastPos.lat, lastPos.lon, latitude, longitude); if (dist > 0.003) { gpsDistance += dist; lastPos = { lat: latitude, lon: longitude }; updateRunUI(); } } else { lastPos = { lat: latitude, lon: longitude }; } }, (err) => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }); }
+  } else { clearInterval(runInt); if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId); }
+  document.getElementById('app').innerHTML = renderRunning();
+}
+
+function updateRunUI() {
+  const elTime = document.getElementById('run-time'), elDist = document.getElementById('run-dist'), elCal = document.getElementById('run-cal'), elPace = document.getElementById('run-pace');
+  if(elTime) elTime.innerText = formatTime(runTime); if(elDist) elDist.innerText = gpsDistance.toFixed(2);
+  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); if(elCal) elCal.innerText = cal;
+  if (runTime > 0 && gpsDistance > 0) { const paceMin = (runTime / 60) / gpsDistance; if(elPace) elPace.innerText = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`; }
+}
+
 function renderProgress() {
   setTimeout(drawChart, 50);
   let delta = '';
@@ -343,7 +395,6 @@ function renderProgress() {
     delta = diff > 0 ? `<span style="color:var(--move)">+${diff.toFixed(1)} кг</span>` : `<span style="color:var(--accent)">${diff.toFixed(1)} кг</span>`;
   }
 
-  // КОМПАКТНЫЙ КАЛЕНДАРЬ
   const now = new Date();
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
@@ -386,7 +437,7 @@ function renderProgress() {
         </div>
         <button class="secondary" onclick="saveMeasurements()">Сохранить замеры</button>
         <div style="margin-top:20px;">
-          ${state.measurements.length > 0 ? `<div style="font-size:14px; font-weight:700; margin-bottom:8px;">История замеров:</div>` : ''}
+          ${state.measurements.length > 0 ? `<div style="font-size:14px; font-weight:700; margin-bottom:8px;">История:</div>` : ''}
           ${state.measurements.map(m => `<div style="font-size:14px; border-bottom:1px solid var(--border); padding:8px 0; display:flex; justify-content:space-between;"><span>${m.date}</span><span>Г:${m.chest||'-'} Т:${m.waist||'-'} Б:${m.bicep||'-'} Бд:${m.thigh||'-'}</span></div>`).join('')}
         </div>
       </div>
