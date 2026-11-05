@@ -225,15 +225,15 @@
 <div id="report-area"></div>
 
 <script>
-  // ДОБАВЛЯЕМ АНИМАЦИЮ ДЛЯ ИКОНКИ БЕГА
-const style = document.createElement('style');
-style.innerHTML = `
-  @keyframes runAnim { from { transform: translateY(0) scale(1); } to { transform: translateY(-3px) scale(1.1); } }
-  .nav-item.active i.ph-person-simple-run { animation: runAnim 0.4s infinite alternate; color: var(--accent); }
+  // АНИМАЦИЯ ДЛЯ ВСЕХ ИКОНОК
+const styleAnim = document.createElement('style');
+styleAnim.innerHTML = `
+  @keyframes bounceAnim { from { transform: translateY(0) scale(1); } to { transform: translateY(-4px) scale(1.15); } }
+  .nav-item.active i { animation: bounceAnim 0.4s infinite alternate; color: var(--accent); }
 `;
-document.head.appendChild(style);
+document.head.appendChild(styleAnim);
 
-const STORAGE = { profile: 'fit_p10', workouts: 'fit_w10', bodyLog: 'fit_b10', daily: 'fit_d10', runs: 'fit_r10', swims: 'fit_sw10', sleepLog: 'fit_s10', themeColor: 'fit_color10', customEx: 'fit_custom10', measurements: 'fit_m10' };
+const STORAGE = { profile: 'fit_p10', workouts: 'fit_w10', bodyLog: 'fit_b10', daily: 'fit_d10', runs: 'fit_r10', swims: 'fit_sw10', sleepLog: 'fit_s10', themeColor: 'fit_color10', customEx: 'fit_custom10' };
 
 const BASE_EXERCISES_DB = {
   'Приседания со штангой': 'Ноги', 'Жим лёжа': 'Грудь', 'Становая тяга': 'Спина', 
@@ -283,11 +283,12 @@ const COLORS = [{ id: 'green', hex: '#a2ff00' }, { id: 'pink', hex: '#fa114f' },
 let state = {
   profile: load(STORAGE.profile), workouts: load(STORAGE.workouts) || [], bodyLog: load(STORAGE.bodyLog) || [],
   runs: load(STORAGE.runs) || [], swims: load(STORAGE.swims) || [], sleepLog: load(STORAGE.sleepLog) || [], customExercises: load(STORAGE.customEx) || {},
-  measurements: load(STORAGE.measurements) || [],
   themeColor: load(STORAGE.themeColor) || '#a2ff00',
   daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0 },
   screen: 'home', currentWorkout: null, chartInstance: null, tempMood: null
 };
+
+if (!state.daily.habits) state.daily.habits = { water: false, steps: false, sleep: false };
 
 let timerInt = null, timerTime = 90, runInt = null, runTime = 0, runActive = false, gpsWatchId = null, lastPos = null, gpsDistance = 0;
 
@@ -298,35 +299,20 @@ document.documentElement.style.setProperty('--accent', state.themeColor);
 
 if (state.daily.date !== today()) { 
   if (state.daily.sleep) { state.sleepLog.push({ date: state.daily.date, sleep: state.daily.sleep, mood: state.daily.mood }); save(STORAGE.sleepLog, state.sleepLog); }
-  state.daily = { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0 }; save(STORAGE.daily, state.daily); 
+  state.daily = { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0, habits: { water: false, steps: false, sleep: false } }; save(STORAGE.daily, state.daily); 
 }
 
-function acceptCookies() {
-  const splash = document.getElementById('splash-screen');
-  splash.style.opacity = '0';
-  setTimeout(() => { 
-    splash.style.display = 'none'; 
-    if(state.profile) document.getElementById('nav').style.display = 'flex';
-  }, 500);
-  render();
-}
-
+function acceptCookies() { const splash = document.getElementById('splash-screen'); splash.style.opacity = '0'; setTimeout(() => { splash.style.display = 'none'; if(state.profile) document.getElementById('nav').style.display = 'flex'; }, 500); render(); }
 function initApp() { render(); }
-
 function getAllExercises() { return { ...BASE_EXERCISES_DB, ...state.customExercises }; }
 function calcTonnage(workout) { return (!workout || !workout.exercises) ? 0 : workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).reduce((sSum, s) => sSum + (s.weight * s.reps), 0), 0); }
 function calcBodyFat(p) { if (!p || !p.weight) return 0; const bmi = p.weight / Math.pow(p.height / 100, 2); let fat = (1.20 * bmi) + (0.23 * p.age) - (10.8 * (p.sex === 'male' ? 1 : 0)) - 5.4; return Math.max(3, Math.min(50, Math.round(fat))); }
-function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-  const R = 6371; const dLat = (lat2 - lat1) * (Math.PI / 180); const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-}
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) { const R = 6371; const dLat = (lat2 - lat1) * (Math.PI / 180); const dLon = (lon2 - lon1) * (Math.PI / 180); const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))); }
 
 function render() {
   const app = document.getElementById('app');
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.screen === state.screen));
   if (!state.profile) { app.innerHTML = renderOnboarding(); return; }
-  
   if (state.screen === 'home') app.innerHTML = renderHome();
   else if (state.screen === 'newWorkout') app.innerHTML = renderNewWorkout();
   else if (state.screen === 'running') app.innerHTML = renderRunning();
@@ -337,26 +323,13 @@ function render() {
 
 function renderOnboarding() {
   document.getElementById('nav').style.display = 'none';
-  return `<div style="max-width: 400px; margin: 40px auto; text-align:center;">
-    <h1 style="font-size:44px; margin-bottom:10px;">Fitness</h1>
-    <div class="card" style="text-align:left;">
-      <label>Цель</label><select id="goal"><option value="mass">Набор массы</option><option value="cut">Похудение</option></select>
-      <label>Пол</label><select id="sex"><option value="male">Мужской</option><option value="female">Женский</option></select>
-      <label>Вес (кг)</label><input id="weight" type="number" placeholder="75">
-      <label>Рост (см)</label><input id="height" type="number" placeholder="180">
-      <label>Возраст</label><input id="age" type="number" placeholder="25">
-      <label>Исключения в еде</label><input id="food_prefs" type="text" placeholder="например: рыба, молоко">
-      <button onclick="completeOnboarding()" style="margin-top:20px;">Начать</button>
-    </div>
-  </div>`;
+  return `<div style="max-width: 400px; margin: 40px auto; text-align:center;"><h1 style="font-size:44px; margin-bottom:10px;">Fitness</h1><div class="card" style="text-align:left;"><label>Цель</label><select id="goal"><option value="mass">Набор массы</option><option value="cut">Похудение</option></select><label>Пол</label><select id="sex"><option value="male">Мужской</option><option value="female">Женский</option></select><label>Вес (кг)</label><input id="weight" type="number" placeholder="75"><label>Рост (см)</label><input id="height" type="number" placeholder="180"><label>Возраст</label><input id="age" type="number" placeholder="25"><label>Исключения в еде</label><input id="food_prefs" type="text" placeholder="например: рыба, молоко"><button onclick="completeOnboarding()" style="margin-top:20px;">Начать</button></div></div>`;
 }
 
 function completeOnboarding() {
   const p = { goal: document.getElementById('goal').value, sex: document.getElementById('sex').value, weight: +document.getElementById('weight').value, height: +document.getElementById('height').value, age: +document.getElementById('age').value, foodPrefs: document.getElementById('food_prefs').value.toLowerCase().split(',').map(s=>s.trim()) };
   if (!p.weight || !p.height || !p.age) { alert('Заполни все поля'); return; }
-  state.profile = p; save(STORAGE.profile, p);
-  document.getElementById('nav').style.display = 'flex';
-  render();
+  state.profile = p; save(STORAGE.profile, p); document.getElementById('nav').style.display = 'flex'; render();
 }
 
 function renderHome() {
@@ -365,21 +338,7 @@ function renderHome() {
   const stepsPct = Math.min((state.daily.steps / 10000) * 100, 100);
   const wPct = done ? 100 : 0;
   const size = 90, stroke = 8, r = (size-stroke)/2, circ = 2*Math.PI*r;
-  const sleepCard = !state.daily.sleep ? `
-    <div class="card span-2" style="background: linear-gradient(145deg, #1c1c1e, #0a0a0a); border: 1px solid var(--stand);">
-      <h2 style="color:var(--stand);"><i class="ph ph-moon"></i> Как спалось?</h2>
-      <div style="display:flex; gap:10px; margin-bottom:16px;">
-        <button class="sleep-btn secondary" onclick="setSleep(4, this)">4ч</button>
-        <button class="sleep-btn secondary" onclick="setSleep(6, this)">6ч</button>
-        <button class="sleep-btn secondary" onclick="setSleep(8, this)">8+ч</button>
-      </div>
-      <div style="display:flex; justify-content:center; gap:16px; font-size:32px;">
-        <div onclick="setMood('😴', this)" style="cursor:pointer; opacity:0.5; transition:0.2s;" onmouseover="this.style.opacity=1" onmouseout="if(!this.classList.contains('active-mood'))this.style.opacity=0.5">😴</div>
-        <div onclick="setMood('😐', this)" style="cursor:pointer; opacity:0.5; transition:0.2s;" onmouseover="this.style.opacity=1" onmouseout="if(!this.classList.contains('active-mood'))this.style.opacity=0.5">😐</div>
-        <div onclick="setMood('⚡', this)" style="cursor:pointer; opacity:0.5; transition:0.2s;" onmouseover="this.style.opacity=1" onmouseout="if(!this.classList.contains('active-mood'))this.style.opacity=0.5">⚡</div>
-      </div>
-    </div>
-  ` : '';
+  const sleepCard = !state.daily.sleep ? `<div class="card span-2" style="background: linear-gradient(145deg, #1c1c1e, #0a0a0a); border: 1px solid var(--stand);"><h2 style="color:var(--stand);"><i class="ph ph-moon"></i> Как спалось?</h2><div style="display:flex; gap:10px; margin-bottom:16px;"><button class="sleep-btn secondary" onclick="setSleep(4, this)">4ч</button><button class="sleep-btn secondary" onclick="setSleep(6, this)">6ч</button><button class="sleep-btn secondary" onclick="setSleep(8, this)">8+ч</button></div><div style="display:flex; justify-content:center; gap:16px; font-size:32px;"><div onclick="setMood('😴', this)" style="cursor:pointer; opacity:0.5;">😴</div><div onclick="setMood('😐', this)" style="cursor:pointer; opacity:0.5;">😐</div><div onclick="setMood('⚡', this)" style="cursor:pointer; opacity:0.5;">⚡</div></div></div>` : '';
 
   return `
     <h1>Сводка</h1>
@@ -402,70 +361,39 @@ function renderHome() {
           <button class="secondary" onclick="openFoodModal()" style="margin:0; font-size:14px; padding:14px;"><i class="ph ph-fork-knife"></i> Добавить еду</button>
         </div>
       </div>
-      
       <div class="card span-2">
         <h2 style="margin-bottom:16px;"><i class="ph ph-check-square-offset"></i> Привычки на сегодня</h2>
-        <div class="habit-item ${state.daily.habits?.water ? 'done' : ''}" onclick="toggleHabit('water')"><span><i class="ph ph-drop" style="color:var(--stand)"></i> Выпить 2л воды</span><div class="habit-check">${state.daily.habits?.water ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
-        <div class="habit-item ${state.daily.habits?.steps ? 'done' : ''}" onclick="toggleHabit('steps')"><span><i class="ph ph-sneaker" style="color:var(--move)"></i> Пройти 10 000 шагов</span><div class="habit-check">${state.daily.habits?.steps ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
-        <div class="habit-item ${state.daily.habits?.sleep ? 'done' : ''}" onclick="toggleHabit('sleep')"><span><i class="ph ph-moon" style="color:var(--purple)"></i> Спать 8 часов</span><div class="habit-check">${state.daily.habits?.sleep ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
+        <div class="habit-item ${state.daily.habits.water ? 'done' : ''}" onclick="toggleHabit('water')"><span><i class="ph ph-drop" style="color:var(--stand)"></i> Выпить 2л воды</span><div class="habit-check">${state.daily.habits.water ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
+        <div class="habit-item ${state.daily.habits.steps ? 'done' : ''}" onclick="toggleHabit('steps')"><span><i class="ph ph-sneaker" style="color:var(--move)"></i> Пройти 10 000 шагов</span><div class="habit-check">${state.daily.habits.steps ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
+        <div class="habit-item ${state.daily.habits.sleep ? 'done' : ''}" onclick="toggleHabit('sleep')"><span><i class="ph ph-moon" style="color:var(--purple)"></i> Спать 8 часов</span><div class="habit-check">${state.daily.habits.sleep ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
       </div>
-
-      <div class="card" style="min-height:180px;">
-        <h2 style="margin-bottom:10px;">План тренировок</h2>
-        <p class="muted">Программа на неделю</p>
-        <button style="margin-top:20px;" onclick="generateAIPlan()">AI План</button>
-      </div>
-      <div class="card" style="min-height:180px;">
-        <h2 style="margin-bottom:10px;">План питания</h2>
-        <p class="muted">Меню под твою цель</p>
-        <button style="margin-top:20px;" onclick="showPlan('food')">Смотреть меню</button>
-      </div>
-      <div class="card span-2">
-        <button onclick="startWorkout()" style="margin:0;"><i class="ph ph-play"></i> Начать тренировку</button>
-      </div>
-    </div>
-  `;
+      <div class="card" style="min-height:180px;"><h2 style="margin-bottom:10px;">План тренировок</h2><p class="muted">Программа на неделю</p><button style="margin-top:20px;" onclick="generateAIPlan()">AI План</button></div>
+      <div class="card" style="min-height:180px;"><h2 style="margin-bottom:10px;">План питания</h2><p class="muted">Меню под твою цель</p><button style="margin-top:20px;" onclick="showPlan('food')">Смотреть меню</button></div>
+      <div class="card span-2"><button onclick="startWorkout()" style="margin:0;"><i class="ph ph-play"></i> Начать тренировку</button></div>
+    </div>`;
 }
 
-function toggleHabit(habit) {
-  if (!state.daily.habits) state.daily.habits = { water: false, steps: false, sleep: false };
-  state.daily.habits[habit] = !state.daily.habits[habit];
-  save(STORAGE.daily, state.daily); 
-  render();
-}
-
+function toggleHabit(habit) { if (!state.daily.habits) state.daily.habits = { water: false, steps: false, sleep: false }; state.daily.habits[habit] = !state.daily.habits[habit]; save(STORAGE.daily, state.daily); render(); }
 function setSleep(hours, btn) { state.daily.sleep = hours; save(STORAGE.daily, state.daily); document.querySelectorAll('.sleep-btn').forEach(b => { b.classList.remove('active'); b.style.borderColor = 'transparent'; }); btn.style.borderColor = 'var(--stand)'; btn.style.color = 'var(--stand)'; if(state.daily.mood) render(); }
 function setMood(mood, el) { state.daily.mood = mood; save(STORAGE.daily, state.daily); el.classList.add('active-mood'); el.style.opacity = 1; setTimeout(render, 300); }
 function addWater() { state.daily.water = Math.min((state.daily.water || 0) + 1, 8); save(STORAGE.daily, state.daily); render(); }
 function openFoodModal() { document.getElementById('food-input').value = ''; document.getElementById('food-modal').classList.add('active'); }
 function processFoodInput() {
-  const input = document.getElementById('food-input').value.toLowerCase().trim();
-  if(!input) return;
-  let foundProduct = null;
-  let sortedKeys = Object.keys(FOOD_DB).sort((a, b) => b.length - a.length);
+  const input = document.getElementById('food-input').value.toLowerCase().trim(); if(!input) return;
+  let foundProduct = null; let sortedKeys = Object.keys(FOOD_DB).sort((a, b) => b.length - a.length);
   for (const key of sortedKeys) { if (input.includes(key)) { foundProduct = key; break; } }
-
   if (foundProduct) {
-    const match = input.match(/(\d+)/);
-    const weight = match ? parseInt(match[1]) : 100;
-    const p = FOOD_DB[foundProduct]; const multiplier = weight / 100;
-    state.daily.calories = (state.daily.calories || 0) + Math.round(p.c * multiplier);
-    state.daily.p = (state.daily.p || 0) + Math.round(p.p * multiplier);
-    state.daily.f = (state.daily.f || 0) + Math.round(p.f * multiplier);
-    state.daily.cb = (state.daily.cb || 0) + Math.round(p.cb * multiplier);
+    const match = input.match(/(\d+)/); const weight = match ? parseInt(match[1]) : 100; const p = FOOD_DB[foundProduct]; const multiplier = weight / 100;
+    state.daily.calories = (state.daily.calories || 0) + Math.round(p.c * multiplier); state.daily.p = (state.daily.p || 0) + Math.round(p.p * multiplier); state.daily.f = (state.daily.f || 0) + Math.round(p.f * multiplier); state.daily.cb = (state.daily.cb || 0) + Math.round(p.cb * multiplier);
     save(STORAGE.daily, state.daily); closeModal('food-modal'); render();
   } else {
     let manualCal = prompt(`Продукт "${input}" не найден. Введи калории на 100г:`);
-    if (manualCal && !isNaN(manualCal)) {
-      const weight = input.match(/(\d+)/) ? parseInt(input.match(/(\d+)/)[1]) : 100;
-      state.daily.calories += Math.round(manualCal * (weight / 100));
-      save(STORAGE.daily, state.daily); closeModal('food-modal'); render();
-    }
+    if (manualCal && !isNaN(manualCal)) { const weight = input.match(/(\d+)/) ? parseInt(input.match(/(\d+)/)[1]) : 100; state.daily.calories += Math.round(manualCal * (weight / 100)); save(STORAGE.daily, state.daily); closeModal('food-modal'); render(); }
   }
 }
 function generateAIPlan() {
   const goal = state.profile.goal === 'mass' ? 'Набор массы' : 'Похудение';
-  document.getElementById('ai-content').innerHTML = `<p style="margin-bottom:16px; color:var(--muted);">На основе твоей цели (<b>${goal}</b>) AI сгенерировал сплит:</p><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 1: Push (Верх тела)</b><br><span class="muted" style="font-size:14px;">Жим лёжа 4х8, Жим гантелей 3х10, Махи в стороны 3х15</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 2: Pull (Спина)</b><br><span class="muted" style="font-size:14px;">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 3: Legs (Ноги)</b><br><span class="muted" style="font-size:14px;">Приседания 4х8, Жим ногами 3х10, Выпады 3х12</span></div><button onclick="applyAIPlan()" style="margin-top:10px;">Применить план</button>`;
+  document.getElementById('ai-content').innerHTML = `<p style="margin-bottom:16px; color:var(--muted);">На основе твоей цели (<b>${goal}</b>) AI сгенерировал сплит:</p><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 1: Push</b><br><span class="muted" style="font-size:14px;">Жим лёжа 4х8, Жим гантелей 3х10, Махи 3х15</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 2: Pull</b><br><span class="muted" style="font-size:14px;">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 3: Legs</b><br><span class="muted" style="font-size:14px;">Приседания 4х8, Жим ногами 3х10, Выпады 3х12</span></div><button onclick="applyAIPlan()" style="margin-top:10px;">Применить план</button>`;
   document.getElementById('ai-modal').classList.add('active');
 }
 function applyAIPlan() { closeModal('ai-modal'); alert("AI План сохранен в ваш профиль!"); }
@@ -475,46 +403,18 @@ function renderNewWorkout() {
   if (!state.currentWorkout) startWorkout();
   const w = state.currentWorkout, tonnage = calcTonnage(w);
   return `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-      <h1 style="margin:0;">Зал</h1>
-      <div style="background: var(--card); color: var(--accent); padding:10px 20px; border-radius:99px; font-weight:800; font-size:18px;">${tonnage} КГ</div>
-      <button class="danger" style="width:auto; padding:10px 20px; margin:0; border-radius:99px;" onclick="cancelWorkout()">Отмена</button>
-    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;"><h1 style="margin:0;">Зал</h1><div style="background: var(--card); color: var(--accent); padding:10px 20px; border-radius:99px; font-weight:800; font-size:18px;">${tonnage} КГ</div><button class="danger" style="width:auto; padding:10px 20px; margin:0; border-radius:99px;" onclick="cancelWorkout()">Отмена</button></div>
     <div class="workout-layout">
       <div>
         ${w.exercises.length > 0 ? w.exercises.map((ex, i) => `
           <div class="card" style="margin-bottom:16px; padding:20px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:16px;">
-              <strong style="font-size:20px;">${ex.name}</strong>
-              <div style="display:flex; gap:8px;">
-                <button class="btn-icon" onclick="startTimer()"><i class="ph ph-timer"></i></button>
-                <button class="btn-icon" style="color:var(--move);" onclick="removeExercise(${i})"><i class="ph ph-trash"></i></button>
-              </div>
-            </div>
-            ${ex.sets.map((s, j) => `
-              <div class="set-row ${s.isWarmup ? 'warmup' : ''}">
-                <div class="set-num">${s.isWarmup ? 'W' : j + 1}</div>
-                <input type="number" value="${s.weight}" onchange="updateSet(${i},${j},'weight',this.value)">
-                <input type="number" value="${s.reps}" onchange="updateSet(${i},${j},'reps',this.value)">
-                <button class="btn-icon" onclick="showPlatesFromRow(this)"><i class="ph ph-cookie"></i></button>
-              </div>`).join('')}
-            <div style="display:flex; gap:10px; margin-top:16px;">
-              <button class="secondary" style="padding:12px; font-size:15px; margin:0;" onclick="addSet(${i})"><i class="ph ph-plus"></i> Подход</button>
-              <button class="secondary" style="padding:12px; font-size:15px; margin:0; color:var(--move);" onclick="addWarmup(${i})"><i class="ph ph-fire"></i> Разминка</button>
-            </div>
-          </div>
-        `).join('') : `<div class="card" style="text-align:center; padding:60px 20px; border:2px dashed var(--border); background:transparent; box-shadow:none;"><p class="muted">Добавь упражнения</p></div>`}
+            <div style="display:flex; justify-content:space-between; margin-bottom:16px;"><strong style="font-size:20px;">${ex.name}</strong><div style="display:flex; gap:8px;"><button class="btn-icon" onclick="startTimer()"><i class="ph ph-timer"></i></button><button class="btn-icon" style="color:var(--move);" onclick="removeExercise(${i})"><i class="ph ph-trash"></i></button></div></div>
+            ${ex.sets.map((s, j) => `<div class="set-row ${s.isWarmup ? 'warmup' : ''}"><div class="set-num">${s.isWarmup ? 'W' : j + 1}</div><input type="number" value="${s.weight}" onchange="updateSet(${i},${j},'weight',this.value)"><input type="number" value="${s.reps}" onchange="updateSet(${i},${j},'reps',this.value)"><button class="btn-icon" onclick="showPlatesFromRow(this)"><i class="ph ph-cookie"></i></button></div>`).join('')}
+            <div style="display:flex; gap:10px; margin-top:16px;"><button class="secondary" style="padding:12px; font-size:15px; margin:0;" onclick="addSet(${i})"><i class="ph ph-plus"></i> Подход</button><button class="secondary" style="padding:12px; font-size:15px; margin:0; color:var(--move);" onclick="addWarmup(${i})"><i class="ph ph-fire"></i> Разминка</button></div>
+          </div>`).join('') : `<div class="card" style="text-align:center; padding:60px 20px; border:2px dashed var(--border); background:transparent; box-shadow:none;"><p class="muted">Добавь упражнения</p></div>`}
         ${w.exercises.length > 0 ? `<button onclick="promptFinishWorkout()" style="margin-top:10px;"><i class="ph ph-check-circle"></i> Завершить</button>` : ''}
       </div>
-      <div>
-        <div class="card" style="padding:20px; margin-bottom:16px;">
-          <h2>Все упражнения</h2>
-          <button class="secondary" onclick="openCustomExModal()" style="margin-bottom:12px; color:var(--accent);"><i class="ph ph-plus"></i> Свое упражнение</button>
-          <div style="max-height:300px; overflow-y:auto; padding-right:5px;">
-            ${Object.keys(getAllExercises()).map(ex => `<button class="secondary" style="justify-content:flex-start; padding:16px; margin-bottom:8px;" onclick="addExercise('${ex}')">${ex}</button>`).join('')}
-          </div>
-        </div>
-      </div>
+      <div><div class="card" style="padding:20px; margin-bottom:16px;"><h2>Все упражнения</h2><button class="secondary" onclick="openCustomExModal()" style="margin-bottom:12px; color:var(--accent);"><i class="ph ph-plus"></i> Свое упражнение</button><div style="max-height:300px; overflow-y:auto; padding-right:5px;">${Object.keys(getAllExercises()).map(ex => `<button class="secondary" style="justify-content:flex-start; padding:16px; margin-bottom:8px;" onclick="addExercise('${ex}')">${ex}</button>`).join('')}</div></div></div>
     </div>`;
 }
 
@@ -527,11 +427,7 @@ function updateSet(i, j, f, v) { state.currentWorkout.exercises[i].sets[j][f] = 
 function addWarmup(i) { const ex = state.currentWorkout.exercises[i]; const w = ex.sets[0]?.weight || 20; ex.sets.unshift({ weight: Math.round((w*0.5)/2.5)*2.5, reps: 10, isWarmup: true }, { weight: Math.round((w*0.7)/2.5)*2.5, reps: 8, isWarmup: true }); render(); }
 function promptFinishWorkout() { if (state.currentWorkout.exercises.length === 0) return; state.tempMood = null; document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected')); document.getElementById('workout-note').value = ''; document.getElementById('feedback-modal').classList.add('active'); }
 function selectMood(emoji) { state.tempMood = emoji; document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected')); event.target.classList.add('selected'); }
-function saveWorkoutWithFeedback() {
-  const note = document.getElementById('workout-note').value;
-  state.workouts.push({ ...state.currentWorkout, id: Date.now(), tonnage: calcTonnage(state.currentWorkout), mood: state.tempMood || '😐', note: note });
-  save(STORAGE.workouts, state.workouts); closeModal('feedback-modal'); state.currentWorkout = null; state.screen = 'home'; render();
-}
+function saveWorkoutWithFeedback() { const note = document.getElementById('workout-note').value; state.workouts.push({ ...state.currentWorkout, id: Date.now(), tonnage: calcTonnage(state.currentWorkout), mood: state.tempMood || '😐', note: note }); save(STORAGE.workouts, state.workouts); closeModal('feedback-modal'); state.currentWorkout = null; state.screen = 'home'; render(); }
 function cancelWorkout() { if(confirm('Отменить тренировку?')) { state.currentWorkout = null; state.screen = 'home'; render(); } }
 
 function renderRunning() {
@@ -558,17 +454,15 @@ function updateRunUI() {
 function renderRunningUI() { document.getElementById('app').innerHTML = renderRunning(); }
 function saveRun(cal) { if (gpsDistance === 0) return alert('Нет данных GPS.'); const paceMin = (runTime / 60) / gpsDistance; state.runs.unshift({ date: today(), distance: +gpsDistance.toFixed(2), time: formatTime(runTime), calories: cal, pace: `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` }); save(STORAGE.runs, state.runs); runTime = 0; runActive = false; gpsDistance = 0; lastPos = null; render(); }
 
-// ЭКРАН ПЛАВАНИЯ С НОВЫМИ СТИЛЯМИ
 function renderSwimming() {
   const sw = state.profile.swim || { time: 30, dist: 1000, style: 'Кроль (вольный стиль)' };
   let muscles = "";
-  
   if(sw.style.includes('Кроль')) muscles = "Широчайшие мышцы спины, дельтовидные (плечи), трицепсы, пресс, ягодицы.";
   else if(sw.style.includes('Брасс')) muscles = "Большая грудная, широчайшие, квадрицепсы, бицепсы бедер, ягодицы, трицепсы.";
   else if(sw.style.includes('Баттерфляй')) muscles = "Грудные, широчайшие, дельтовидные, пресс, мышцы ног (движение дельфином).";
   else if(sw.style.includes('На спине')) muscles = "Широчайшие, задние пучки дельтовидных, пресс, квадрицепсы, ягодицы.";
-  else if(sw.style.includes('Комплексное')) muscles = "Абсолютно все группы мышц (грудь, спина, ноги, руки, плечи, пресс). Максимальная нагрузка на сердечно-сосудистую систему.";
-  else if(sw.style.includes('С ластами')) muscles = "Мышцы ног (квадрицепс, бицепс бедра, икры), ягодицы, пресс, спина (за счет большей амплитуды).";
+  else if(sw.style.includes('Комплексное')) muscles = "Абсолютно все группы мышц (грудь, спина, ноги, руки, плечи, пресс).";
+  else if(sw.style.includes('С ластами')) muscles = "Мышцы ног (квадрицепс, бицепс бедра, икры), ягодицы, пресс, спина.";
   else if(sw.style.includes('Колобашка')) muscles = "Изолированная нагрузка на ноги: квадрицепсы, бицепсы бедер, икроножные мышцы, ягодицы.";
 
   return `
@@ -586,50 +480,27 @@ function renderSwimming() {
           <option value="Плавание с ластами" ${sw.style.includes('С ластами')?'selected':''}>Плавание с ластами</option>
           <option value="Колобашка (только ноги)" ${sw.style.includes('Колобашка')?'selected':''}>Колобашка (только ноги)</option>
         </select>
-        <div style="display:flex; gap:10px;">
-          <div style="flex:1;"><label>Время (мин)</label><input type="number" id="swim-time" value="${sw.time}"></div>
-          <div style="flex:1;"><label>Дистанция (м)</label><input type="number" id="swim-dist" value="${sw.dist}"></div>
-        </div>
+        <div style="display:flex; gap:10px;"><div style="flex:1;"><label>Время (мин)</label><input type="number" id="swim-time" value="${sw.time}"></div><div style="flex:1;"><label>Дистанция (м)</label><input type="number" id="swim-dist" value="${sw.dist}"></div></div>
         <button style="margin-top:10px;" onclick="saveSwim()"><i class="ph ph-check"></i> Сохранить заплыв</button>
       </div>
-
       <div class="card span-2" style="border-left: 4px solid var(--stand);">
         <h2 style="color: var(--stand);"><i class="ph ph-activity"></i> Восстановление мышц</h2>
         <p class="muted" style="margin-bottom:10px;">При стиле <b>${sw.style}</b> основную нагрузку получают:</p>
-        <div style="background:var(--card-light); padding:16px; border-radius:12px; font-weight:600; color:var(--text); line-height: 1.5;">
-          ${muscles}
-        </div>
+        <div style="background:var(--card-light); padding:16px; border-radius:12px; font-weight:600; color:var(--text); line-height: 1.5;">${muscles}</div>
         <p class="muted" style="font-size:12px; margin-top:10px;">Эти мышцы нуждаются в отдыхе (от 24 до 48 часов) перед следующей тяжелой тренировкой в зале.</p>
       </div>
-
       <div class="card span-2">
         <h2>История заплывов</h2>
         ${(state.swims || []).map(s => `<div style="padding:12px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;"><span>${s.date} - ${s.style}</span> <b>${s.dist} м / ${s.time} мин</b></div>`).join('') || '<p class="muted">Пока пусто</p>'}
       </div>
-    </div>
-  `;
+    </div>`;
 }
-
-function updateSwimStyle(val) {
-  if(!state.profile.swim) state.profile.swim = { time: 30, dist: 1000, style: val };
-  state.profile.swim.style = val;
-  save(STORAGE.profile, state.profile);
-  render();
-}
-
+function updateSwimStyle(val) { if(!state.profile.swim) state.profile.swim = { time: 30, dist: 1000, style: val }; state.profile.swim.style = val; save(STORAGE.profile, state.profile); render(); }
 function saveSwim() {
-  const time = +document.getElementById('swim-time').value;
-  const dist = +document.getElementById('swim-dist').value;
-  const style = document.getElementById('swim-style').value;
-  
-  state.profile.swim = { time, dist, style };
-  save(STORAGE.profile, state.profile);
-  
-  state.swims = state.swims || [];
-  state.swims.unshift({ date: today(), time, dist, style });
-  save(STORAGE.swims, state.swims);
-  alert('Заплыв сохранен!');
-  render();
+  const time = +document.getElementById('swim-time').value, dist = +document.getElementById('swim-dist').value, style = document.getElementById('swim-style').value;
+  state.profile.swim = { time, dist, style }; save(STORAGE.profile, state.profile);
+  state.swims = state.swims || []; state.swims.unshift({ date: today(), time, dist, style }); save(STORAGE.swims, state.swims);
+  alert('Заплыв сохранен!'); render();
 }
 
 function renderProgress() {
@@ -642,7 +513,6 @@ function renderProgress() {
     else if (diff < 0) { deltaText = `${diff.toFixed(1)} кг`; deltaColor = 'var(--accent)'; }
     else { deltaText = '0 кг'; }
   }
-
   let muscleLoad = { 'Грудь': 0, 'Спина': 0, 'Ноги': 0, 'Руки': 0, 'Плечи': 0 };
   const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
   state.workouts.filter(w => new Date(w.date) >= weekAgo).forEach(w => { w.exercises.forEach(ex => { const group = getAllExercises()[ex.name] || 'Другое'; if (muscleLoad[group] !== undefined) { muscleLoad[group] += ex.sets.filter(s=>!s.isWarmup).reduce((sum, s) => sum + (s.weight * s.reps), 0); } }); });
@@ -654,37 +524,22 @@ function renderProgress() {
     <h1>Тренды</h1>
     <div class="bento-grid">
       <div class="card" style="display:flex; align-items:center; gap:20px; padding:20px;">
-        <div style="flex:1;">
-          <h2 style="margin-bottom:8px;">Карта мышц</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Нагрузка за 7 дней</p>
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#fa114f;"></div><span style="font-size:12px;">Восстановление</span></div>
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#a2ff00;"></div><span style="font-size:12px;">Готово</span></div>
-          <div style="display:flex; align-items:center; gap:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#2c2c2e;"></div><span style="font-size:12px;">Без нагрузки</span></div>
-        </div>
+        <div style="flex:1;"><h2 style="margin-bottom:8px;">Карта мышц</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Нагрузка за 7 дней</p><div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#fa114f;"></div><span style="font-size:12px;">Восстановление</span></div><div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#a2ff00;"></div><span style="font-size:12px;">Готово</span></div><div style="display:flex; align-items:center; gap:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#2c2c2e;"></div><span style="font-size:12px;">Без нагрузки</span></div></div>
         <svg viewBox="0 0 100 200" class="muscle-svg"><circle cx="50" cy="20" r="12" fill="#2c2c2e"></circle><rect x="25" y="35" width="15" height="15" rx="5" fill="${getColor('Плечи')}"></rect><rect x="60" y="35" width="15" height="15" rx="5" fill="${getColor('Плечи')}"></rect><rect x="30" y="45" width="40" height="25" rx="5" fill="${getColor('Грудь')}"></rect><rect x="15" y="55" width="12" height="35" rx="5" fill="${getColor('Руки')}"></rect><rect x="73" y="55" width="12" height="35" rx="5" fill="${getColor('Руки')}"></rect><rect x="38" y="75" width="24" height="30" rx="5" fill="#2c2c2e"></rect><rect x="30" y="110" width="16" height="60" rx="5" fill="${getColor('Ноги')}"></rect><rect x="54" y="110" width="16" height="60" rx="5" fill="${getColor('Ноги')}"></rect></svg>
       </div>
-      <div class="card">
-        <h2>Лидерборд</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Тоннаж за месяц</p>
-        ${friends.map((f, i) => `<div class="leaderboard-item"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:800; color:${i===0?'#ffd700':'var(--muted)'}">${i+1}</span><div class="avatar" style="background:${f.me ? 'var(--accent)' : 'var(--card-light)'}; color:${f.me ? '#000' : '#fff'}">${f.name[0]}</div><span style="font-weight:${f.me ? '800' : '500'}; color:${f.me ? 'var(--accent)' : 'var(--text)'}">${f.name}</span></div><span style="font-weight:700;">${f.ton.toLocaleString('ru')} кг</span></div>`).join('')}
-      </div>
+      <div class="card"><h2>Лидерборд</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Тоннаж за месяц</p>${friends.map((f, i) => `<div class="leaderboard-item"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:800; color:${i===0?'#ffd700':'var(--muted)'}">${i+1}</span><div class="avatar" style="background:${f.me ? 'var(--accent)' : 'var(--card-light)'}; color:${f.me ? '#000' : '#fff'}">${f.name[0]}</div><span style="font-weight:${f.me ? '800' : '500'}; color:${f.me ? 'var(--accent)' : 'var(--text)'}">${f.name}</span></div><span style="font-weight:700;">${f.ton.toLocaleString('ru')} кг</span></div>`).join('')}</div>
       <div class="card span-2">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
-          <div><h2 style="margin:0;">Вес тела</h2><div style="font-size:18px; font-weight:800; margin-top:8px; color:${deltaColor};">${deltaText}</div></div>
-          <div style="display:flex; gap:10px;"><input id="bw" type="number" placeholder="Вес" style="width:100px; margin:0; padding:10px;"><button style="width:44px; height:44px; margin:0; padding:0; border-radius:12px;" onclick="logBodyWeight()"><i class="ph ph-plus"></i></button></div>
-        </div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;"><div><h2 style="margin:0;">Вес тела</h2><div style="font-size:18px; font-weight:800; margin-top:8px; color:${deltaColor};">${deltaText}</div></div><div style="display:flex; gap:10px;"><input id="bw" type="number" placeholder="Вес" style="width:100px; margin:0; padding:10px;"><button style="width:44px; height:44px; margin:0; padding:0; border-radius:12px;" onclick="logBodyWeight()"><i class="ph ph-plus"></i></button></div></div>
         <div class="chart-container"><canvas id="weightChart"></canvas></div>
       </div>
       <div class="card span-2" style="text-align:center; padding:30px;"><h2>PDF Отчет для тренера</h2><p class="muted" style="margin-bottom:20px;">Скачай полную статистику тренировок</p><button onclick="downloadReport()"><i class="ph ph-file-pdf"></i> Скачать PDF</button></div>
     </div>`;
 }
-
 function drawWeightChart() {
-  const ctx = document.getElementById('weightChart'); if (!ctx) return;
-  if (state.chartInstance) state.chartInstance.destroy(); 
+  const ctx = document.getElementById('weightChart'); if (!ctx) return; if (state.chartInstance) state.chartInstance.destroy(); 
   const sorted = [...state.bodyLog].sort((a, b) => a.date.localeCompare(b.date));
-  let labels = sorted.length ? sorted.map(b => b.date.slice(5)) : ['Нет данных'];
-  let data = sorted.length ? sorted.map(b => b.weight) : [state.profile.weight];
-  let gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 250);
-  gradient.addColorStop(0, state.themeColor + '88'); gradient.addColorStop(1, state.themeColor + '00');
+  let labels = sorted.length ? sorted.map(b => b.date.slice(5)) : ['Нет данных']; let data = sorted.length ? sorted.map(b => b.weight) : [state.profile.weight];
+  let gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 250); gradient.addColorStop(0, state.themeColor + '88'); gradient.addColorStop(1, state.themeColor + '00');
   state.chartInstance = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ data: data, borderColor: state.themeColor, backgroundColor: gradient, borderWidth: 4, tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#fff' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93' } }, x: { grid: { display: false }, ticks: { color: '#8e8e93' } } } } });
 }
 function logBodyWeight() { const w = +document.getElementById('bw').value; if (!w) return; state.bodyLog.push({ date: today(), weight: w }); save(STORAGE.bodyLog, state.bodyLog); render(); }
@@ -694,28 +549,21 @@ function renderProfile() {
     <h1>Профиль</h1>
     <div class="card" style="text-align:center; padding:40px 24px;">
       <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, var(--move), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:48px; color:#fff; margin:0 auto 20px;"><i class="ph ph-user"></i></div>
-      <h2 style="margin-bottom:8px;">Атлет</h2>
-      <p class="muted" style="margin-bottom:16px;">Исключения: ${state.profile.foodPrefs?.length ? state.profile.foodPrefs.join(', ') : 'Нет'}</p>
+      <h2 style="margin-bottom:8px;">Атлет</h2><p class="muted" style="margin-bottom:16px;">Исключения: ${state.profile.foodPrefs?.length ? state.profile.foodPrefs.join(', ') : 'Нет'}</p>
       <div style="margin-top:20px; margin-bottom:20px;"><label>Цвет интерфейса</label><div style="display:flex; justify-content:center; gap:12px; margin-top:10px;">${COLORS.map(c => `<div class="color-swatch ${state.themeColor === c.hex ? 'active' : ''}" style="background:${c.hex}" onclick="changeThemeColor('${c.hex}')"></div>`).join('')}</div></div>
       <button class="secondary" onclick="downloadReport()"><i class="ph ph-file-pdf"></i> Скачать отчет</button>
     </div>
-    <div class="card">
-      <h2>История тренировок</h2>
-      ${[...state.workouts].sort((a,b)=>b.id-a.id).slice(0,5).map(w => `<div style="padding:16px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showHistoryDetails(${w.id})"><div><div style="font-weight:700;">${w.date}</div><div class="muted" style="font-size:13px; margin-top:4px;">${w.exercises.map(e => e.name).join(', ').slice(0, 30)}...</div></div><div style="display:flex; align-items:center; gap:10px;"><span style="font-size:24px;">${w.mood || '😐'}</span><i class="ph ph-caret-right muted"></i></div></div>`).join('')}
-    </div>
+    <div class="card"><h2>История тренировок</h2>${[...state.workouts].sort((a,b)=>b.id-a.id).slice(0,5).map(w => `<div style="padding:16px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showHistoryDetails(${w.id})"><div><div style="font-weight:700;">${w.date}</div><div class="muted" style="font-size:13px; margin-top:4px;">${w.exercises.map(e => e.name).join(', ').slice(0, 30)}...</div></div><div style="display:flex; align-items:center; gap:10px;"><span style="font-size:24px;">${w.mood || '😐'}</span><i class="ph ph-caret-right muted"></i></div></div>`).join('')}</div>
     <div class="card"><button class="danger" onclick="resetApp()"><i class="ph ph-trash"></i> Сбросить данные</button></div>`;
 }
 function changeThemeColor(hex) { state.themeColor = hex; save(STORAGE.themeColor, hex); document.documentElement.style.setProperty('--accent', hex); render(); }
 function showHistoryDetails(id) {
-  const w = state.workouts.find(x => x.id === id); if (!w) return;
-  document.getElementById('history-title').innerText = `Тренировка от ${w.date}`;
+  const w = state.workouts.find(x => x.id === id); if (!w) return; document.getElementById('history-title').innerText = `Тренировка от ${w.date}`;
   document.getElementById('history-content').innerHTML = `<div style="text-align:center; font-size:36px; margin-bottom:20px;">${w.mood || '😐'}</div>${w.note ? `<div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:20px; font-style:italic;">"${w.note}"</div>` : ''}<div style="margin-bottom:16px; font-weight:700; color:var(--accent);">Тоннаж: ${w.tonnage} кг</div>${w.exercises.map(ex => `<div style="margin-bottom:16px;"><div style="font-weight:700; margin-bottom:8px;">${ex.name}</div><div style="display:flex; flex-wrap:wrap; gap:8px;">${ex.sets.map((s, i) => `<div style="background:var(--card-light); padding:8px 12px; border-radius:8px; font-size:14px; ${s.isWarmup ? 'color:var(--move)' : ''}">${s.isWarmup ? 'W' : i+1}: ${s.weight}кг × ${s.reps}</div>`).join('')}</div></div>`).join('')}`;
   document.getElementById('history-modal').classList.add('active');
 }
 function downloadReport() {
-  const area = document.getElementById('report-area');
-  const fat = calcBodyFat(state.profile);
-  const totalTon = state.workouts.reduce((sum, w) => sum + w.tonnage, 0);
+  const area = document.getElementById('report-area'); const fat = calcBodyFat(state.profile); const totalTon = state.workouts.reduce((sum, w) => sum + w.tonnage, 0);
   area.innerHTML = `<div style="text-align:center; margin-bottom:30px;"><div style="width:50px; height:50px; background:${state.themeColor}; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:10px;"><i class="ph-bold ph-barbell" style="color:#000; font-size:28px;"></i></div><h1 style="color:#fff; margin:0; font-size:28px; font-weight:800;">Fitness Pro Отчет</h1><p style="color:#8e8e93; margin:5px 0 0 0;">Дата: ${today()}</p></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:30px;"><div style="background:#1c1c1e; padding:20px; border-radius:16px; text-align:center;"><div style="color:#8e8e93; font-size:12px; font-weight:700; text-transform:uppercase;">Тоннаж</div><div style="font-size:32px; font-weight:800; color:${state.themeColor};">${totalTon.toLocaleString('ru')}</div><div style="color:#8e8e93; font-size:12px;">КГ</div></div><div style="background:#1c1c1e; padding:20px; border-radius:16px; text-align:center;"><div style="color:#8e8e93; font-size:12px; font-weight:700; text-transform:uppercase;">% Жира</div><div style="font-size:32px; font-weight:800; color:#00d4ff;">${fat}%</div><div style="color:#8e8e93; font-size:12px;">ПРИМЕРНО</div></div></div><h2 style="color:#fff; font-size:20px; margin-bottom:15px;">Последние тренировки</h2>${state.workouts.slice(0, 5).map(w => `<div style="background:#1c1c1e; padding:16px; border-radius:16px; margin-bottom:12px;"><div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span style="color:#fff; font-weight:700;">${w.date}</span><span style="color:${state.themeColor}; font-weight:800;">${w.tonnage} кг</span></div><div style="color:#8e8e93; font-size:13px;">${w.exercises.map(e => e.name).join(', ')}</div></div>`).join('')}<div style="text-align:center; margin-top:30px; color:#8e8e93; font-size:12px;">Сгенерировано в приложении Fitness Pro</div>`;
   html2canvas(area, { scale: 2, backgroundColor: '#111111' }).then(canvas => { const link = document.createElement('a'); link.download = `fitness_report_${today()}.png`; link.href = canvas.toDataURL('image/png'); link.click(); });
 }
@@ -732,12 +580,7 @@ function resetApp() { if (confirm('Удалить все данные?')) { loca
 function go(screen) { if (screen === 'newWorkout' && !state.currentWorkout) { startWorkout(); return; } state.screen = screen; render(); window.scrollTo(0,0); }
 
 initApp();
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js');
-  });
-}
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); }); }
 </script>
 </body>
 </html>
