@@ -16,7 +16,7 @@
     --bg: #000000; --card: #1c1c1e; --card-light: #2c2c2e;
     --text: #ffffff; --muted: #8e8e93;
     --move: #fa114f; --exercise: #a2ff00; --stand: #00d4ff; 
-    --accent: #a2ff00; 
+    --accent: #a2ff00; --premium: #ffd700;
     --radius: 28px; --border: #38383a; --nav-bg: rgba(28,28,30,0.9);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -34,6 +34,7 @@
   button:active { opacity: 0.7; transform: scale(0.98); }
   button.secondary { background: var(--card-light); color: var(--text); }
   button.danger { background: rgba(250,17,79,0.15); color: var(--move); }
+  button.premium-btn { background: linear-gradient(90deg, #ffd700, #ffaa00); color: #000; }
   
   input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=number] { -moz-appearance: textfield; }
@@ -49,7 +50,6 @@
   
   .muted { color: var(--muted); font-size: 15px; font-weight: 500; }
   .stat-num { font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: -1.5px; }
-  .stat-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
 
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -74,8 +74,6 @@
   .set-row { display: grid; grid-template-columns: 40px 1fr 1fr 44px; gap: 10px; align-items: center; margin-bottom: 12px; }
   .set-num { width: 40px; height: 40px; background: var(--card-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--muted); }
   .set-row input { margin-bottom: 0; padding: 14px; font-size: 17px; border-radius: 12px; text-align: center; font-weight: 700; }
-  .set-row.warmup .set-num { color: var(--move); }
-  .set-row.warmup input { color: var(--move); }
   .btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 12px; background: var(--card-light); color: var(--text); border: none; display: flex; align-items: center; justify-content: center; font-size: 20px; }
 
   .run-screen { display: flex; flex-direction: column; height: calc(100vh - 160px); justify-content: center; }
@@ -100,7 +98,14 @@
   .leaderboard-item { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
   .avatar { width:32px; height:32px; border-radius:50%; background:var(--card-light); display:flex; align-items:center; justify-content:center; font-weight:bold; color:var(--accent); }
 
-  #export-area, #report-area { position: absolute; left: -9999px; top: -9999px; width: 400px; background: #111; padding: 30px; border-radius: 30px; color: #fff; font-family: -apple-system, sans-serif; }
+  /* Достижения */
+  .achieve-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 16px; }
+  .achieve-item { aspect-ratio: 1; background: var(--card-light); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3; transition: 0.3s; }
+  .achieve-item.unlocked { opacity: 1; background: rgba(162,255,0,0.1); border: 1px solid var(--accent); }
+  .achieve-icon { font-size: 28px; color: var(--muted); margin-bottom: 4px; }
+  .achieve-item.unlocked .achieve-icon { color: var(--accent); }
+  .achieve-title { font-size: 10px; font-weight: 700; text-align: center; color: var(--muted); }
+  .achieve-item.unlocked .achieve-title { color: var(--text); }
 
   .splash-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; justify-content: space-between; padding: 40px 24px; align-items: center; transition: opacity 0.5s ease; }
   .splash-content { display: flex; flex-direction: column; align-items: center; margin-top: 25vh; text-align: center; }
@@ -121,6 +126,7 @@
     .modal-content { border-radius: 32px; max-width: 450px; }
     .run-time-big { font-size: 110px; }
     .workout-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    .achieve-grid { grid-template-columns: repeat(6, 1fr); }
   }
 </style>
 </head>
@@ -139,10 +145,25 @@
   </div>
 </div>
 
+<!-- МОДАЛКА ПРЕМИУМ -->
+<div id="premium-modal" class="modal-overlay" onclick="closeModal('premium-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <i class="ph-fill ph-crown" style="font-size:64px; color:var(--premium); margin-bottom:16px;"></i>
+    <h2 style="margin-bottom:8px;">Fitness Pro Premium</h2>
+    <p class="muted" style="margin-bottom:24px;">Разблокируй полный потенциал</p>
+    <ul style="text-align:left; margin:0 0 24px 0; padding:0 20px; list-style:none; line-height:2;">
+      <li><i class="ph ph-check-circle" style="color:var(--accent)"></i> AI-тренер и планы</li>
+      <li><i class="ph ph-check-circle" style="color:var(--accent)"></i> Анализ состава тела</li>
+      <li><i class="ph ph-check-circle" style="color:var(--accent)"></i> Безлимитные экспорты</li>
+    </ul>
+    <button class="premium-btn" onclick="buyPremium()">Оформить за 299 ₽ / мес</button>
+    <button class="secondary" onclick="closeModal('premium-modal')">Позже</button>
+  </div>
+</div>
+
 <div id="food-modal" class="modal-overlay" onclick="closeModal('food-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Добавить еду</h2>
-    <p class="muted" style="font-size:14px; margin-bottom:20px;">Напиши название и вес.<br>Например: <b>шаурма 200</b> или <b>творог 180</b></p>
     <input type="text" id="food-input" placeholder="Название и вес..." style="text-align:center; margin-bottom:20px;">
     <button onclick="processFoodInput()"><i class="ph ph-check"></i> Добавить в дневник</button>
   </div>
@@ -157,7 +178,7 @@
       <div class="mood-btn" onclick="selectMood('🥵')">🥵</div>
       <div class="mood-btn" onclick="selectMood('😴')">😴</div>
     </div>
-    <input type="text" id="workout-note" placeholder="Заметка (например: болела спина)" style="text-align:left;">
+    <input type="text" id="workout-note" placeholder="Заметка..." style="text-align:left;">
     <button onclick="saveWorkoutWithFeedback()" style="margin-top:10px;">Сохранить тренировку</button>
   </div>
 </div>
@@ -221,19 +242,24 @@
 </nav>
 
 <div id="app"></div>
-<div id="export-area"></div>
+<div id="export-area" style="position:absolute; left:-9999px; top:-9999px; width:400px; background:#000; padding:30px; border-radius:30px; color:#fff; font-family:-apple-system,sans-serif;"></div>
 <div id="report-area"></div>
 
 <script>
   // АНИМАЦИЯ ДЛЯ ВСЕХ ИКОНОК
 const styleAnim = document.createElement('style');
-styleAnim.innerHTML = `
-  @keyframes bounceAnim { from { transform: translateY(0) scale(1); } to { transform: translateY(-4px) scale(1.15); } }
-  .nav-item.active i { animation: bounceAnim 0.4s infinite alternate; color: var(--accent); }
-`;
+styleAnim.innerHTML = `@keyframes bounceAnim { from { transform: translateY(0) scale(1); } to { transform: translateY(-4px) scale(1.15); } } .nav-item.active i { animation: bounceAnim 0.4s infinite alternate; color: var(--accent); }`;
 document.head.appendChild(styleAnim);
 
-const STORAGE = { profile: 'fit_p10', workouts: 'fit_w10', bodyLog: 'fit_b10', daily: 'fit_d10', runs: 'fit_r10', swims: 'fit_sw10', sleepLog: 'fit_s10', themeColor: 'fit_color10', customEx: 'fit_custom10' };
+const STORAGE = { profile: 'fit_p10', workouts: 'fit_w10', bodyLog: 'fit_b10', daily: 'fit_d10', runs: 'fit_r10', swims: 'fit_sw10', measurements: 'fit_m10', achievements: 'fit_a10', premium: 'fit_prem10', themeColor: 'fit_color10', customEx: 'fit_custom10' };
+
+const ACHIEVEMENTS_LIST = [
+  { id: 'first_workout', name: 'Первый шаг', icon: 'ph-sneaker', cond: (s) => s.workouts.length > 0 },
+  { id: 'run_5km', name: 'Бегун', icon: 'ph-person-simple-run', cond: (s) => s.runs.reduce((a, b) => a + b.distance, 0) >= 5 },
+  { id: 'swim_1km', name: 'Дельфин', icon: 'ph-waves', cond: (s) => (s.swims || []).reduce((a, b) => a + b.dist, 0) >= 1000 },
+  { id: 'ton_10k', name: 'Тонна', icon: 'ph-scales', cond: (s) => s.workouts.reduce((a, b) => a + b.tonnage, 0) >= 10000 },
+  { id: 'measure', name: 'Замеры', icon: 'ph-ruler', cond: (s) => (s.measurements || []).length > 0 }
+];
 
 const BASE_EXERCISES_DB = {
   'Приседания со штангой': 'Ноги', 'Жим лёжа': 'Грудь', 'Становая тяга': 'Спина', 
@@ -282,9 +308,10 @@ const COLORS = [{ id: 'green', hex: '#a2ff00' }, { id: 'pink', hex: '#fa114f' },
 
 let state = {
   profile: load(STORAGE.profile), workouts: load(STORAGE.workouts) || [], bodyLog: load(STORAGE.bodyLog) || [],
-  runs: load(STORAGE.runs) || [], swims: load(STORAGE.swims) || [], sleepLog: load(STORAGE.sleepLog) || [], customExercises: load(STORAGE.customEx) || {},
+  runs: load(STORAGE.runs) || [], swims: load(STORAGE.swims) || [], measurements: load(STORAGE.measurements) || [], achievements: load(STORAGE.achievements) || [],
+  isPremium: load(STORAGE.premium) || false, customExercises: load(STORAGE.customEx) || {},
   themeColor: load(STORAGE.themeColor) || '#a2ff00',
-  daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0 },
+  daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0, habits: { water: false, steps: false, sleep: false } },
   screen: 'home', currentWorkout: null, chartInstance: null, tempMood: null
 };
 
@@ -298,7 +325,6 @@ function today() { return new Date().toISOString().slice(0, 10); }
 document.documentElement.style.setProperty('--accent', state.themeColor);
 
 if (state.daily.date !== today()) { 
-  if (state.daily.sleep) { state.sleepLog.push({ date: state.daily.date, sleep: state.daily.sleep, mood: state.daily.mood }); save(STORAGE.sleepLog, state.sleepLog); }
   state.daily = { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0, habits: { water: false, steps: false, sleep: false } }; save(STORAGE.daily, state.daily); 
 }
 
@@ -308,6 +334,37 @@ function getAllExercises() { return { ...BASE_EXERCISES_DB, ...state.customExerc
 function calcTonnage(workout) { return (!workout || !workout.exercises) ? 0 : workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).reduce((sSum, s) => sSum + (s.weight * s.reps), 0), 0); }
 function calcBodyFat(p) { if (!p || !p.weight) return 0; const bmi = p.weight / Math.pow(p.height / 100, 2); let fat = (1.20 * bmi) + (0.23 * p.age) - (10.8 * (p.sex === 'male' ? 1 : 0)) - 5.4; return Math.max(3, Math.min(50, Math.round(fat))); }
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) { const R = 6371; const dLat = (lat2 - lat1) * (Math.PI / 180); const dLon = (lon2 - lon1) * (Math.PI / 180); const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))); }
+
+// ДОСТИЖЕНИЯ
+function checkAchievements() {
+  ACHIEVEMENTS_LIST.forEach(ach => {
+    if (!state.achievements.includes(ach.id) && ach.cond(state)) {
+      state.achievements.push(ach.id);
+    }
+  });
+  save(STORAGE.achievements, state.achievements);
+}
+
+// БЭКАП
+function downloadBackup() {
+  const data = {};
+  Object.values(STORAGE).forEach(key => { const val = localStorage.getItem(key); if(val) data[key] = JSON.parse(val); });
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `fitness_backup_${today()}.json`; a.click(); URL.revokeObjectURL(url);
+}
+function uploadBackup(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      Object.keys(data).forEach(key => localStorage.setItem(key, JSON.stringify(data[key])));
+      alert('Данные восстановлены! Страница перезагрузится.'); location.reload();
+    } catch (err) { alert('Ошибка при чтении файла бэкапа.'); }
+  };
+  reader.readAsText(file);
+}
 
 function render() {
   const app = document.getElementById('app');
@@ -338,12 +395,10 @@ function renderHome() {
   const stepsPct = Math.min((state.daily.steps / 10000) * 100, 100);
   const wPct = done ? 100 : 0;
   const size = 90, stroke = 8, r = (size-stroke)/2, circ = 2*Math.PI*r;
-  const sleepCard = !state.daily.sleep ? `<div class="card span-2" style="background: linear-gradient(145deg, #1c1c1e, #0a0a0a); border: 1px solid var(--stand);"><h2 style="color:var(--stand);"><i class="ph ph-moon"></i> Как спалось?</h2><div style="display:flex; gap:10px; margin-bottom:16px;"><button class="sleep-btn secondary" onclick="setSleep(4, this)">4ч</button><button class="sleep-btn secondary" onclick="setSleep(6, this)">6ч</button><button class="sleep-btn secondary" onclick="setSleep(8, this)">8+ч</button></div><div style="display:flex; justify-content:center; gap:16px; font-size:32px;"><div onclick="setMood('😴', this)" style="cursor:pointer; opacity:0.5;">😴</div><div onclick="setMood('😐', this)" style="cursor:pointer; opacity:0.5;">😐</div><div onclick="setMood('⚡', this)" style="cursor:pointer; opacity:0.5;">⚡</div></div></div>` : '';
 
   return `
     <h1>Сводка</h1>
     <div class="bento-grid">
-      ${sleepCard}
       <div class="card span-2" style="padding: 30px 15px;">
         <div class="rings-container">
           <div class="ring-wrap"><svg class="ring-svg" viewBox="0 0 90 90"><circle class="ring-bg" cx="45" cy="45" r="${r}"></circle><circle class="ring-progress" cx="45" cy="45" r="${r}" style="stroke:var(--exercise); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (wPct/100)*circ};"></circle></svg><div class="ring-content"><i class="ph ph-barbell ring-icon" style="color:var(--exercise)"></i><span class="ring-val">${done ? '100%' : '0%'}</span></div></div>
@@ -358,7 +413,7 @@ function renderHome() {
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;">
           <button class="secondary" onclick="addWater()" style="margin:0; font-size:14px; padding:14px;"><i class="ph ph-plus"></i> Вода</button>
-          <button class="secondary" onclick="openFoodModal()" style="margin:0; font-size:14px; padding:14px;"><i class="ph ph-fork-knife"></i> Добавить еду</button>
+          <button class="secondary" onclick="openFoodModal()" style="margin:0; font-size:14px; padding:14px;"><i class="ph ph-fork-knife"></i> Еда</button>
         </div>
       </div>
       <div class="card span-2">
@@ -374,8 +429,6 @@ function renderHome() {
 }
 
 function toggleHabit(habit) { if (!state.daily.habits) state.daily.habits = { water: false, steps: false, sleep: false }; state.daily.habits[habit] = !state.daily.habits[habit]; save(STORAGE.daily, state.daily); render(); }
-function setSleep(hours, btn) { state.daily.sleep = hours; save(STORAGE.daily, state.daily); document.querySelectorAll('.sleep-btn').forEach(b => { b.classList.remove('active'); b.style.borderColor = 'transparent'; }); btn.style.borderColor = 'var(--stand)'; btn.style.color = 'var(--stand)'; if(state.daily.mood) render(); }
-function setMood(mood, el) { state.daily.mood = mood; save(STORAGE.daily, state.daily); el.classList.add('active-mood'); el.style.opacity = 1; setTimeout(render, 300); }
 function addWater() { state.daily.water = Math.min((state.daily.water || 0) + 1, 8); save(STORAGE.daily, state.daily); render(); }
 function openFoodModal() { document.getElementById('food-input').value = ''; document.getElementById('food-modal').classList.add('active'); }
 function processFoodInput() {
@@ -386,19 +439,16 @@ function processFoodInput() {
     const match = input.match(/(\d+)/); const weight = match ? parseInt(match[1]) : 100; const p = FOOD_DB[foundProduct]; const multiplier = weight / 100;
     state.daily.calories = (state.daily.calories || 0) + Math.round(p.c * multiplier); state.daily.p = (state.daily.p || 0) + Math.round(p.p * multiplier); state.daily.f = (state.daily.f || 0) + Math.round(p.f * multiplier); state.daily.cb = (state.daily.cb || 0) + Math.round(p.cb * multiplier);
     save(STORAGE.daily, state.daily); closeModal('food-modal'); render();
-  } else {
-    let manualCal = prompt(`Продукт "${input}" не найден. Введи калории на 100г:`);
-    if (manualCal && !isNaN(manualCal)) { const weight = input.match(/(\d+)/) ? parseInt(input.match(/(\d+)/)[1]) : 100; state.daily.calories += Math.round(manualCal * (weight / 100)); save(STORAGE.daily, state.daily); closeModal('food-modal'); render(); }
-  }
+  } else { alert(`Продукт "${input}" не найден.`); }
 }
+
 function generateAIPlan() {
   const goal = state.profile.goal === 'mass' ? 'Набор массы' : 'Похудение';
-  document.getElementById('ai-content').innerHTML = `<p style="margin-bottom:16px; color:var(--muted);">На основе твоей цели (<b>${goal}</b>) AI сгенерировал сплит:</p><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 1: Push</b><br><span class="muted" style="font-size:14px;">Жим лёжа 4х8, Жим гантелей 3х10, Махи 3х15</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 2: Pull</b><br><span class="muted" style="font-size:14px;">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 3: Legs</b><br><span class="muted" style="font-size:14px;">Приседания 4х8, Жим ногами 3х10, Выпады 3х12</span></div><button onclick="applyAIPlan()" style="margin-top:10px;">Применить план</button>`;
+  document.getElementById('ai-content').innerHTML = `<p style="margin-bottom:16px; color:var(--muted);">На основе твоей цели (<b>${goal}</b>) AI сгенерировал сплит:</p><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 1: Push</b><br><span class="muted" style="font-size:14px;">Жим лёжа 4х8, Жим гантелей 3х10, Махи 3х15</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 2: Pull</b><br><span class="muted" style="font-size:14px;">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 3: Legs</b><br><span class="muted" style="font-size:14px;">Приседания 4х8, Жим ногами 3х10, Выпады 3х12</span></div><button onclick="closeModal('ai-modal'); startWorkout();" style="margin-top:10px;">Применить план</button>`;
   document.getElementById('ai-modal').classList.add('active');
 }
-function applyAIPlan() { closeModal('ai-modal'); alert("AI План сохранен в ваш профиль!"); }
-function startWorkout() { state.currentWorkout = { date: today(), exercises: [], mood: null, note: '' }; state.screen = 'newWorkout'; render(); }
 
+function startWorkout() { state.currentWorkout = { date: today(), exercises: [], mood: null, note: '' }; state.screen = 'newWorkout'; render(); }
 function renderNewWorkout() {
   if (!state.currentWorkout) startWorkout();
   const w = state.currentWorkout, tonnage = calcTonnage(w);
@@ -427,13 +477,20 @@ function updateSet(i, j, f, v) { state.currentWorkout.exercises[i].sets[j][f] = 
 function addWarmup(i) { const ex = state.currentWorkout.exercises[i]; const w = ex.sets[0]?.weight || 20; ex.sets.unshift({ weight: Math.round((w*0.5)/2.5)*2.5, reps: 10, isWarmup: true }, { weight: Math.round((w*0.7)/2.5)*2.5, reps: 8, isWarmup: true }); render(); }
 function promptFinishWorkout() { if (state.currentWorkout.exercises.length === 0) return; state.tempMood = null; document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected')); document.getElementById('workout-note').value = ''; document.getElementById('feedback-modal').classList.add('active'); }
 function selectMood(emoji) { state.tempMood = emoji; document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected')); event.target.classList.add('selected'); }
-function saveWorkoutWithFeedback() { const note = document.getElementById('workout-note').value; state.workouts.push({ ...state.currentWorkout, id: Date.now(), tonnage: calcTonnage(state.currentWorkout), mood: state.tempMood || '😐', note: note }); save(STORAGE.workouts, state.workouts); closeModal('feedback-modal'); state.currentWorkout = null; state.screen = 'home'; render(); }
+function saveWorkoutWithFeedback() { 
+  const note = document.getElementById('workout-note').value; 
+  const newW = { ...state.currentWorkout, id: Date.now(), tonnage: calcTonnage(state.currentWorkout), mood: state.tempMood || '😐', note: note };
+  state.workouts.push(newW); 
+  save(STORAGE.workouts, state.workouts); 
+  checkAchievements();
+  closeModal('feedback-modal'); 
+  state.currentWorkout = null; state.screen = 'home'; render();
+  setTimeout(() => exportWorkoutStory(newW.id), 300);
+}
 function cancelWorkout() { if(confirm('Отменить тренировку?')) { state.currentWorkout = null; state.screen = 'home'; render(); } }
 
 function renderRunning() {
-  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); 
-  const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0;
-  const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` : '0:00';
+  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600)); const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0; const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` : '0:00';
   return `<div class="run-screen"><div class="run-time-big" id="run-time">${formatTime(runTime)}</div><div class="run-metrics"><div class="run-metric-box"><div class="run-metric-val" id="run-dist">${gpsDistance.toFixed(2)}</div><div class="stat-label">КМ (GPS)</div></div><div class="run-metric-box"><div class="run-metric-val" id="run-pace" style="color:var(--stand);">${paceStr}</div><div class="stat-label">ТЕМП</div></div><div class="run-metric-box" style="grid-column: span 2;"><div class="run-metric-val" id="run-cal" style="color:var(--accent);">${cal}</div><div class="stat-label">СОЖЖЕНО ККАЛ</div></div></div><button onclick="toggleRun()" id="run-btn" style="border-radius:99px; padding:24px; font-size:22px; background:${runActive ? 'var(--move)' : 'var(--accent)'}; color:${runActive ? '#fff' : '#000'};"><i class="ph ${runActive ? 'ph-pause' : 'ph-play'}"></i> ${runActive ? 'ПАУЗА' : 'СТАРТ'}</button><button class="secondary" id="run-save-btn" style="display:${runActive || runTime === 0 ? 'none' : 'flex'};" onclick="saveRun(${cal})">Сохранить результат</button></div>`;
 }
 function formatTime(sec) { return `${Math.floor(sec/3600).toString().padStart(2,'0')}:${Math.floor((sec%3600)/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
@@ -452,7 +509,7 @@ function updateRunUI() {
   if (runTime > 0 && gpsDistance > 0) { const paceMin = (runTime / 60) / gpsDistance; if(elPace) elPace.innerText = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`; }
 }
 function renderRunningUI() { document.getElementById('app').innerHTML = renderRunning(); }
-function saveRun(cal) { if (gpsDistance === 0) return alert('Нет данных GPS.'); const paceMin = (runTime / 60) / gpsDistance; state.runs.unshift({ date: today(), distance: +gpsDistance.toFixed(2), time: formatTime(runTime), calories: cal, pace: `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` }); save(STORAGE.runs, state.runs); runTime = 0; runActive = false; gpsDistance = 0; lastPos = null; render(); }
+function saveRun(cal) { if (gpsDistance === 0) return alert('Нет данных GPS.'); const paceMin = (runTime / 60) / gpsDistance; state.runs.unshift({ date: today(), distance: +gpsDistance.toFixed(2), time: formatTime(runTime), calories: cal, pace: `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` }); save(STORAGE.runs, state.runs); checkAchievements(); runTime = 0; runActive = false; gpsDistance = 0; lastPos = null; render(); }
 
 function renderSwimming() {
   const sw = state.profile.swim || { time: 30, dist: 1000, style: 'Кроль (вольный стиль)' };
@@ -487,7 +544,6 @@ function renderSwimming() {
         <h2 style="color: var(--stand);"><i class="ph ph-activity"></i> Восстановление мышц</h2>
         <p class="muted" style="margin-bottom:10px;">При стиле <b>${sw.style}</b> основную нагрузку получают:</p>
         <div style="background:var(--card-light); padding:16px; border-radius:12px; font-weight:600; color:var(--text); line-height: 1.5;">${muscles}</div>
-        <p class="muted" style="font-size:12px; margin-top:10px;">Эти мышцы нуждаются в отдыхе (от 24 до 48 часов) перед следующей тяжелой тренировкой в зале.</p>
       </div>
       <div class="card span-2">
         <h2>История заплывов</h2>
@@ -500,7 +556,7 @@ function saveSwim() {
   const time = +document.getElementById('swim-time').value, dist = +document.getElementById('swim-dist').value, style = document.getElementById('swim-style').value;
   state.profile.swim = { time, dist, style }; save(STORAGE.profile, state.profile);
   state.swims = state.swims || []; state.swims.unshift({ date: today(), time, dist, style }); save(STORAGE.swims, state.swims);
-  alert('Заплыв сохранен!'); render();
+  checkAchievements(); alert('Заплыв сохранен!'); render();
 }
 
 function renderProgress() {
@@ -532,8 +588,23 @@ function renderProgress() {
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;"><div><h2 style="margin:0;">Вес тела</h2><div style="font-size:18px; font-weight:800; margin-top:8px; color:${deltaColor};">${deltaText}</div></div><div style="display:flex; gap:10px;"><input id="bw" type="number" placeholder="Вес" style="width:100px; margin:0; padding:10px;"><button style="width:44px; height:44px; margin:0; padding:0; border-radius:12px;" onclick="logBodyWeight()"><i class="ph ph-plus"></i></button></div></div>
         <div class="chart-container"><canvas id="weightChart"></canvas></div>
       </div>
+      <div class="card span-2">
+        <h2>Замеры тела (см)</h2>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+          <div><label>Грудь</label><input type="number" id="m_chest" placeholder="0"></div>
+          <div><label>Талия</label><input type="number" id="m_waist" placeholder="0"></div>
+          <div><label>Бицепс</label><input type="number" id="m_bicep" placeholder="0"></div>
+          <div><label>Бедро</label><input type="number" id="m_thigh" placeholder="0"></div>
+        </div>
+        <button class="secondary" onclick="saveMeasurements()">Сохранить замеры</button>
+      </div>
       <div class="card span-2" style="text-align:center; padding:30px;"><h2>PDF Отчет для тренера</h2><p class="muted" style="margin-bottom:20px;">Скачай полную статистику тренировок</p><button onclick="downloadReport()"><i class="ph ph-file-pdf"></i> Скачать PDF</button></div>
     </div>`;
+}
+function saveMeasurements() {
+  const m = { date: today(), chest: +document.getElementById('m_chest').value || null, waist: +document.getElementById('m_waist').value || null, bicep: +document.getElementById('m_bicep').value || null, thigh: +document.getElementById('m_thigh').value || null };
+  if (!m.chest && !m.waist && !m.bicep && !m.thigh) return alert('Введи хотя бы один замер');
+  state.measurements.push(m); save(STORAGE.measurements, state.measurements); checkAchievements(); alert('Замеры сохранены!');
 }
 function drawWeightChart() {
   const ctx = document.getElementById('weightChart'); if (!ctx) return; if (state.chartInstance) state.chartInstance.destroy(); 
@@ -550,23 +621,104 @@ function renderProfile() {
     <div class="card" style="text-align:center; padding:40px 24px;">
       <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, var(--move), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:48px; color:#fff; margin:0 auto 20px;"><i class="ph ph-user"></i></div>
       <h2 style="margin-bottom:8px;">Атлет</h2><p class="muted" style="margin-bottom:16px;">Исключения: ${state.profile.foodPrefs?.length ? state.profile.foodPrefs.join(', ') : 'Нет'}</p>
+      
+      ${state.isPremium ? 
+        `<div style="color:var(--premium); font-weight:800; display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:16px;"><i class="ph-fill ph-crown"></i> Premium Активен</div>` : 
+        `<button class="premium-btn" onclick="document.getElementById('premium-modal').classList.add('active')" style="margin-bottom:16px;"><i class="ph-fill ph-crown"></i> Получить Premium</button>`
+      }
+
       <div style="margin-top:20px; margin-bottom:20px;"><label>Цвет интерфейса</label><div style="display:flex; justify-content:center; gap:12px; margin-top:10px;">${COLORS.map(c => `<div class="color-swatch ${state.themeColor === c.hex ? 'active' : ''}" style="background:${c.hex}" onclick="changeThemeColor('${c.hex}')"></div>`).join('')}</div></div>
-      <button class="secondary" onclick="downloadReport()"><i class="ph ph-file-pdf"></i> Скачать отчет</button>
+      <button class="secondary" onclick="downloadBackup()" style="font-size:14px; padding:12px; margin-bottom:8px;"><i class="ph ph-download-simple"></i> Скачать бэкап</button>
+      <div style="position:relative;">
+        <input type="file" accept=".json" onchange="uploadBackup(event)" style="opacity:0; position:absolute; top:0; left:0; width:100%; height:100%; cursor:pointer;">
+        <button class="secondary" style="font-size:14px; padding:12px; pointer-events:none;"><i class="ph ph-upload-simple"></i> Загрузить бэкап</button>
+      </div>
     </div>
+
+    <div class="card">
+      <h2>Достижения</h2>
+      <div class="achieve-grid">
+        ${ACHIEVEMENTS_LIST.map(a => {
+          const unlocked = state.achievements.includes(a.id);
+          return `<div class="achieve-item ${unlocked ? 'unlocked' : ''}">
+            <i class="ph ${a.icon} achieve-icon"></i>
+            <div class="achieve-title">${a.name}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
     <div class="card"><h2>История тренировок</h2>${[...state.workouts].sort((a,b)=>b.id-a.id).slice(0,5).map(w => `<div style="padding:16px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showHistoryDetails(${w.id})"><div><div style="font-weight:700;">${w.date}</div><div class="muted" style="font-size:13px; margin-top:4px;">${w.exercises.map(e => e.name).join(', ').slice(0, 30)}...</div></div><div style="display:flex; align-items:center; gap:10px;"><span style="font-size:24px;">${w.mood || '😐'}</span><i class="ph ph-caret-right muted"></i></div></div>`).join('')}</div>
     <div class="card"><button class="danger" onclick="resetApp()"><i class="ph ph-trash"></i> Сбросить данные</button></div>`;
 }
 function changeThemeColor(hex) { state.themeColor = hex; save(STORAGE.themeColor, hex); document.documentElement.style.setProperty('--accent', hex); render(); }
+function buyPremium() { state.isPremium = true; save(STORAGE.premium, true); closeModal('premium-modal'); render(); alert('Premium активирован! (Демо-режим)'); }
+
 function showHistoryDetails(id) {
   const w = state.workouts.find(x => x.id === id); if (!w) return; document.getElementById('history-title').innerText = `Тренировка от ${w.date}`;
   document.getElementById('history-content').innerHTML = `<div style="text-align:center; font-size:36px; margin-bottom:20px;">${w.mood || '😐'}</div>${w.note ? `<div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:20px; font-style:italic;">"${w.note}"</div>` : ''}<div style="margin-bottom:16px; font-weight:700; color:var(--accent);">Тоннаж: ${w.tonnage} кг</div>${w.exercises.map(ex => `<div style="margin-bottom:16px;"><div style="font-weight:700; margin-bottom:8px;">${ex.name}</div><div style="display:flex; flex-wrap:wrap; gap:8px;">${ex.sets.map((s, i) => `<div style="background:var(--card-light); padding:8px 12px; border-radius:8px; font-size:14px; ${s.isWarmup ? 'color:var(--move)' : ''}">${s.isWarmup ? 'W' : i+1}: ${s.weight}кг × ${s.reps}</div>`).join('')}</div></div>`).join('')}`;
   document.getElementById('history-modal').classList.add('active');
 }
+
 function downloadReport() {
   const area = document.getElementById('report-area'); const fat = calcBodyFat(state.profile); const totalTon = state.workouts.reduce((sum, w) => sum + w.tonnage, 0);
   area.innerHTML = `<div style="text-align:center; margin-bottom:30px;"><div style="width:50px; height:50px; background:${state.themeColor}; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:10px;"><i class="ph-bold ph-barbell" style="color:#000; font-size:28px;"></i></div><h1 style="color:#fff; margin:0; font-size:28px; font-weight:800;">Fitness Pro Отчет</h1><p style="color:#8e8e93; margin:5px 0 0 0;">Дата: ${today()}</p></div><div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:30px;"><div style="background:#1c1c1e; padding:20px; border-radius:16px; text-align:center;"><div style="color:#8e8e93; font-size:12px; font-weight:700; text-transform:uppercase;">Тоннаж</div><div style="font-size:32px; font-weight:800; color:${state.themeColor};">${totalTon.toLocaleString('ru')}</div><div style="color:#8e8e93; font-size:12px;">КГ</div></div><div style="background:#1c1c1e; padding:20px; border-radius:16px; text-align:center;"><div style="color:#8e8e93; font-size:12px; font-weight:700; text-transform:uppercase;">% Жира</div><div style="font-size:32px; font-weight:800; color:#00d4ff;">${fat}%</div><div style="color:#8e8e93; font-size:12px;">ПРИМЕРНО</div></div></div><h2 style="color:#fff; font-size:20px; margin-bottom:15px;">Последние тренировки</h2>${state.workouts.slice(0, 5).map(w => `<div style="background:#1c1c1e; padding:16px; border-radius:16px; margin-bottom:12px;"><div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span style="color:#fff; font-weight:700;">${w.date}</span><span style="color:${state.themeColor}; font-weight:800;">${w.tonnage} кг</span></div><div style="color:#8e8e93; font-size:13px;">${w.exercises.map(e => e.name).join(', ')}</div></div>`).join('')}<div style="text-align:center; margin-top:30px; color:#8e8e93; font-size:12px;">Сгенерировано в приложении Fitness Pro</div>`;
   html2canvas(area, { scale: 2, backgroundColor: '#111111' }).then(canvas => { const link = document.createElement('a'); link.download = `fitness_report_${today()}.png`; link.href = canvas.toDataURL('image/png'); link.click(); });
 }
+
+function exportWorkoutStory(id) {
+  const w = state.workouts.find(x => x.id === id); if (!w) return;
+  const area = document.getElementById('export-area');
+  const topEx = [...w.exercises].sort((a,b) => calcTonnage({exercises:[b]}) - calcTonnage({exercises:[a]})).slice(0, 3);
+  
+  area.innerHTML = `
+    <div style="width: 100%; height: 100%; background: linear-gradient(180deg, #1c1c1e 0%, #000 100%); border-radius: 30px; padding: 30px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
+      <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: ${state.themeColor}; filter: blur(100px); opacity: 0.3;"></div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 32px; height: 32px; background: ${state.themeColor}; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <i class="ph-bold ph-barbell" style="color: #000; font-size: 18px;"></i>
+          </div>
+          <div style="font-size: 20px; font-weight: 800; color: white;">Fitness Pro</div>
+        </div>
+        <div style="color: #8e8e93; font-size: 14px; font-weight: 600;">${w.date}</div>
+      </div>
+
+      <div style="text-align: center; z-index: 10;">
+        <div style="color: ${state.themeColor}; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Тоннаж</div>
+        <div style="font-size: 72px; font-weight: 900; line-height: 0.9; letter-spacing: -3px; color: white;">${w.tonnage.toLocaleString('ru')}</div>
+        <div style="color: #8e8e93; font-size: 18px; font-weight: 600; margin-top: 5px;">КГ</div>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; z-index: 10;">
+        <div style="color: #8e8e93; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Топ упражнений</div>
+        ${topEx.map((ex, i) => `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: ${i === topEx.length - 1 ? '0' : '12px'};">
+            <div style="font-size: 15px; font-weight: 600; color: white;">${ex.name}</div>
+            <div style="font-size: 13px; font-weight: 800; color: white; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 8px;">${calcTonnage({exercises:[ex]})} кг</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; z-index: 10;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="font-size: 32px;">${w.mood || '😐'}</div>
+          <div>
+            <div style="font-size: 12px; color: #8e8e93; font-weight: 600;">Настроение</div>
+            <div style="font-size: 14px; font-weight: 700; color: white;">Тренировка завершена</div>
+          </div>
+        </div>
+        <i class="ph-fill ph-lightning" style="font-size: 24px; color: ${state.themeColor};"></i>
+      </div>
+    </div>
+  `;
+
+  html2canvas(area, { scale: 2, backgroundColor: '#000000' }).then(canvas => {
+    const link = document.createElement('a'); link.download = `fitness_story_${w.date}.png`; link.href = canvas.toDataURL('image/png'); link.click();
+  });
+}
+
 function showPlan(type) {
   const title = document.getElementById('plan-title'), content = document.getElementById('plan-content');
   if (type === 'food') { const meals = MEAL_DB[state.profile.goal][0]; title.innerText = "План питания"; content.innerHTML = `<div style="margin-bottom:10px;"><b>Завтрак:</b> ${meals.b}</div><div style="margin-bottom:10px;"><b>Обед:</b> ${meals.l}</div><div style="margin-bottom:10px;"><b>Перекус:</b> ${meals.s}</div><div><b>Ужин:</b> ${meals.d}</div>`; }
@@ -581,6 +733,3 @@ function go(screen) { if (screen === 'newWorkout' && !state.currentWorkout) { st
 
 initApp();
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); }); }
-</script>
-</body>
-</html>
