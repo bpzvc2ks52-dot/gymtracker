@@ -129,10 +129,10 @@
   .studio { font-size: 12px; color: var(--muted); font-weight: 800; letter-spacing: 2px; text-transform: uppercase; opacity: 0.6;}
   @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(162,255,0,0.4); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(162,255,0,0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(162,255,0,0); } }
 
-  /* === НОВОЕ: GLASSMORPHISM === */
+  /* GLASSMORPHISM */
   .glass-card { background: rgba(28, 28, 30, 0.55); backdrop-filter: blur(24px) saturate(140%); -webkit-backdrop-filter: blur(24px) saturate(140%); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
 
-  /* === НОВОЕ: SKELETON === */
+  /* SKELETON */
   @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
   .skeleton { background: linear-gradient(90deg, var(--card) 0%, var(--card-light) 50%, var(--card) 100%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 12px; }
   .skeleton-title { height: 36px; width: 60%; margin-bottom: 20px; border-radius: 10px; }
@@ -140,7 +140,7 @@
   .skeleton-line { height: 16px; margin-bottom: 10px; border-radius: 8px; }
   .skeleton-line.short { width: 40%; }
 
-  /* === НОВОЕ: TIMER === */
+  /* TIMER */
   .timer-presets { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
   .timer-preset-btn { background: var(--card-light); color: var(--text); border: 2px solid transparent; padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: 14px; width: auto; margin: 0; transition: all 0.2s; cursor: pointer; }
   .timer-preset-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(162, 255, 0, 0.1); }
@@ -149,6 +149,11 @@
   .timer-ring-bg { fill: none; stroke: var(--card-light); stroke-width: 8; }
   .timer-ring-progress { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
   #timer-display { font-size: 56px !important; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); z-index: 1; position: relative; }
+
+  /* GOAL CARDS в онбординге */
+  .goal-card { background: var(--card-light); border-radius: 16px; padding: 14px 6px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+  .goal-card.selected { border-color: var(--accent); background: rgba(162,255,0,0.1); }
+  .goal-card:active { transform: scale(0.96); }
 
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px 24px 40px 24px; }
@@ -180,6 +185,52 @@
   </div>
 </div>
 
+<!-- МОДАЛКА ОНБОРДИНГА -->
+<div id="onboarding-modal" class="modal-overlay">
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left; max-height:95vh;">
+    <div style="text-align:center; margin-bottom:20px;">
+      <div style="width:70px;height:70px;background:var(--accent);border-radius:20px;display:inline-flex;align-items:center;justify-content:center;font-size:36px;color:#000;margin-bottom:12px;">
+        <i class="ph-bold ph-user-circle"></i>
+      </div>
+      <h2 style="margin:0;" id="ob-title">Давай познакомимся</h2>
+      <p class="muted" style="font-size:14px; margin-top:6px; margin-bottom:0;">Данные для расчёта КБЖУ и плана питания</p>
+    </div>
+    <label>Пол</label>
+    <select id="ob_sex" style="margin-bottom:16px;" onchange="updatePreview()">
+      <option value="male">Мужской</option>
+      <option value="female">Женский</option>
+    </select>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div><label>Вес (кг)</label><input type="number" id="ob_weight" placeholder="75" oninput="updatePreview()" style="margin-bottom:16px;"></div>
+      <div><label>Рост (см)</label><input type="number" id="ob_height" placeholder="180" oninput="updatePreview()" style="margin-bottom:16px;"></div>
+    </div>
+    <label>Возраст</label>
+    <input type="number" id="ob_age" placeholder="25" oninput="updatePreview()" style="margin-bottom:16px;">
+    <label>Цель</label>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px;">
+      <div class="goal-card" data-goal="cut" onclick="selectGoal('cut')">
+        <div style="font-size:26px; margin-bottom:4px;">📉</div>
+        <div style="font-size:12px; font-weight:700;">Похудение</div>
+      </div>
+      <div class="goal-card selected" data-goal="maintain" onclick="selectGoal('maintain')">
+        <div style="font-size:26px; margin-bottom:4px;">⚖️</div>
+        <div style="font-size:12px; font-weight:700;">Удержание</div>
+      </div>
+      <div class="goal-card" data-goal="mass" onclick="selectGoal('mass')">
+        <div style="font-size:26px; margin-bottom:4px;">📈</div>
+        <div style="font-size:12px; font-weight:700;">Набор</div>
+      </div>
+    </div>
+    <div id="ob_preview" style="display:none; background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:16px;">
+      <div style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:10px; letter-spacing:1px;">Твоя норма на день</div>
+      <div id="ob_preview_content"></div>
+    </div>
+    <button onclick="completeOnboarding()" id="ob-submit-btn"><i class="ph ph-check-circle"></i> Рассчитать и начать</button>
+    <button class="secondary" id="ob-cancel-btn" style="display:none;" onclick="closeModal('onboarding-modal')">Отмена</button>
+  </div>
+</div>
+
+<!-- ПРЕМИУМ -->
 <div id="premium-modal" class="modal-overlay" onclick="closeModal('premium-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <i class="ph-fill ph-crown" style="font-size:64px; color:var(--premium); margin-bottom:16px;"></i>
@@ -295,7 +346,7 @@
 
 <script>
   // ============================================
-// ГЛОБАЛЬНЫЙ ПЕРЕХВАТ ОШИБОК (помогает отладить)
+// ГЛОБАЛЬНЫЙ ПЕРЕХВАТ ОШИБОК
 // ============================================
 window.addEventListener('error', (e) => console.error('🔴 JS error:', e.error || e.message));
 window.addEventListener('unhandledrejection', (e) => console.error('🔴 Promise rejection:', e.reason));
@@ -306,7 +357,7 @@ styleAnim.innerHTML = `@keyframes bounceAnim { from { transform: translateY(0) s
 document.head.appendChild(styleAnim);
 
 // ============================================
-// HAPTIC FEEDBACK — вибрация
+// HAPTIC FEEDBACK
 // ============================================
 function haptic(type = 'light') {
   if (!('vibrate' in navigator)) return;
@@ -375,11 +426,6 @@ const FOOD_DB = {
   'кола': { c: 42, p: 0, f: 0, cb: 10.6 }
 };
 
-const MEAL_DB = {
-  mass: [{ b: "Овсянка + 3 яйца + банан", l: "Гречка + Куриная грудка 200г", d: "Рыба 200г + рис", s: "Творог 200г + орехи" }],
-  cut: [{ b: "Омлет из 2 яиц + шпинат", l: "Куриная грудка 150г + салат", d: "Треска 150г + брокколи", s: "Яблоко или кефир" }]
-};
-
 const COLORS = [{ id: 'green', hex: '#a2ff00' }, { id: 'pink', hex: '#fa114f' }, { id: 'blue', hex: '#00d4ff' }, { id: 'orange', hex: '#ff9f0a' }, { id: 'purple', hex: '#bf5af2' }];
 
 let state = {
@@ -393,8 +439,10 @@ let state = {
 
 if (!state.daily.habits) state.daily.habits = { water: false, steps: false, sleep: false };
 
-let timerInt = null, timerTime = 90, timerTotal = 90, timerRemaining = 90;
+let timerInt = null, timerTotal = 90, timerRemaining = 90;
 let runInt = null, runTime = 0, runActive = false, gpsWatchId = null, lastPos = null, gpsDistance = 0;
+let obGoal = 'maintain';
+let obEditMode = false;
 
 function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
@@ -406,7 +454,71 @@ if (state.daily.date !== today()) {
 }
 
 // ============================================
-// ИСПРАВЛЕННАЯ КНОПКА «ПРОДОЛЖИТЬ»
+// КАЛЬКУЛЯТОР КБЖУ (Миффлин-Сан Жеор)
+// ============================================
+function calculateKBJU(p) {
+  const { sex, weight, height, age, goal } = p;
+  let bmr = 10 * weight + 6.25 * height - 5 * age;
+  bmr += sex === 'male' ? 5 : -161;
+  const tdee = bmr * 1.55;
+
+  let calories;
+  if (goal === 'cut') calories = Math.round(tdee * 0.8);
+  else if (goal === 'mass') calories = Math.round(tdee * 1.15);
+  else calories = Math.round(tdee);
+
+  const proteinPerKg = goal === 'cut' ? 2.0 : goal === 'mass' ? 1.8 : 1.6;
+  const protein = Math.round(weight * proteinPerKg);
+  const fat = Math.round((calories * 0.25) / 9);
+  const carbCal = calories - (protein * 4) - (fat * 9);
+  const carbs = Math.max(0, Math.round(carbCal / 4));
+
+  return { calories, p: protein, f: fat, cb: carbs };
+}
+
+function getTargets() {
+  if (state.profile && state.profile.targets) return state.profile.targets;
+  if (state.profile && state.profile.weight) return calculateKBJU(state.profile);
+  return { calories: 2000, p: 120, f: 60, cb: 200 };
+}
+
+// ============================================
+// ГЕНЕРАТОР РАЦИОНА ПОД ЦЕЛЬ
+// ============================================
+function generateMealPlan() {
+  const goal = state.profile.goal || 'maintain';
+  const target = getTargets();
+
+  const bCal = Math.round(target.calories * 0.25);
+  const lCal = Math.round(target.calories * 0.35);
+  const sCal = Math.round(target.calories * 0.15);
+  const dCal = Math.round(target.calories * 0.25);
+
+  const plans = {
+    cut: [
+      { name: 'Завтрак', cal: bCal, p: 22, f: 10, cb: 35, desc: 'Омлет из 2 яиц, 50 г овсянки на воде, зелёный чай' },
+      { name: 'Обед', cal: lCal, p: 40, f: 8, cb: 55, desc: '150 г куриной грудки, 100 г гречки, овощной салат' },
+      { name: 'Перекус', cal: sCal, p: 20, f: 12, cb: 10, desc: '150 г творога 5%, горсть орехов (20 г)' },
+      { name: 'Ужин', cal: dCal, p: 35, f: 6, cb: 30, desc: '150 г трески, 100 г брокколи, 50 г риса' }
+    ],
+    mass: [
+      { name: 'Завтрак', cal: bCal, p: 30, f: 20, cb: 60, desc: '100 г овсянки с бананом и 30 г орехов, 3 яйца' },
+      { name: 'Обед', cal: lCal, p: 50, f: 10, cb: 90, desc: '200 г куриной грудки, 200 г риса, овощи' },
+      { name: 'Перекус', cal: sCal, p: 25, f: 8, cb: 40, desc: 'Творог 200 г, банан, чайная ложка мёда' },
+      { name: 'Ужин', cal: dCal, p: 40, f: 15, cb: 50, desc: '200 г рыбы, 200 г картофеля, салат с оливковым маслом' }
+    ],
+    maintain: [
+      { name: 'Завтрак', cal: bCal, p: 22, f: 14, cb: 50, desc: '80 г овсянки с ягодами, 2 яйца' },
+      { name: 'Обед', cal: lCal, p: 45, f: 10, cb: 65, desc: '180 г курицы, 150 г гречки, овощи' },
+      { name: 'Перекус', cal: sCal, p: 10, f: 5, cb: 25, desc: 'Йогурт 150 г, яблоко' },
+      { name: 'Ужин', cal: dCal, p: 32, f: 8, cb: 45, desc: '150 г рыбы, 150 г риса, салат' }
+    ]
+  };
+  return plans[goal] || plans.maintain;
+}
+
+// ============================================
+// ИСПРАВЛЕННАЯ КНОПКА «ПРОДОЛЖИТЬ» + ОНБОРДИНГ
 // ============================================
 function acceptCookies() {
   console.log('🔵 acceptCookies вызвана');
@@ -414,17 +526,15 @@ function acceptCookies() {
   
   try {
     if (!splash) { 
-      console.warn('⚠️ splash не найден, рендерим напрямую');
+      console.warn('⚠️ splash не найден');
       render(); 
       return; 
     }
     
-    // Сразу блокируем клики по splash и начинаем fade
     splash.style.pointerEvents = 'none';
     splash.classList.add('fade-out');
     splash.style.opacity = '0';
     
-    // Показываем skeleton-заглушку
     const appEl = document.getElementById('app');
     if (appEl) appEl.innerHTML = renderSkeleton();
     
@@ -435,30 +545,126 @@ function acceptCookies() {
         if (state.profile) {
           const nav = document.getElementById('nav');
           if (nav) nav.style.display = 'flex';
+          render();
+        } else {
+          // Первый запуск — онбординг
+          const appEl2 = document.getElementById('app');
+          if (appEl2) appEl2.innerHTML = '';
+          const obModal = document.getElementById('onboarding-modal');
+          if (obModal) obModal.classList.add('active');
+          obGoal = 'maintain';
+          obEditMode = false;
         }
         
-        render();
         haptic('light');
         console.log('🟢 acceptCookies: успешно');
       } catch (e) {
-        console.error('🔴 Ошибка внутри setTimeout acceptCookies:', e);
+        console.error('🔴 Ошибка внутри setTimeout:', e);
       }
     }, 400);
   } catch (e) {
     console.error('🔴 Ошибка в acceptCookies:', e);
-    // Fallback: принудительно
     if (splash) { splash.style.display = 'none'; splash.style.opacity = '0'; }
-    try { render(); } catch(e2) { console.error('🔴 Fallback render error:', e2); }
+    try { render(); } catch(e2) { console.error('🔴 Fallback:', e2); }
   }
 }
 
+// ============================================
+// ОНБОРДИНГ: превью, выбор цели, сохранение
+// ============================================
+function selectGoal(goal) {
+  obGoal = goal;
+  document.querySelectorAll('.goal-card').forEach(c => c.classList.toggle('selected', c.dataset.goal === goal));
+  haptic('light');
+  updatePreview();
+}
+
+function updatePreview() {
+  const sex = document.getElementById('ob_sex').value;
+  const weight = +document.getElementById('ob_weight').value;
+  const height = +document.getElementById('ob_height').value;
+  const age = +document.getElementById('ob_age').value;
+
+  const previewEl = document.getElementById('ob_preview');
+  if (!weight || !height || !age || !previewEl) {
+    if (previewEl) previewEl.style.display = 'none';
+    return;
+  }
+
+  const kbju = calculateKBJU({ sex, weight, height, age, goal: obGoal });
+  previewEl.style.display = 'block';
+  document.getElementById('ob_preview_content').innerHTML = `
+    <div style="font-size:28px; font-weight:800; color:var(--accent); margin-bottom:10px;">${kbju.calories} <span style="font-size:14px; color:var(--muted); font-weight:600;">ккал</span></div>
+    <div style="display:flex; justify-content:space-between; font-size:14px;">
+      <div><span style="color:var(--muted);">Белки:</span> <b>${kbju.p} г</b></div>
+      <div><span style="color:var(--muted);">Жиры:</span> <b>${kbju.f} г</b></div>
+      <div><span style="color:var(--muted);">Углев.:</span> <b>${kbju.cb} г</b></div>
+    </div>
+  `;
+}
+
+function completeOnboarding() {
+  const sex = document.getElementById('ob_sex').value;
+  const weight = +document.getElementById('ob_weight').value;
+  const height = +document.getElementById('ob_height').value;
+  const age = +document.getElementById('ob_age').value;
+
+  if (!weight || !height || !age) { alert('Заполни вес, рост и возраст'); return; }
+  if (weight < 30 || weight > 300) { alert('Вес должен быть от 30 до 300 кг'); return; }
+  if (height < 100 || height > 250) { alert('Рост должен быть от 100 до 250 см'); return; }
+  if (age < 10 || age > 100) { alert('Возраст должен быть от 10 до 100 лет'); return; }
+
+  const targets = calculateKBJU({ sex, weight, height, age, goal: obGoal });
+
+  state.profile = {
+    sex, weight, height, age,
+    goal: obGoal,
+    foodPrefs: state.profile?.foodPrefs || [],
+    targets,
+    swim: state.profile?.swim || { time: 30, dist: 1000, style: 'Кроль (вольный стиль)' }
+  };
+  save(STORAGE.profile, state.profile);
+
+  closeModal('onboarding-modal');
+  const nav = document.getElementById('nav');
+  if (nav) nav.style.display = 'flex';
+  haptic('success');
+
+  if (obEditMode) {
+    obEditMode = false;
+    document.getElementById('ob-cancel-btn').style.display = 'none';
+    document.getElementById('ob-title').innerText = 'Давай познакомимся';
+    document.getElementById('ob-submit-btn').innerHTML = '<i class="ph ph-check-circle"></i> Рассчитать и начать';
+  }
+
+  render();
+}
+
+function openOnboardingEdit() {
+  if (!state.profile) return;
+  obEditMode = true;
+  obGoal = state.profile.goal || 'maintain';
+  document.getElementById('ob-title').innerText = 'Изменить параметры';
+  document.getElementById('ob-submit-btn').innerHTML = '<i class="ph ph-check-circle"></i> Пересчитать';
+  document.getElementById('ob-cancel-btn').style.display = 'flex';
+  document.getElementById('ob_sex').value = state.profile.sex || 'male';
+  document.getElementById('ob_weight').value = state.profile.weight || '';
+  document.getElementById('ob_height').value = state.profile.height || '';
+  document.getElementById('ob_age').value = state.profile.age || '';
+  document.querySelectorAll('.goal-card').forEach(c => c.classList.toggle('selected', c.dataset.goal === obGoal));
+  updatePreview();
+  document.getElementById('onboarding-modal').classList.add('active');
+}
+
+// ============================================
+// УТИЛИТЫ
+// ============================================
 function initApp() { render(); }
 function getAllExercises() { return { ...BASE_EXERCISES_DB, ...state.customExercises }; }
 function calcTonnage(workout) { return (!workout || !workout.exercises) ? 0 : workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).reduce((sSum, s) => sSum + (s.weight * s.reps), 0), 0); }
 function calcBodyFat(p) { if (!p || !p.weight) return 0; const bmi = p.weight / Math.pow(p.height / 100, 2); let fat = (1.20 * bmi) + (0.23 * p.age) - (10.8 * (p.sex === 'male' ? 1 : 0)) - 5.4; return Math.max(3, Math.min(50, Math.round(fat))); }
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) { const R = 6371; const dLat = (lat2 - lat1) * (Math.PI / 180); const dLon = (lon2 - lon1) * (Math.PI / 180); const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))); }
 
-// ДОСТИЖЕНИЯ
 function checkAchievements() {
   ACHIEVEMENTS_LIST.forEach(ach => {
     if (!state.achievements.includes(ach.id) && ach.cond(state)) {
@@ -468,7 +674,6 @@ function checkAchievements() {
   save(STORAGE.achievements, state.achievements);
 }
 
-// БЭКАП
 function downloadBackup() {
   const data = {};
   Object.values(STORAGE).forEach(key => { const val = localStorage.getItem(key); if(val) data[key] = JSON.parse(val); });
@@ -492,7 +697,7 @@ function uploadBackup(event) {
 function render() {
   const app = document.getElementById('app');
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.screen === state.screen));
-  if (!state.profile) { app.innerHTML = renderOnboarding(); return; }
+  if (!state.profile) { app.innerHTML = ''; return; }
   if (state.screen === 'home') app.innerHTML = renderHome();
   else if (state.screen === 'newWorkout') app.innerHTML = renderNewWorkout();
   else if (state.screen === 'running') app.innerHTML = renderRunning();
@@ -500,33 +705,11 @@ function render() {
   else if (state.screen === 'progress') app.innerHTML = renderProgress();
   else if (state.screen === 'profile') app.innerHTML = renderProfile();
 }
-
-function renderOnboarding() {
-  document.getElementById('nav').style.display = 'none';
-  return `<div style="max-width: 400px; margin: 40px auto; text-align:center;"><h1 style="font-size:44px; margin-bottom:10px;">Fitness</h1><div class="card" style="text-align:left;"><label>Цель</label><select id="goal"><option value="mass">Набор массы</option><option value="cut">Похудение</option></select><label>Пол</label><select id="sex"><option value="male">Мужской</option><option value="female">Женский</option></select><label>Вес (кг)</label><input id="weight" type="number" placeholder="75"><label>Рост (см)</label><input id="height" type="number" placeholder="180"><label>Возраст</label><input id="age" type="number" placeholder="25"><label>Исключения в еде</label><input id="food_prefs" type="text" placeholder="например: рыба, молоко"><button onclick="completeOnboarding()" style="margin-top:20px;">Начать</button></div></div>`;
-}
-
-function completeOnboarding() {
-  const prefsRaw = document.getElementById('food_prefs').value || '';
-  const p = {
-    goal: document.getElementById('goal').value,
-    sex: document.getElementById('sex').value,
-    weight: +document.getElementById('weight').value,
-    height: +document.getElementById('height').value,
-    age: +document.getElementById('age').value,
-    foodPrefs: prefsRaw.toLowerCase().split(',').map(s => s.trim()).filter(Boolean)
-  };
-  if (!p.weight || !p.height || !p.age) { alert('Заполни все поля'); return; }
-  state.profile = p; 
-  save(STORAGE.profile, p); 
-  document.getElementById('nav').style.display = 'flex'; 
-  haptic('success');
-  render();
-}
   // ============================================
-// ГЛАВНЫЙ ЭКРАН (Сводка) — со стеклянными карточками
+// ГЛАВНАЯ (Сводка) — прогресс КБЖУ к цели
 // ============================================
 function renderHome() {
+  const targets = getTargets();
   const done = state.workouts.some(w => w.date === today());
   const waterPct = Math.min((state.daily.water / 8) * 100, 100);
   const stepsPct = Math.min((state.daily.steps / 10000) * 100, 100);
@@ -543,10 +726,10 @@ function renderHome() {
           <div class="ring-wrap"><svg class="ring-svg" viewBox="0 0 90 90"><circle class="ring-bg" cx="45" cy="45" r="${r}"></circle><circle class="ring-progress" cx="45" cy="45" r="${r}" style="stroke:var(--move); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (stepsPct/100)*circ};"></circle></svg><div class="ring-content"><i class="ph ph-sneaker ring-icon" style="color:var(--move)"></i><span class="ring-val">${state.daily.steps}</span></div></div>
         </div>
         <div style="background:var(--card-light); padding:16px; border-radius:16px; margin-top:20px; display:flex; justify-content:space-between; text-align:center;">
-          <div><div style="font-size:18px; font-weight:800; color:var(--accent);">${state.daily.calories}</div><div class="muted" style="font-size:11px;">ККАЛ</div></div>
-          <div><div style="font-size:18px; font-weight:800;">${state.daily.p}</div><div class="muted" style="font-size:11px;">БЕЛКИ</div></div>
-          <div><div style="font-size:18px; font-weight:800;">${state.daily.f}</div><div class="muted" style="font-size:11px;">ЖИРЫ</div></div>
-          <div><div style="font-size:18px; font-weight:800;">${state.daily.cb}</div><div class="muted" style="font-size:11px;">УГЛЕВ.</div></div>
+          <div><div style="font-size:16px; font-weight:800; color:var(--accent);">${state.daily.calories}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.calories}</span></div><div class="muted" style="font-size:11px;">ККАЛ</div></div>
+          <div><div style="font-size:16px; font-weight:800;">${state.daily.p}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.p}</span></div><div class="muted" style="font-size:11px;">БЕЛКИ</div></div>
+          <div><div style="font-size:16px; font-weight:800;">${state.daily.f}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.f}</span></div><div class="muted" style="font-size:11px;">ЖИРЫ</div></div>
+          <div><div style="font-size:16px; font-weight:800;">${state.daily.cb}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.cb}</span></div><div class="muted" style="font-size:11px;">УГЛЕВ.</div></div>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;">
           <button class="secondary" onclick="addWater()" style="margin:0; font-size:14px; padding:14px;"><i class="ph ph-plus"></i> Вода</button>
@@ -572,7 +755,12 @@ function toggleHabit(habit) {
   haptic('light');
   render();
 }
-function addWater() { state.daily.water = Math.min((state.daily.water || 0) + 1, 8); save(STORAGE.daily, state.daily); haptic('light'); render(); }
+function addWater() {
+  state.daily.water = Math.min((state.daily.water || 0) + 1, 8);
+  save(STORAGE.daily, state.daily);
+  haptic('light');
+  render();
+}
 function openFoodModal() { document.getElementById('food-input').value = ''; document.getElementById('food-modal').classList.add('active'); }
 function processFoodInput() {
   const input = document.getElementById('food-input').value.toLowerCase().trim(); if(!input) return;
@@ -580,13 +768,19 @@ function processFoodInput() {
   for (const key of sortedKeys) { if (input.includes(key)) { foundProduct = key; break; } }
   if (foundProduct) {
     const match = input.match(/(\d+)/); const weight = match ? parseInt(match[1]) : 100; const p = FOOD_DB[foundProduct]; const multiplier = weight / 100;
-    state.daily.calories = (state.daily.calories || 0) + Math.round(p.c * multiplier); state.daily.p = (state.daily.p || 0) + Math.round(p.p * multiplier); state.daily.f = (state.daily.f || 0) + Math.round(p.f * multiplier); state.daily.cb = (state.daily.cb || 0) + Math.round(p.cb * multiplier);
-    save(STORAGE.daily, state.daily); closeModal('food-modal'); haptic('success'); render();
+    state.daily.calories = (state.daily.calories || 0) + Math.round(p.c * multiplier);
+    state.daily.p = (state.daily.p || 0) + Math.round(p.p * multiplier);
+    state.daily.f = (state.daily.f || 0) + Math.round(p.f * multiplier);
+    state.daily.cb = (state.daily.cb || 0) + Math.round(p.cb * multiplier);
+    save(STORAGE.daily, state.daily);
+    closeModal('food-modal');
+    haptic('success');
+    render();
   } else { alert(`Продукт "${input}" не найден.`); }
 }
 
 function generateAIPlan() {
-  const goal = state.profile.goal === 'mass' ? 'Набор массы' : 'Похудение';
+  const goal = state.profile.goal === 'mass' ? 'Набор массы' : state.profile.goal === 'cut' ? 'Похудение' : 'Удержание';
   document.getElementById('ai-content').innerHTML = `<p style="margin-bottom:16px; color:var(--muted);">На основе твоей цели (<b>${goal}</b>) AI сгенерировал сплит:</p><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 1: Push</b><br><span class="muted" style="font-size:14px;">Жим лёжа 4х8, Жим гантелей 3х10, Махи 3х15</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 2: Pull</b><br><span class="muted" style="font-size:14px;">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 3: Legs</b><br><span class="muted" style="font-size:14px;">Приседания 4х8, Жим ногами 3х10, Выпады 3х12</span></div><button onclick="closeModal('ai-modal'); startWorkout();" style="margin-top:10px;">Применить план</button>`;
   document.getElementById('ai-modal').classList.add('active');
 }
@@ -664,7 +858,7 @@ function addWarmup(i) {
 }
 
 // ============================================
-// УДАЛЕНИЕ ПОДХОДА (свайпом или напрямую)
+// УДАЛЕНИЕ ПОДХОДА + СВАЙП
 // ============================================
 function removeSet(exIdx, setIdx) {
   if (!state.currentWorkout) return;
@@ -908,7 +1102,7 @@ function saveSwim() {
 }
 
 // ============================================
-// ТРЕНДЫ (прогресс)
+// ТРЕНДЫ
 // ============================================
 function renderProgress() {
   setTimeout(drawWeightChart, 50);
@@ -1009,16 +1203,22 @@ function logBodyWeight() {
 // ПРОФИЛЬ
 // ============================================
 function renderProfile() {
+  const t = getTargets();
+  const goalNames = { cut: 'Похудение', mass: 'Набор массы', maintain: 'Удержание' };
   return `
     <h1>Профиль</h1>
     <div class="card glass-card" style="text-align:center; padding:40px 24px;">
       <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, var(--move), var(--accent)); display:flex; align-items:center; justify-content:center; font-size:48px; color:#fff; margin:0 auto 20px;"><i class="ph ph-user"></i></div>
-      <h2 style="margin-bottom:8px;">Атлет</h2><p class="muted" style="margin-bottom:16px;">Исключения: ${state.profile.foodPrefs?.length ? state.profile.foodPrefs.join(', ') : 'Нет'}</p>
+      <h2 style="margin-bottom:8px;">Атлет</h2>
+      <p class="muted" style="margin-bottom:4px;">Цель: <b style="color:var(--accent);">${goalNames[state.profile.goal] || 'Удержание'}</b></p>
+      <p class="muted" style="margin-bottom:16px; font-size:13px;">Норма: <b>${t.calories} ккал</b> • Б:${t.p} Ж:${t.f} У:${t.cb}</p>
+      <p class="muted" style="margin-bottom:16px;">Исключения: ${state.profile.foodPrefs?.length ? state.profile.foodPrefs.join(', ') : 'Нет'}</p>
       ${state.isPremium ? 
         `<div style="color:var(--premium); font-weight:800; display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:16px;"><i class="ph-fill ph-crown"></i> Premium Активен</div>` : 
         `<button class="premium-btn" onclick="document.getElementById('premium-modal').classList.add('active')" style="margin-bottom:16px;"><i class="ph-fill ph-crown"></i> Получить Premium</button>`
       }
       <div style="margin-top:20px; margin-bottom:20px;"><label>Цвет интерфейса</label><div style="display:flex; justify-content:center; gap:12px; margin-top:10px;">${COLORS.map(c => `<div class="color-swatch ${state.themeColor === c.hex ? 'active' : ''}" style="background:${c.hex}" onclick="changeThemeColor('${c.hex}')"></div>`).join('')}</div></div>
+      <button class="secondary" onclick="openOnboardingEdit()" style="font-size:14px; padding:12px; margin-bottom:8px;"><i class="ph ph-pencil-simple"></i> Изменить параметры и КБЖУ</button>
       <button class="secondary" onclick="downloadBackup()" style="font-size:14px; padding:12px; margin-bottom:8px;"><i class="ph ph-download-simple"></i> Скачать бэкап</button>
       <div style="position:relative;">
         <input type="file" accept=".json" onchange="uploadBackup(event)" style="opacity:0; position:absolute; top:0; left:0; width:100%; height:100%; cursor:pointer; z-index:2;">
@@ -1133,12 +1333,39 @@ function exportWorkoutStory(id) {
   });
 }
 
+// ============================================
+// ПЛАН ПИТАНИЯ (с КБЖУ по цели)
+// ============================================
 function showPlan(type) {
   const title = document.getElementById('plan-title'), content = document.getElementById('plan-content');
   if (type === 'food') {
-    const meals = MEAL_DB[state.profile.goal][0];
-    title.innerText = "План питания";
-    content.innerHTML = `<div style="margin-bottom:10px;"><b>Завтрак:</b> ${meals.b}</div><div style="margin-bottom:10px;"><b>Обед:</b> ${meals.l}</div><div style="margin-bottom:10px;"><b>Перекус:</b> ${meals.s}</div><div><b>Ужин:</b> ${meals.d}</div>`;
+    const plan = generateMealPlan();
+    const target = getTargets();
+    const goalNames = { cut: 'Похудение', mass: 'Набор массы', maintain: 'Удержание' };
+    title.innerText = `План питания — ${goalNames[state.profile.goal] || 'Удержание'}`;
+
+    let html = `<div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:16px; text-align:center;">
+      <div style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Дневная норма</div>
+      <div style="font-size:26px; font-weight:800; color:var(--accent); margin-bottom:8px;">${target.calories} ккал</div>
+      <div style="display:flex; justify-content:space-around; font-size:13px;">
+        <div><span style="color:var(--muted);">Б:</span> <b>${target.p} г</b></div>
+        <div><span style="color:var(--muted);">Ж:</span> <b>${target.f} г</b></div>
+        <div><span style="color:var(--muted);">У:</span> <b>${target.cb} г</b></div>
+      </div>
+    </div>`;
+
+    plan.forEach(meal => {
+      html += `<div style="background:var(--card-light); padding:14px; border-radius:14px; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <b style="color:var(--accent);">${meal.name}</b>
+          <span style="font-size:13px; color:var(--muted); font-weight:600;">${meal.cal} ккал</span>
+        </div>
+        <div style="font-size:14px; color:var(--text); line-height:1.5;">${meal.desc}</div>
+        <div style="font-size:11px; color:var(--muted); margin-top:6px;">Б: ${meal.p}г • Ж: ${meal.f}г • У: ${meal.cb}г</div>
+      </div>`;
+    });
+
+    content.innerHTML = html;
   }
   document.getElementById('plan-modal').classList.add('active');
 }
@@ -1163,7 +1390,7 @@ function showPlates(totalWeight) {
 }
 
 // ============================================
-// ТАЙМЕР ОТДЫХА — новый, с пресетами и кольцом
+// ТАЙМЕР ОТДЫХА — с пресетами и кольцом
 // ============================================
 function startTimer() {
   document.getElementById('timer-modal').classList.add('active');
@@ -1225,7 +1452,7 @@ function startTimerCountdown() {
 }
 
 // ============================================
-// ОБЩИЕ УТИЛИТЫ: закрытие модалок, навигация
+// ОБЩИЕ УТИЛИТЫ
 // ============================================
 function closeModal(id) {
   const el = document.getElementById(id);
@@ -1260,7 +1487,6 @@ initApp();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').then((reg) => {
-      // Проверяем обновления при каждой загрузке
       reg.update();
       console.log('🟢 Service Worker зарегистрирован');
     }).catch((err) => {
