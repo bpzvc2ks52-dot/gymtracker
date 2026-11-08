@@ -150,10 +150,17 @@
   .timer-ring-progress { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
   #timer-display { font-size: 56px !important; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); z-index: 1; position: relative; }
 
-  /* GOAL CARDS в онбординге */
+  /* GOAL CARDS */
   .goal-card { background: var(--card-light); border-radius: 16px; padding: 14px 6px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
   .goal-card.selected { border-color: var(--accent); background: rgba(162,255,0,0.1); }
   .goal-card:active { transform: scale(0.96); }
+
+  /* EXERCISE PROGRESS */
+  .ex-row { padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: opacity 0.2s; display: flex; justify-content: space-between; align-items: center; }
+  .ex-row:hover { opacity: 0.7; }
+  .ex-row:last-child { border-bottom: none; }
+  .ex-name { font-weight: 700; color: var(--text); font-size: 15px; }
+  .ex-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
 
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px 24px 40px 24px; }
@@ -289,6 +296,17 @@
     <h2 id="history-title" style="text-align:center;">Детали</h2>
     <div id="history-content" style="margin-top:20px;"></div>
     <button class="secondary" style="margin-top:24px;" onclick="closeModal('history-modal')">Закрыть</button>
+  </div>
+</div>
+
+<!-- НОВОЕ: модалка прогресса упражнения -->
+<div id="exercise-progress-modal" class="modal-overlay" onclick="closeModal('exercise-progress-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
+    <h2 id="exp-title" style="text-align:center; color:var(--accent); margin-bottom:6px;">Прогресс</h2>
+    <p id="exp-subtitle" class="muted" style="text-align:center; font-size:13px; margin-top:0; margin-bottom:16px;"></p>
+    <div id="exp-stats" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px;"></div>
+    <div class="chart-container" style="height:240px;"><canvas id="exerciseChart"></canvas></div>
+    <button class="secondary" style="margin-top:24px;" onclick="closeModal('exercise-progress-modal')">Закрыть</button>
   </div>
 </div>
 
@@ -434,7 +452,7 @@ let state = {
   isPremium: load(STORAGE.premium) || false, customExercises: load(STORAGE.customEx) || {},
   themeColor: load(STORAGE.themeColor) || '#a2ff00',
   daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0, habits: { water: false, steps: false, sleep: false } },
-  screen: 'home', currentWorkout: null, chartInstance: null, tempMood: null
+  screen: 'home', currentWorkout: null, chartInstance: null, exerciseChartInstance: null, tempMood: null
 };
 
 if (!state.daily.habits) state.daily.habits = { water: false, steps: false, sleep: false };
@@ -443,6 +461,7 @@ let timerInt = null, timerTotal = 90, timerRemaining = 90;
 let runInt = null, runTime = 0, runActive = false, gpsWatchId = null, lastPos = null, gpsDistance = 0;
 let obGoal = 'maintain';
 let obEditMode = false;
+let prShownThisWorkout = new Set();
 
 function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
@@ -518,7 +537,7 @@ function generateMealPlan() {
 }
 
 // ============================================
-// ИСПРАВЛЕННАЯ КНОПКА «ПРОДОЛЖИТЬ» + ОНБОРДИНГ
+// КНОПКА «ПРОДОЛЖИТЬ» + ОНБОРДИНГ
 // ============================================
 function acceptCookies() {
   console.log('🔵 acceptCookies вызвана');
@@ -547,7 +566,6 @@ function acceptCookies() {
           if (nav) nav.style.display = 'flex';
           render();
         } else {
-          // Первый запуск — онбординг
           const appEl2 = document.getElementById('app');
           if (appEl2) appEl2.innerHTML = '';
           const obModal = document.getElementById('onboarding-modal');
@@ -570,7 +588,7 @@ function acceptCookies() {
 }
 
 // ============================================
-// ОНБОРДИНГ: превью, выбор цели, сохранение
+// ОНБОРДИНГ
 // ============================================
 function selectGoal(goal) {
   obGoal = goal;
@@ -654,6 +672,61 @@ function openOnboardingEdit() {
   document.querySelectorAll('.goal-card').forEach(c => c.classList.toggle('selected', c.dataset.goal === obGoal));
   updatePreview();
   document.getElementById('onboarding-modal').classList.add('active');
+}
+
+// ============================================
+// «ПРОШЛЫЙ РАЗ» + PR + TOAST
+// ============================================
+function getLastExerciseData(exName) {
+  const sorted = [...state.workouts].sort((a, b) => b.id - a.id);
+  for (const w of sorted) {
+    const ex = w.exercises.find(e => e.name === exName);
+    if (ex) {
+      const workingSets = ex.sets.filter(s => !s.isWarmup);
+      if (workingSets.length) return { date: w.date, sets: workingSets };
+    }
+  }
+  return null;
+}
+
+function getPR(exName) {
+  let max = 0;
+  state.workouts.forEach(w => {
+    const ex = w.exercises.find(e => e.name === exName);
+    if (ex) {
+      ex.sets.filter(s => !s.isWarmup).forEach(s => {
+        if (s.weight > max) max = s.weight;
+      });
+    }
+  });
+  return max;
+}
+
+function showToast(message) {
+  if (!document.getElementById('toast-styles')) {
+    const st = document.createElement('style');
+    st.id = 'toast-styles';
+    st.textContent = '@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } } @keyframes toastOut { from { opacity:1; transform:translateX(-50%) translateY(0); } to { opacity:0; transform:translateX(-50%) translateY(20px); } }';
+    document.head.appendChild(st);
+  }
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  toast.style.cssText = 'position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--premium); color:#000; padding:14px 22px; border-radius:16px; font-weight:800; font-size:15px; z-index:99999; box-shadow:0 8px 24px rgba(255,215,0,0.4); max-width:90%; text-align:center; animation:toastIn 0.3s ease;';
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'toastOut 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
+
+function copyLastSets(i) {
+  const ex = state.currentWorkout.exercises[i];
+  const last = getLastExerciseData(ex.name);
+  if (!last) return;
+  ex.sets = last.sets.map(s => ({ weight: s.weight, reps: s.reps, isWarmup: false }));
+  haptic('success');
+  showToast(`Скопированы подходы: ${ex.name}`);
+  render();
 }
 
 // ============================================
@@ -786,11 +859,12 @@ function generateAIPlan() {
 }
 
 // ============================================
-// ТРЕНИРОВКА В ЗАЛЕ
+// ТРЕНИРОВКА В ЗАЛЕ (с «Прошлым разом» + PR)
 // ============================================
 function startWorkout() {
   state.currentWorkout = { date: today(), exercises: [], mood: null, note: '' };
   state.screen = 'newWorkout';
+  prShownThisWorkout = new Set();
   haptic('medium');
   render();
 }
@@ -802,12 +876,21 @@ function renderNewWorkout() {
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap:10px;"><h1 style="margin:0;">Зал</h1><div style="background: var(--card); color: var(--accent); padding:10px 20px; border-radius:99px; font-weight:800; font-size:18px;">${tonnage} КГ</div><button class="danger" style="width:auto; padding:10px 20px; margin:0; border-radius:99px;" onclick="cancelWorkout()">Отмена</button></div>
     <div class="workout-layout">
       <div>
-        ${w.exercises.length > 0 ? w.exercises.map((ex, i) => `
+        ${w.exercises.length > 0 ? w.exercises.map((ex, i) => {
+          const lastTime = getLastExerciseData(ex.name);
+          const pr = getPR(ex.name);
+          return `
           <div class="card" style="margin-bottom:16px; padding:20px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:16px;"><strong style="font-size:20px;">${ex.name}</strong><div style="display:flex; gap:8px;"><button class="btn-icon" onclick="startTimer()"><i class="ph ph-timer"></i></button><button class="btn-icon" style="color:var(--move);" onclick="removeExercise(${i})"><i class="ph ph-trash"></i></button></div></div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><strong style="font-size:20px;">${ex.name}</strong><div style="display:flex; gap:8px;"><button class="btn-icon" onclick="startTimer()"><i class="ph ph-timer"></i></button><button class="btn-icon" style="color:var(--move);" onclick="removeExercise(${i})"><i class="ph ph-trash"></i></button></div></div>
+            <div style="font-size:12px; color:var(--muted); margin-bottom:12px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+              ${lastTime ? `<span><i class="ph ph-clock-counter-clockwise"></i> Прошлый раз: <b style="color:var(--text);">${lastTime.sets.map(s => `${s.weight}×${s.reps}`).join(' • ')}</b></span>` : '<span><i class="ph ph-sparkle"></i> Первое выполнение</span>'}
+              ${pr > 0 ? `<span style="color:var(--premium); font-weight:700;"><i class="ph-fill ph-trophy"></i> PR: ${pr} кг</span>` : ''}
+              ${lastTime ? `<button onclick="copyLastSets(${i})" style="width:auto; padding:4px 12px; margin:0; font-size:11px; border-radius:8px; background:rgba(162,255,0,0.15); color:var(--accent);"><i class="ph ph-copy"></i> Повторить</button>` : ''}
+            </div>
             ${ex.sets.map((s, j) => `<div class="set-row-wrapper"><div class="set-delete-bg" data-del-ex="${i}" data-del-set="${j}"><i class="ph ph-trash"></i></div><div class="set-row ${s.isWarmup ? 'warmup' : ''}"><div class="set-num">${s.isWarmup ? 'W' : j + 1}</div><input type="number" value="${s.weight}" onchange="updateSet(${i},${j},'weight',this.value)"><input type="number" value="${s.reps}" onchange="updateSet(${i},${j},'reps',this.value)"><button class="btn-icon" onclick="showPlatesFromRow(this)"><i class="ph ph-cookie"></i></button></div></div>`).join('')}
             <div style="display:flex; gap:10px; margin-top:16px;"><button class="secondary" style="padding:12px; font-size:15px; margin:0;" onclick="addSet(${i})"><i class="ph ph-plus"></i> Подход</button><button class="secondary" style="padding:12px; font-size:15px; margin:0; color:var(--move);" onclick="addWarmup(${i})"><i class="ph ph-fire"></i> Разминка</button></div>
-          </div>`).join('') : `<div class="card" style="text-align:center; padding:60px 20px; border:2px dashed var(--border); background:transparent; box-shadow:none;"><p class="muted">Добавь упражнения</p></div>`}
+          </div>`;
+        }).join('') : `<div class="card" style="text-align:center; padding:60px 20px; border:2px dashed var(--border); background:transparent; box-shadow:none;"><p class="muted">Добавь упражнения</p></div>`}
         ${w.exercises.length > 0 ? `<button onclick="promptFinishWorkout()" style="margin-top:10px;"><i class="ph ph-check-circle"></i> Завершить</button>` : ''}
       </div>
       <div><div class="card" style="padding:20px; margin-bottom:16px;"><h2>Все упражнения</h2><button class="secondary" onclick="openCustomExModal()" style="margin-bottom:12px; color:var(--accent);"><i class="ph ph-plus"></i> Свое упражнение</button><div style="max-height:300px; overflow-y:auto; padding-right:5px;">${Object.keys(getAllExercises()).map(ex => `<button class="secondary" style="justify-content:flex-start; padding:16px; margin-bottom:8px;" onclick="addExercise('${ex}')">${ex}</button>`).join('')}</div></div></div>
@@ -842,10 +925,27 @@ function addSet(i) {
   haptic('light');
   render();
 }
+
+// ============================================
+// UPDATE SET — с проверкой PR
+// ============================================
 function updateSet(i, j, f, v) {
-  state.currentWorkout.exercises[i].sets[j][f] = +v;
+  const ex = state.currentWorkout.exercises[i];
+  const set = ex.sets[j];
+  const newVal = +v;
+  set[f] = newVal;
+
+  if (f === 'weight' && !set.isWarmup && newVal > 0) {
+    const pr = getPR(ex.name);
+    if (pr > 0 && newVal > pr && !prShownThisWorkout.has(ex.name)) {
+      prShownThisWorkout.add(ex.name);
+      showToast(`🎉 Новый рекорд в «${ex.name}»: ${newVal} кг! (было ${pr})`);
+      haptic('success');
+    }
+  }
   render();
 }
+
 function addWarmup(i) {
   const ex = state.currentWorkout.exercises[i];
   const w = ex.sets[0]?.weight || 20;
@@ -1205,6 +1305,12 @@ function logBodyWeight() {
 function renderProfile() {
   const t = getTargets();
   const goalNames = { cut: 'Похудение', mass: 'Набор массы', maintain: 'Удержание' };
+
+  // Собираем уникальные упражнения из истории
+  const allExNames = new Set();
+  state.workouts.forEach(w => w.exercises.forEach(ex => allExNames.add(ex.name)));
+  const exList = [...allExNames].sort();
+
   return `
     <h1>Профиль</h1>
     <div class="card glass-card" style="text-align:center; padding:40px 24px;">
@@ -1239,6 +1345,25 @@ function renderProfile() {
       </div>
     </div>
 
+    ${exList.length > 0 ? `<div class="card">
+      <h2><i class="ph ph-chart-line-up" style="color:var(--accent);"></i> Прогресс по упражнениям</h2>
+      <p class="muted" style="font-size:13px; margin-bottom:8px;">Тапни упражнение — увидишь график роста</p>
+      ${exList.map(exName => {
+        const pr = getPR(exName);
+        const last = getLastExerciseData(exName);
+        return `<div class="ex-row" onclick="showExerciseProgress('${exName.replace(/'/g, "\\'")}')">
+          <div>
+            <div class="ex-name">${exName}</div>
+            <div class="ex-meta">${last ? `Последний раз: ${last.date} • ${last.sets[0].weight}кг × ${last.sets[0].reps}` : 'Нет данных'}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:var(--premium); font-weight:800; font-size:15px;">${pr} кг</div>
+            <div class="ex-meta">PR</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+
     <div class="card"><h2>История тренировок</h2>${[...state.workouts].sort((a,b)=>b.id-a.id).slice(0,5).map(w => `<div style="padding:16px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showHistoryDetails(${w.id})"><div><div style="font-weight:700;">${w.date}</div><div class="muted" style="font-size:13px; margin-top:4px;">${w.exercises.map(e => e.name).join(', ').slice(0, 30)}...</div></div><div style="display:flex; align-items:center; gap:10px;"><span style="font-size:24px;">${w.mood || '😐'}</span><i class="ph ph-caret-right muted"></i></div></div>`).join('') || '<p class="muted">Пока нет тренировок</p>'}</div>
     <div class="card"><button class="danger" onclick="resetApp()"><i class="ph ph-trash"></i> Сбросить данные</button></div>`;
 }
@@ -1259,13 +1384,118 @@ function buyPremium() {
   alert('Premium активирован! (Демо-режим)');
 }
 
+// ============================================
+// ИСТОРИЯ ТРЕНИРОВКИ — с кликабельными упражнениями
+// ============================================
 function showHistoryDetails(id) {
   const w = state.workouts.find(x => x.id === id); if (!w) return;
   document.getElementById('history-title').innerText = `Тренировка от ${w.date}`;
-  document.getElementById('history-content').innerHTML = `<div style="text-align:center; font-size:36px; margin-bottom:20px;">${w.mood || '😐'}</div>${w.note ? `<div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:20px; font-style:italic;">"${w.note}"</div>` : ''}<div style="margin-bottom:16px; font-weight:700; color:var(--accent);">Тоннаж: ${w.tonnage} кг</div>${w.exercises.map(ex => `<div style="margin-bottom:16px;"><div style="font-weight:700; margin-bottom:8px;">${ex.name}</div><div style="display:flex; flex-wrap:wrap; gap:8px;">${ex.sets.map((s, i) => `<div style="background:var(--card-light); padding:8px 12px; border-radius:8px; font-size:14px; ${s.isWarmup ? 'color:var(--move)' : ''}">${s.isWarmup ? 'W' : i+1}: ${s.weight}кг × ${s.reps}</div>`).join('')}</div></div>`).join('')}`;
+  document.getElementById('history-content').innerHTML = `<div style="text-align:center; font-size:36px; margin-bottom:20px;">${w.mood || '😐'}</div>${w.note ? `<div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:20px; font-style:italic;">"${w.note}"</div>` : ''}<div style="margin-bottom:16px; font-weight:700; color:var(--accent);">Тоннаж: ${w.tonnage} кг</div>${w.exercises.map(ex => `<div style="margin-bottom:16px;"><div style="font-weight:700; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;"><span>${ex.name}</span><button onclick="closeModal('history-modal'); showExerciseProgress('${ex.name.replace(/'/g, "\\'")}')" style="width:auto; padding:4px 10px; margin:0; font-size:11px; border-radius:8px; background:rgba(162,255,0,0.15); color:var(--accent);"><i class="ph ph-chart-line-up"></i> График</button></div><div style="display:flex; flex-wrap:wrap; gap:8px;">${ex.sets.map((s, i) => `<div style="background:var(--card-light); padding:8px 12px; border-radius:8px; font-size:14px; ${s.isWarmup ? 'color:var(--move)' : ''}">${s.isWarmup ? 'W' : i+1}: ${s.weight}кг × ${s.reps}</div>`).join('')}</div></div>`).join('')}`;
   document.getElementById('history-modal').classList.add('active');
 }
 
+// ============================================
+// ПРОГРЕСС ПО УПРАЖНЕНИЮ (график Chart.js)
+// ============================================
+function showExerciseProgress(exName) {
+  const history = [];
+  state.workouts.forEach(w => {
+    const ex = w.exercises.find(e => e.name === exName);
+    if (ex) {
+      const workingSets = ex.sets.filter(s => !s.isWarmup && s.weight > 0);
+      if (workingSets.length) {
+        const maxWeight = Math.max(...workingSets.map(s => s.weight));
+        const totalReps = workingSets.reduce((sum, s) => sum + s.reps, 0);
+        const volume = workingSets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+        history.push({ date: w.date, maxWeight, totalReps, volume, sets: workingSets.length });
+      }
+    }
+  });
+  history.sort((a, b) => a.date.localeCompare(b.date));
+
+  document.getElementById('exp-title').innerText = exName;
+
+  if (history.length === 0) {
+    document.getElementById('exp-subtitle').innerText = 'Нет данных';
+    document.getElementById('exp-stats').innerHTML = '';
+    document.getElementById('exerciseChart').style.display = 'none';
+    document.getElementById('exercise-progress-modal').classList.add('active');
+    return;
+  }
+  document.getElementById('exerciseChart').style.display = 'block';
+
+  const pr = Math.max(...history.map(h => h.maxWeight));
+  const avgWeight = Math.round(history.reduce((s, h) => s + h.maxWeight, 0) / history.length);
+  const totalVolume = history.reduce((s, h) => s + h.volume, 0);
+
+  document.getElementById('exp-subtitle').innerText = `Всего тренировок: ${history.length}`;
+  document.getElementById('exp-stats').innerHTML = `
+    <div style="background:var(--card-light); padding:12px 8px; border-radius:12px; text-align:center;">
+      <div style="font-size:20px; font-weight:800; color:var(--premium);">${pr}</div>
+      <div style="font-size:10px; color:var(--muted); font-weight:700; text-transform:uppercase;">PR, кг</div>
+    </div>
+    <div style="background:var(--card-light); padding:12px 8px; border-radius:12px; text-align:center;">
+      <div style="font-size:20px; font-weight:800; color:var(--accent);">${avgWeight}</div>
+      <div style="font-size:10px; color:var(--muted); font-weight:700; text-transform:uppercase;">Сред., кг</div>
+    </div>
+    <div style="background:var(--card-light); padding:12px 8px; border-radius:12px; text-align:center;">
+      <div style="font-size:20px; font-weight:800; color:var(--stand);">${(totalVolume/1000).toFixed(1)}т</div>
+      <div style="font-size:10px; color:var(--muted); font-weight:700; text-transform:uppercase;">Объём</div>
+    </div>
+  `;
+
+  document.getElementById('exercise-progress-modal').classList.add('active');
+
+  setTimeout(() => {
+    const canvas = document.getElementById('exerciseChart');
+    if (!canvas) return;
+    if (state.exerciseChartInstance) state.exerciseChartInstance.destroy();
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 240);
+    grad.addColorStop(0, state.themeColor + '88');
+    grad.addColorStop(1, state.themeColor + '00');
+
+    state.exerciseChartInstance = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: history.map(h => h.date.slice(5)),
+        datasets: [{
+          label: 'Макс. вес, кг',
+          data: history.map(h => h.maxWeight),
+          borderColor: state.themeColor,
+          backgroundColor: grad,
+          borderWidth: 3,
+          tension: 0.35,
+          fill: true,
+          pointRadius: 5,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: state.themeColor,
+          pointBorderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.parsed.y} кг`
+            }
+          }
+        },
+        scales: {
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93' }, beginAtZero: false },
+          x: { grid: { display: false }, ticks: { color: '#8e8e93' } }
+        }
+      }
+    });
+  }, 100);
+}
+
+// ============================================
+// PDF ОТЧЁТ
+// ============================================
 function downloadReport() {
   const area = document.getElementById('report-area');
   const fat = calcBodyFat(state.profile);
@@ -1281,6 +1511,9 @@ function downloadReport() {
   });
 }
 
+// ============================================
+// STORY-ЭКСПОРТ
+// ============================================
 function exportWorkoutStory(id) {
   const w = state.workouts.find(x => x.id === id); if (!w) return;
   const area = document.getElementById('export-area');
@@ -1334,7 +1567,7 @@ function exportWorkoutStory(id) {
 }
 
 // ============================================
-// ПЛАН ПИТАНИЯ (с КБЖУ по цели)
+// ПЛАН ПИТАНИЯ
 // ============================================
 function showPlan(type) {
   const title = document.getElementById('plan-title'), content = document.getElementById('plan-content');
