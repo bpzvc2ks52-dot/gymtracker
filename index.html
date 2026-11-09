@@ -35,6 +35,7 @@
   button.secondary { background: var(--card-light); color: var(--text); }
   button.danger { background: rgba(250,17,79,0.15); color: var(--move); }
   button.premium-btn { background: linear-gradient(90deg, #ffd700, #ffaa00); color: #000; }
+  button.sm-btn { padding: 8px 12px; font-size: 12px; width: auto; margin: 0; border-radius: 10px; }
   
   input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=number] { -moz-appearance: textfield; }
@@ -49,8 +50,7 @@
           box-shadow: 0 4px 20px rgba(0,0,0,0.2); overflow: hidden; position: relative; }
   
   .muted { color: var(--muted); font-size: 15px; font-weight: 500; }
-  .stat-num { font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: -1.5px; }
-
+  
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--border); display: flex; justify-content: space-around;
@@ -62,14 +62,14 @@
   .nav-item i { font-size: 26px; pointer-events: none; }
   .nav-item span { pointer-events: none; }
 
-  .rings-container { display: flex; justify-content: center; gap: 15px; padding: 10px 0; }
-  .ring-wrap { position: relative; width: 90px; height: 90px; display: flex; align-items: center; justify-content: center; }
+  .rings-container { display: flex; justify-content: center; gap: 8px; padding: 10px 0; }
+  .ring-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
   .ring-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
-  .ring-bg { fill: none; stroke: var(--card-light); stroke-width: 8; opacity: 0.3; }
-  .ring-progress { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s ease-in-out; }
+  .ring-bg { fill: none; stroke: var(--card-light); stroke-width: 7; opacity: 0.3; }
+  .ring-progress { fill: none; stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset 1s ease-in-out; }
   .ring-content { z-index: 10; text-align: center; display: flex; flex-direction: column; align-items: center; }
-  .ring-icon { font-size: 18px; margin-bottom: 2px; }
-  .ring-val { font-size: 12px; font-weight: 800; }
+  .ring-icon { margin-bottom: 2px; }
+  .ring-val { font-weight: 800; }
 
   .set-row-wrapper { position: relative; overflow: hidden; border-radius: 12px; margin-bottom: 12px; }
   .set-row-wrapper .set-delete-bg { position: absolute; top: 0; right: 0; bottom: 0; width: 90px; background: var(--move);
@@ -129,18 +129,13 @@
   .studio { font-size: 12px; color: var(--muted); font-weight: 800; letter-spacing: 2px; text-transform: uppercase; opacity: 0.6;}
   @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(162,255,0,0.4); } 50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(162,255,0,0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(162,255,0,0); } }
 
-  /* GLASSMORPHISM */
   .glass-card { background: rgba(28, 28, 30, 0.55); backdrop-filter: blur(24px) saturate(140%); -webkit-backdrop-filter: blur(24px) saturate(140%); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
 
-  /* SKELETON */
   @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
   .skeleton { background: linear-gradient(90deg, var(--card) 0%, var(--card-light) 50%, var(--card) 100%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 12px; }
   .skeleton-title { height: 36px; width: 60%; margin-bottom: 20px; border-radius: 10px; }
   .skeleton-card { height: 160px; margin-bottom: 16px; border-radius: var(--radius); }
-  .skeleton-line { height: 16px; margin-bottom: 10px; border-radius: 8px; }
-  .skeleton-line.short { width: 40%; }
 
-  /* TIMER */
   .timer-presets { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
   .timer-preset-btn { background: var(--card-light); color: var(--text); border: 2px solid transparent; padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: 14px; width: auto; margin: 0; transition: all 0.2s; cursor: pointer; }
   .timer-preset-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(162, 255, 0, 0.1); }
@@ -150,17 +145,26 @@
   .timer-ring-progress { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
   #timer-display { font-size: 56px !important; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); z-index: 1; position: relative; }
 
-  /* GOAL CARDS */
   .goal-card { background: var(--card-light); border-radius: 16px; padding: 14px 6px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
   .goal-card.selected { border-color: var(--accent); background: rgba(162,255,0,0.1); }
   .goal-card:active { transform: scale(0.96); }
 
-  /* EXERCISE PROGRESS */
   .ex-row { padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: opacity 0.2s; display: flex; justify-content: space-between; align-items: center; }
   .ex-row:hover { opacity: 0.7; }
   .ex-row:last-child { border-bottom: none; }
   .ex-name { font-weight: 700; color: var(--text); font-size: 15px; }
   .ex-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  /* КАЛЕНДАРЬ */
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
+  .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; border-radius: 8px; background: var(--card-light); color: var(--muted); }
+  .cal-day.empty { background: transparent; }
+  .cal-day.workout { background: var(--exercise); color: #000; }
+  .cal-day.run { background: var(--stand); color: #000; }
+  .cal-day.both { background: linear-gradient(135deg, var(--exercise) 50%, var(--stand) 50%); color: #000; }
+
+  /* ПРОГРЕССИВНАЯ ПЕРЕГРУЗКА */
+  .overload-hint { font-size: 11px; color: var(--accent); background: rgba(162,255,0,0.1); padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; }
 
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px 24px 40px 24px; }
@@ -192,7 +196,7 @@
   </div>
 </div>
 
-<!-- ОНБОРДИНГ -->
+<!-- МОДАЛКА ОНБОРДИНГА -->
 <div id="onboarding-modal" class="modal-overlay">
   <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left; max-height:95vh;">
     <div style="text-align:center; margin-bottom:20px;">
@@ -237,6 +241,39 @@
   </div>
 </div>
 
+<!-- ШАБЛОНЫ -->
+<div id="templates-modal" class="modal-overlay" onclick="closeModal('templates-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0;">Выбрать шаблон</h2>
+    <div id="templates-list" style="margin-bottom:20px;"></div>
+    <button class="secondary" onclick="closeModal('templates-modal')">Отмена</button>
+  </div>
+</div>
+
+<div id="save-template-modal" class="modal-overlay" onclick="closeModal('save-template-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0;">Сохранить как шаблон</h2>
+    <input type="text" id="template-name-input" placeholder="Название (например: Push Day)">
+    <button onclick="saveTemplate()" style="margin-top:10px;">Сохранить</button>
+    <button class="secondary" onclick="closeModal('save-template-modal')">Отмена</button>
+  </div>
+</div>
+
+<!-- 1ПМ КАЛЬКУЛЯТОР -->
+<div id="rm-modal" class="modal-overlay" onclick="closeModal('rm-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0;">Калькулятор 1ПМ</h2>
+    <p class="muted" style="font-size:13px; margin-bottom:16px;">Одноповторный максимум (теоретический)</p>
+    <label>Вес (кг)</label>
+    <input type="number" id="rm-weight" placeholder="80">
+    <label>Повторения</label>
+    <input type="number" id="rm-reps" placeholder="8">
+    <button onclick="calc1RM()" style="margin-top:10px;">Рассчитать</button>
+    <div id="rm-result" style="margin-top:16px; font-size:24px; font-weight:800; color:var(--accent);"></div>
+    <button class="secondary" onclick="closeModal('rm-modal')">Закрыть</button>
+  </div>
+</div>
+
 <!-- ПРЕМИУМ -->
 <div id="premium-modal" class="modal-overlay" onclick="closeModal('premium-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
@@ -256,18 +293,17 @@
 <div id="food-modal" class="modal-overlay" onclick="closeModal('food-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Добавить еду</h2>
-    <p class="muted" style="font-size:13px; margin-top:-10px; margin-bottom:16px;">Введи блюдо и вес (например: курица 150, паста 200, кофе с молоком 250)</p>
+    <p class="muted" style="font-size:13px; margin-top:-10px; margin-bottom:16px;">Введи блюдо и вес (например: курица 150, паста 200)</p>
     <input type="text" id="food-input" placeholder="Название и вес..." style="text-align:center; margin-bottom:20px;">
     <button onclick="processFoodInput()"><i class="ph ph-check"></i> Добавить в дневник</button>
   </div>
 </div>
 
-<!-- ОБНОВЛЕННАЯ МОДАЛКА ТРЕНИРОВКИ -->
 <div id="feedback-modal" class="modal-overlay">
   <div class="modal-content">
     <div style="text-align:center; margin-bottom:16px;">
       <i class="ph-fill ph-check-circle" style="font-size:56px; color:var(--accent);"></i>
-      <h2 style="margin-top:8px; margin-bottom:4px;" id="feedback-title">Тренировка сохранена!</h2>
+      <h2 style="margin-top:8px; margin-bottom:4px;">Тренировка сохранена!</h2>
       <p class="muted" style="font-size:14px; margin:0;">Как она прошла? (Необязательно)</p>
     </div>
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;" id="mood-container">
@@ -277,7 +313,7 @@
       <div class="mood-btn" onclick="selectMood('😴')">😴</div>
     </div>
     <input type="text" id="workout-note" placeholder="Заметка..." style="text-align:left;">
-    <button onclick="updateWorkoutFeedback()" style="margin-top:10px;" id="feedback-btn">Добавить к тренировке</button>
+    <button onclick="updateWorkoutFeedback()" style="margin-top:10px;">Добавить к тренировке</button>
     <button class="secondary" onclick="closeModal('feedback-modal')">Пропустить</button>
   </div>
 </div>
@@ -306,14 +342,13 @@
   </div>
 </div>
 
-<!-- ПРОГРЕСС УПРАЖНЕНИЯ -->
 <div id="exercise-progress-modal" class="modal-overlay" onclick="closeModal('exercise-progress-modal')">
   <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
     <h2 id="exp-title" style="text-align:center; color:var(--accent); margin-bottom:6px;">Прогресс</h2>
     <p id="exp-subtitle" class="muted" style="text-align:center; font-size:13px; margin-top:0; margin-bottom:16px;"></p>
     <div id="exp-stats" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px;"></div>
     <div class="chart-container" style="height:240px;"><canvas id="exerciseChart"></canvas></div>
-    <div style="font-size:12px; color:var(--muted); text-align:center; margin-top:16px; line-height:1.4;">PR (Personal Record) — это твой лучший результат за 1 подход (максимальный вес, который ты когда-либо поднимал в этом упражнении).</div>
+    <div style="font-size:12px; color:var(--muted); text-align:center; margin-top:16px; line-height:1.4;">Рекорд — это лучший результат за 1 подход (максимальный вес, который ты когда-либо поднимал).</div>
     <button class="secondary" style="margin-top:24px;" onclick="closeModal('exercise-progress-modal')">Закрыть</button>
   </div>
 </div>
@@ -404,7 +439,12 @@ function renderSkeleton() {
   `;
 }
 
-const STORAGE = { profile: 'fit_p10', workouts: 'fit_w10', bodyLog: 'fit_b10', daily: 'fit_d10', runs: 'fit_r10', swims: 'fit_sw10', measurements: 'fit_m10', achievements: 'fit_a10', premium: 'fit_prem10', themeColor: 'fit_color10', customEx: 'fit_custom10' };
+const STORAGE = { 
+  profile: 'fit_p10', workouts: 'fit_w10', bodyLog: 'fit_b10', daily: 'fit_d10', 
+  runs: 'fit_r10', swims: 'fit_sw10', measurements: 'fit_m10', achievements: 'fit_a10', 
+  premium: 'fit_prem10', themeColor: 'fit_color10', customEx: 'fit_custom10',
+  templates: 'fit_temp10'
+};
 
 const ACHIEVEMENTS_LIST = [
   { id: 'first_workout', name: 'Первый шаг', icon: 'ph-sneaker', cond: (s) => s.workouts.length > 0 },
@@ -528,6 +568,7 @@ let state = {
   profile: load(STORAGE.profile), workouts: load(STORAGE.workouts) || [], bodyLog: load(STORAGE.bodyLog) || [],
   runs: load(STORAGE.runs) || [], swims: load(STORAGE.swims) || [], measurements: load(STORAGE.measurements) || [], achievements: load(STORAGE.achievements) || [],
   isPremium: load(STORAGE.premium) || false, customExercises: load(STORAGE.customEx) || {},
+  templates: load(STORAGE.templates) || [],
   themeColor: load(STORAGE.themeColor) || '#a2ff00',
   daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0, habits: { water: false, steps: false, sleep: false } },
   screen: 'home', currentWorkout: null, chartInstance: null, exerciseChartInstance: null, tempMood: null, lastSavedWorkoutId: null
@@ -551,7 +592,7 @@ if (state.daily.date !== today()) {
 }
 
 // ============================================
-// КАЛЬКУЛЯТОР КБЖУ (Миффлин-Сан Жеор)
+// КАЛЬКУЛЯТОР КБЖУ И 1ПМ
 // ============================================
 function calculateKBJU(p) {
   const { sex, weight, height, age, goal } = p;
@@ -577,6 +618,19 @@ function getTargets() {
   if (state.profile && state.profile.targets) return state.profile.targets;
   if (state.profile && state.profile.weight) return calculateKBJU(state.profile);
   return { calories: 2000, p: 120, f: 60, cb: 200 };
+}
+
+function calc1RM() {
+  const w = +document.getElementById('rm-weight').value;
+  const r = +document.getElementById('rm-reps').value;
+  if (!w || !r || r < 1 || r > 30) { 
+    document.getElementById('rm-result').innerText = 'Введи корректные данные'; 
+    return; 
+  }
+  // Формула Эпли
+  const rm = Math.round(w * (1 + r / 30));
+  document.getElementById('rm-result').innerText = `~ ${rm} кг`;
+  haptic('success');
 }
 
 // ============================================
@@ -612,6 +666,80 @@ function generateMealPlan() {
     ]
   };
   return plans[goal] || plans.maintain;
+}
+
+// ============================================
+// СТРИК (СЕРИЯ ТРЕНИРОВОК)
+// ============================================
+function getStreak() {
+  if (state.workouts.length === 0) return 0;
+  const dates = [...new Set(state.workouts.map(w => w.date))].sort().reverse();
+  let streak = 0;
+  let checkDate = new Date();
+  
+  // Если сегодня нет тренировки, начинаем проверку со вчера
+  const todayStr = today();
+  if (dates[0] !== todayStr) {
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
+  for (let i = 0; i < 365; i++) { // максимум год
+    const dStr = checkDate.toISOString().slice(0, 10);
+    if (dates.includes(dStr)) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      // Если пропустили 1 день, но тренировались до этого, стрик не рвется, если это был "вчера"
+      if (i === 0 && dates[0] !== todayStr) {
+         checkDate.setDate(checkDate.getDate() - 1);
+         continue; 
+      }
+      break;
+    }
+  }
+  return streak;
+}
+
+// ============================================
+// ШАБЛОНЫ ТРЕНИРОВОК
+// ============================================
+function openTemplatesModal() {
+  const list = document.getElementById('templates-list');
+  if (state.templates.length === 0) {
+    list.innerHTML = '<p class="muted">У тебя пока нет сохраненных шаблонов.</p>';
+  } else {
+    list.innerHTML = state.templates.map((t, i) => `
+      <div class="card" style="margin-bottom:8px; padding:16px; text-align:left; cursor:pointer;" onclick="loadTemplate(${i})">
+        <div style="font-weight:800; font-size:16px; color:var(--accent);">${t.name}</div>
+        <div class="muted" style="font-size:12px; margin-top:4px;">${t.exercises.length} упражнений</div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('templates-modal').classList.add('active');
+}
+
+function loadTemplate(index) {
+  const t = state.templates[index];
+  state.currentWorkout = { date: today(), exercises: JSON.parse(JSON.stringify(t.exercises)), mood: null, note: '' };
+  state.screen = 'newWorkout';
+  prShownThisWorkout = new Set();
+  closeModal('templates-modal');
+  haptic('success');
+  render();
+}
+
+function saveTemplate() {
+  const name = document.getElementById('template-name-input').value.trim();
+  if (!name) return alert('Введи название шаблона');
+  
+  state.templates.push({
+    name: name,
+    exercises: JSON.parse(JSON.stringify(state.currentWorkout.exercises))
+  });
+  save(STORAGE.templates, state.templates);
+  closeModal('save-template-modal');
+  haptic('success');
+  showToast('Шаблон сохранен!');
 }
 
 // ============================================
@@ -737,7 +865,7 @@ function openOnboardingEdit() {
 }
 
 // ============================================
-// «ПРОШЛЫЙ РАЗ» + PR + TOAST
+// «ПРОШЛЫЙ РАЗ» + PR + TOAST + УТИЛИТЫ
 // ============================================
 function getLastExerciseData(exName) {
   const sorted = [...state.workouts].sort((a, b) => b.id - a.id);
@@ -791,9 +919,6 @@ function copyLastSets(i) {
   render();
 }
 
-// ============================================
-// УТИЛИТЫ
-// ============================================
 function initApp() { render(); }
 function getAllExercises() { return { ...BASE_EXERCISES_DB, ...state.customExercises }; }
 function calcTonnage(workout) { return (!workout || !workout.exercises) ? 0 : workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).reduce((sSum, s) => sSum + (s.weight * s.reps), 0), 0); }
@@ -841,42 +966,111 @@ function render() {
   else if (state.screen === 'profile') app.innerHTML = renderProfile();
 }
   // ============================================
-// ГЛАВНАЯ (Сводка)
+// ГЛАВНАЯ (Сводка) — 4 кольца + Streak
 // ============================================
 function renderHome() {
   const targets = getTargets();
   const done = state.workouts.some(w => w.date === today());
-  const waterPct = Math.min((state.daily.water / 8) * 100, 100);
+  const streak = getStreak();
+  
+  // Проценты для колец
+  const waterMl = state.daily.water || 0;
+  const waterPct = Math.min((waterMl / 2000) * 100, 100); // 2л = 100%
   const stepsPct = Math.min((state.daily.steps / 10000) * 100, 100);
+  const calPct = Math.min(((state.daily.calories || 0) / targets.calories) * 100, 100);
   const wPct = done ? 100 : 0;
-  const size = 90, stroke = 8, r = (size-stroke)/2, circ = 2*Math.PI*r;
+  
+  const size = 76, stroke = 7, r = (size - stroke) / 2, circ = 2 * Math.PI * r;
 
   return `
     <h1>Сводка</h1>
+    
+    <!-- Виджет серии (Streak) -->
+    ${streak > 0 ? `
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px; background:linear-gradient(90deg, rgba(250,17,79,0.15), transparent); padding:14px 20px; border-radius:20px; border-left:4px solid var(--move);">
+      <span style="font-size:32px; line-height:1;">🔥</span>
+      <div>
+        <div style="font-weight:800; font-size:18px;">${streak} ${streak === 1 ? 'день' : (streak > 1 && streak < 5) ? 'дня' : 'дней'} подряд</div>
+        <div class="muted" style="font-size:12px;">Не разрывай серию! Тренируйся сегодня.</div>
+      </div>
+    </div>` : ''}
+
     <div class="bento-grid">
-      <div class="card glass-card span-2" style="padding: 30px 15px;">
+      <div class="card glass-card span-2" style="padding: 30px 10px;">
+        
+        <!-- 4 кольца -->
         <div class="rings-container">
-          <div class="ring-wrap"><svg class="ring-svg" viewBox="0 0 90 90"><circle class="ring-bg" cx="45" cy="45" r="${r}"></circle><circle class="ring-progress" cx="45" cy="45" r="${r}" style="stroke:var(--exercise); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (wPct/100)*circ};"></circle></svg><div class="ring-content"><i class="ph ph-barbell ring-icon" style="color:var(--exercise)"></i><span class="ring-val">${done ? '100%' : '0%'}</span></div></div>
-          <div class="ring-wrap"><svg class="ring-svg" viewBox="0 0 90 90"><circle class="ring-bg" cx="45" cy="45" r="${r}"></circle><circle class="ring-progress" cx="45" cy="45" r="${r}" style="stroke:var(--stand); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (waterPct/100)*circ};"></circle></svg><div class="ring-content"><i class="ph ph-drop ring-icon" style="color:var(--stand)"></i><span class="ring-val">${state.daily.water}/8</span></div></div>
-          <div class="ring-wrap"><svg class="ring-svg" viewBox="0 0 90 90"><circle class="ring-bg" cx="45" cy="45" r="${r}"></circle><circle class="ring-progress" cx="45" cy="45" r="${r}" style="stroke:var(--move); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (stepsPct/100)*circ};"></circle></svg><div class="ring-content"><i class="ph ph-sneaker ring-icon" style="color:var(--move)"></i><span class="ring-val">${state.daily.steps}</span></div></div>
+          <!-- 1. Тренировка -->
+          <div class="ring-wrap" style="width:${size}px; height:${size}px;">
+            <svg class="ring-svg" viewBox="0 0 76 76">
+              <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle>
+              <circle class="ring-progress" cx="${size/2}" cy="${size/2}" r="${r}" style="stroke:var(--exercise); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (wPct/100)*circ};"></circle>
+            </svg>
+            <div class="ring-content">
+              <i class="ph ph-barbell ring-icon" style="color:var(--exercise); font-size:14px;"></i>
+              <span class="ring-val" style="font-size:10px;">${done ? '100%' : '0%'}</span>
+            </div>
+          </div>
+          <!-- 2. Калории -->
+          <div class="ring-wrap" style="width:${size}px; height:${size}px;">
+            <svg class="ring-svg" viewBox="0 0 76 76">
+              <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle>
+              <circle class="ring-progress" cx="${size/2}" cy="${size/2}" r="${r}" style="stroke:var(--premium); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (calPct/100)*circ};"></circle>
+            </svg>
+            <div class="ring-content">
+              <i class="ph ph-fire ring-icon" style="color:var(--premium); font-size:14px;"></i>
+              <span class="ring-val" style="font-size:10px;">${Math.round(calPct)}%</span>
+            </div>
+          </div>
+          <!-- 3. Вода -->
+          <div class="ring-wrap" style="width:${size}px; height:${size}px;">
+            <svg class="ring-svg" viewBox="0 0 76 76">
+              <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle>
+              <circle class="ring-progress" cx="${size/2}" cy="${size/2}" r="${r}" style="stroke:var(--stand); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (waterPct/100)*circ};"></circle>
+            </svg>
+            <div class="ring-content">
+              <i class="ph ph-drop ring-icon" style="color:var(--stand); font-size:14px;"></i>
+              <span class="ring-val" style="font-size:10px;">${waterMl}</span>
+            </div>
+          </div>
+          <!-- 4. Шаги -->
+          <div class="ring-wrap" style="width:${size}px; height:${size}px;">
+            <svg class="ring-svg" viewBox="0 0 76 76">
+              <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle>
+              <circle class="ring-progress" cx="${size/2}" cy="${size/2}" r="${r}" style="stroke:var(--move); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (stepsPct/100)*circ};"></circle>
+            </svg>
+            <div class="ring-content">
+              <i class="ph ph-sneaker ring-icon" style="color:var(--move); font-size:14px;"></i>
+              <span class="ring-val" style="font-size:10px;">${state.daily.steps}</span>
+            </div>
+          </div>
         </div>
+
+        <!-- Макронутриенты -->
         <div style="background:var(--card-light); padding:16px; border-radius:16px; margin-top:20px; display:flex; justify-content:space-between; text-align:center;">
-          <div><div style="font-size:16px; font-weight:800; color:var(--accent);">${state.daily.calories}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.calories}</span></div><div class="muted" style="font-size:11px;">ККАЛ</div></div>
+          <div><div style="font-size:16px; font-weight:800; color:var(--premium);">${state.daily.calories}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.calories}</span></div><div class="muted" style="font-size:11px;">ККАЛ</div></div>
           <div><div style="font-size:16px; font-weight:800;">${state.daily.p}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.p}</span></div><div class="muted" style="font-size:11px;">БЕЛКИ</div></div>
           <div><div style="font-size:16px; font-weight:800;">${state.daily.f}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.f}</span></div><div class="muted" style="font-size:11px;">ЖИРЫ</div></div>
           <div><div style="font-size:16px; font-weight:800;">${state.daily.cb}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.cb}</span></div><div class="muted" style="font-size:11px;">УГЛЕВ.</div></div>
         </div>
+        
+        <!-- Кнопки воды и еды -->
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;">
-          <button class="secondary" onclick="addWater()" style="margin:0; font-size:14px; padding:14px;"><i class="ph ph-plus"></i> Вода</button>
-          <button class="secondary" onclick="openFoodModal()" style="margin:0; font-size:14px; padding:14px;"><i class="ph ph-fork-knife"></i> Еда</button>
+          <button class="secondary" onclick="addWater(250)" style="margin:0; font-size:14px; padding:12px;"><i class="ph ph-plus"></i> 250мл</button>
+          <button class="secondary" onclick="addWater(500)" style="margin:0; font-size:14px; padding:12px;"><i class="ph ph-plus"></i> 500мл</button>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr; gap:10px; margin-top:10px;">
+          <button class="secondary" onclick="openFoodModal()" style="margin:0; font-size:14px; padding:14px;"><i class="ph ph-fork-knife"></i> Добавить еду</button>
         </div>
       </div>
+      
       <div class="card span-2">
         <h2 style="margin-bottom:16px;"><i class="ph ph-check-square-offset"></i> Привычки на сегодня</h2>
         <div class="habit-item ${state.daily.habits.water ? 'done' : ''}" onclick="toggleHabit('water')"><span><i class="ph ph-drop" style="color:var(--stand)"></i> Выпить 2л воды</span><div class="habit-check">${state.daily.habits.water ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
         <div class="habit-item ${state.daily.habits.steps ? 'done' : ''}" onclick="toggleHabit('steps')"><span><i class="ph ph-sneaker" style="color:var(--move)"></i> Пройти 10 000 шагов</span><div class="habit-check">${state.daily.habits.steps ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
         <div class="habit-item ${state.daily.habits.sleep ? 'done' : ''}" onclick="toggleHabit('sleep')"><span><i class="ph ph-moon" style="color:var(--purple)"></i> Спать 8 часов</span><div class="habit-check">${state.daily.habits.sleep ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
       </div>
+      
       <div class="card glass-card" style="min-height:180px;"><h2 style="margin-bottom:10px;">План тренировок</h2><p class="muted">Программа на неделю</p><button style="margin-top:20px;" onclick="generateAIPlan()">AI План</button></div>
       <div class="card" style="min-height:180px;"><h2 style="margin-bottom:10px;">План питания</h2><p class="muted">Меню под твою цель</p><button style="margin-top:20px;" onclick="showPlan('food')">Смотреть меню</button></div>
       <div class="card span-2"><button onclick="startWorkout()" style="margin:0;"><i class="ph ph-play"></i> Начать тренировку</button></div>
@@ -890,12 +1084,15 @@ function toggleHabit(habit) {
   haptic('light');
   render();
 }
-function addWater() {
-  state.daily.water = Math.min((state.daily.water || 0) + 1, 8);
+
+function addWater(amount = 250) {
+  state.daily.water = (state.daily.water || 0) + amount;
   save(STORAGE.daily, state.daily);
   haptic('light');
+  showToast(`+${amount} мл воды`);
   render();
 }
+
 function openFoodModal() { document.getElementById('food-input').value = ''; document.getElementById('food-modal').classList.add('active'); }
 
 function processFoodInput() {
@@ -905,12 +1102,8 @@ function processFoodInput() {
   let foundProduct = null; 
   let sortedKeys = Object.keys(FOOD_DB).sort((a, b) => b.length - a.length);
   
-  // Ищем самое длинное совпадение (чтобы "паста с креветками" нашлась раньше, чем просто "паста")
   for (const key of sortedKeys) { 
-    if (input.includes(key)) { 
-      foundProduct = key; 
-      break; 
-    } 
+    if (input.includes(key)) { foundProduct = key; break; } 
   }
   
   if (foundProduct) {
@@ -954,26 +1147,62 @@ function startWorkout() {
 function renderNewWorkout() {
   if (!state.currentWorkout) startWorkout();
   const w = state.currentWorkout, tonnage = calcTonnage(w);
+  
   return `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap:10px;"><h1 style="margin:0;">Зал</h1><div style="background: var(--card); color: var(--accent); padding:10px 20px; border-radius:99px; font-weight:800; font-size:18px;">${tonnage} КГ</div><button class="danger" style="width:auto; padding:10px 20px; margin:0; border-radius:99px;" onclick="cancelWorkout()">Отмена</button></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap:10px;">
+      <h1 style="margin:0;">Зал</h1>
+      <div style="display:flex; gap:8px;">
+        <button class="secondary" onclick="openTemplatesModal()" style="padding:8px 12px; margin:0; border-radius:99px; font-size:12px;"><i class="ph ph-files"></i> Шаблоны</button>
+        <div style="background: var(--card); color: var(--accent); padding:10px 16px; border-radius:99px; font-weight:800; font-size:16px;">${tonnage} КГ</div>
+        <button class="danger" style="width:auto; padding:10px 16px; margin:0; border-radius:99px; font-size:12px;" onclick="cancelWorkout()">Отмена</button>
+      </div>
+    </div>
     <div class="workout-layout">
       <div>
         ${w.exercises.length > 0 ? w.exercises.map((ex, i) => {
           const lastTime = getLastExerciseData(ex.name);
           const pr = getPR(ex.name);
+          
+          // Логика прогрессивной перегрузки
+          let hintHtml = '';
+          if (lastTime && lastTime.sets.length > 0) {
+            const bestSet = lastTime.sets.reduce((prev, current) => (prev.weight > current.weight) ? prev : current);
+            hintHtml = `<div class="overload-hint"><i class="ph ph-lightbulb"></i> Попробуй: <b>${bestSet.weight + 2.5} кг</b> × ${bestSet.reps}</div>`;
+          }
+
           return `
           <div class="card" style="margin-bottom:16px; padding:20px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><strong style="font-size:20px;">${ex.name}</strong><div style="display:flex; gap:8px;"><button class="btn-icon" onclick="startTimer()"><i class="ph ph-timer"></i></button><button class="btn-icon" style="color:var(--move);" onclick="removeExercise(${i})"><i class="ph ph-trash"></i></button></div></div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <strong style="font-size:20px;">${ex.name}</strong>
+              <div style="display:flex; gap:8px;">
+                <button class="btn-icon" onclick="open1RM()" title="Калькулятор 1ПМ"><i class="ph ph-calculator"></i></button>
+                <button class="btn-icon" onclick="startTimer()"><i class="ph ph-timer"></i></button>
+                <button class="btn-icon" style="color:var(--move);" onclick="removeExercise(${i})"><i class="ph ph-trash"></i></button>
+              </div>
+            </div>
+            
+            ${hintHtml}
+            
             <div style="font-size:12px; color:var(--muted); margin-bottom:12px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
               ${lastTime ? `<span><i class="ph ph-clock-counter-clockwise"></i> Прошлый раз: <b style="color:var(--text);">${lastTime.sets.map(s => `${s.weight}×${s.reps}`).join(' • ')}</b></span>` : '<span><i class="ph ph-sparkle"></i> Первое выполнение</span>'}
-              ${pr > 0 ? `<span style="color:var(--premium); font-weight:700;" title="Личный рекорд (максимальный вес за 1 подход)"><i class="ph-fill ph-trophy"></i> Личный рекорд: ${pr} кг</span>` : ''}
+              ${pr > 0 ? `<span style="color:var(--premium); font-weight:700;" title="Личный рекорд"><i class="ph-fill ph-trophy"></i> Рекорд: ${pr} кг</span>` : ''}
               ${lastTime ? `<button onclick="copyLastSets(${i})" style="width:auto; padding:4px 12px; margin:0; font-size:11px; border-radius:8px; background:rgba(162,255,0,0.15); color:var(--accent);"><i class="ph ph-copy"></i> Повторить</button>` : ''}
             </div>
+            
             ${ex.sets.map((s, j) => `<div class="set-row-wrapper"><div class="set-delete-bg" data-del-ex="${i}" data-del-set="${j}"><i class="ph ph-trash"></i></div><div class="set-row ${s.isWarmup ? 'warmup' : ''}"><div class="set-num">${s.isWarmup ? 'W' : j + 1}</div><input type="number" value="${s.weight}" onchange="updateSet(${i},${j},'weight',this.value)"><input type="number" value="${s.reps}" onchange="updateSet(${i},${j},'reps',this.value)"><button class="btn-icon" onclick="showPlatesFromRow(this)"><i class="ph ph-cookie"></i></button></div></div>`).join('')}
-            <div style="display:flex; gap:10px; margin-top:16px;"><button class="secondary" style="padding:12px; font-size:15px; margin:0;" onclick="addSet(${i})"><i class="ph ph-plus"></i> Подход</button><button class="secondary" style="padding:12px; font-size:15px; margin:0; color:var(--move);" onclick="addWarmup(${i})"><i class="ph ph-fire"></i> Разминка</button></div>
+            
+            <div style="display:flex; gap:10px; margin-top:16px;">
+              <button class="secondary" style="padding:12px; font-size:15px; margin:0;" onclick="addSet(${i})"><i class="ph ph-plus"></i> Подход</button>
+              <button class="secondary" style="padding:12px; font-size:15px; margin:0; color:var(--move);" onclick="addWarmup(${i})"><i class="ph ph-fire"></i> Разминка</button>
+            </div>
           </div>`;
         }).join('') : `<div class="card" style="text-align:center; padding:60px 20px; border:2px dashed var(--border); background:transparent; box-shadow:none;"><p class="muted">Добавь упражнения</p></div>`}
-        ${w.exercises.length > 0 ? `<button onclick="promptFinishWorkout()" style="margin-top:10px;"><i class="ph ph-check-circle"></i> Завершить</button>` : ''}
+        
+        ${w.exercises.length > 0 ? `
+        <div style="display:flex; gap:10px; margin-top:10px;">
+          <button onclick="promptFinishWorkout()" style="margin:0; flex:2;"><i class="ph ph-check-circle"></i> Завершить</button>
+          <button class="secondary" onclick="document.getElementById('template-name-input').value=''; document.getElementById('save-template-modal').classList.add('active');" style="margin:0; flex:1; padding:18px 10px;"><i class="ph ph-floppy-disk"></i> Шаблон</button>
+        </div>` : ''}
       </div>
       <div><div class="card" style="padding:20px; margin-bottom:16px;"><h2>Все упражнения</h2><button class="secondary" onclick="openCustomExModal()" style="margin-bottom:12px; color:var(--accent);"><i class="ph ph-plus"></i> Свое упражнение</button><div style="max-height:300px; overflow-y:auto; padding-right:5px;">${Object.keys(getAllExercises()).map(ex => `<button class="secondary" style="justify-content:flex-start; padding:16px; margin-bottom:8px;" onclick="addExercise('${ex}')">${ex}</button>`).join('')}</div></div></div>
     </div>`;
@@ -1103,12 +1332,12 @@ function removeSet(exIdx, setIdx) {
 })();
 
 // ============================================
-// ИСПРАВЛЕННОЕ ЗАВЕРШЕНИЕ ТРЕНИРОВКИ
+// МОМЕНТАЛЬНОЕ СОХРАНЕНИЕ ТРЕНИРОВКИ
 // ============================================
 function promptFinishWorkout() {
   if (state.currentWorkout.exercises.length === 0) return;
   
-  // 1. СОХРАНЯЕМ ТРЕНИРОВКУ СРАЗУ (с дефолтным настроением)
+  // 1. Сохраняем тренировку сразу
   const newW = { 
     ...state.currentWorkout, 
     id: Date.now(), 
@@ -1128,7 +1357,7 @@ function promptFinishWorkout() {
   render();
   setTimeout(() => exportWorkoutStory(newW.id), 300);
 
-  // 3. Открываем модалку фидбека ПОВЕРХ главного экрана
+  // 3. Открываем модалку фидбека
   state.tempMood = null;
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('workout-note').value = '';
@@ -1142,7 +1371,6 @@ function selectMood(emoji) {
   haptic('light');
 }
 
-// Вызывается, если юзер нажал "Добавить к тренировке" в модалке
 function updateWorkoutFeedback() {
   if (!state.lastSavedWorkoutId) return;
   const w = state.workouts.find(x => x.id === state.lastSavedWorkoutId);
@@ -1287,10 +1515,63 @@ function saveSwim() {
 }
 
 // ============================================
+// КАЛЕНДАРЬ АКТИВНОСТИ
+// ============================================
+function renderCalendar() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const firstDay = new Date(year, month, 1).getDay(); // 0 = Вс, 1 = Пн
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Сдвиг для Пн-первого дня
+
+  const workoutDates = new Set(state.workouts.map(w => w.date));
+  const runDates = new Set(state.runs.map(r => r.date));
+
+  let html = `<div class="calendar-grid">`;
+  // Заголовки дней
+  ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(d => { html += `<div style="text-align:center; font-size:10px; color:var(--muted); font-weight:700; margin-bottom:4px;">${d}</div>`; });
+  
+  // Пустые клетки до начала месяца
+  for (let i = 0; i < startOffset; i++) html += `<div class="cal-day empty"></div>`;
+
+  // Дни месяца
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hasW = workoutDates.has(dateStr);
+    const hasR = runDates.has(dateStr);
+    let cls = 'cal-day';
+    if (hasW && hasR) cls += ' both';
+    else if (hasW) cls += ' workout';
+    else if (hasR) cls += ' run';
+    
+    // Подсветка сегодняшнего дня
+    const isToday = dateStr === today();
+    const style = isToday ? 'border:2px solid #fff;' : '';
+    
+    html += `<div class="${cls}" style="${style}" title="${dateStr}">${d}</div>`;
+  }
+  html += `</div>`;
+  
+  // Легенда
+  html += `<div style="display:flex; gap:12px; justify-content:center; margin-top:16px; font-size:11px; color:var(--muted);">
+    <div style="display:flex; align-items:center; gap:4px;"><div style="width:10px; height:10px; border-radius:3px; background:var(--exercise);"></div> Зал</div>
+    <div style="display:flex; align-items:center; gap:4px;"><div style="width:10px; height:10px; border-radius:3px; background:var(--stand);"></div> Кардио</div>
+    <div style="display:flex; align-items:center; gap:4px;"><div style="width:10px; height:10px; border-radius:3px; background:linear-gradient(135deg, var(--exercise) 50%, var(--stand) 50%);"></div> Оба</div>
+  </div>`;
+  
+  return html;
+}
+
+// ============================================
 // ТРЕНДЫ
 // ============================================
 function renderProgress() {
-  setTimeout(drawWeightChart, 50);
+  setTimeout(() => {
+    drawWeightChart();
+    drawMeasurementsChart();
+  }, 50);
+  
   let deltaText = '', deltaColor = 'var(--muted)';
   if (state.bodyLog.length > 1) {
     const sorted = [...state.bodyLog].sort((a, b) => a.date.localeCompare(b.date));
@@ -1321,17 +1602,40 @@ function renderProgress() {
   return `
     <h1>Тренды</h1>
     <div class="bento-grid">
+      
+      <!-- КАЛЕНДАРЬ -->
+      <div class="card glass-card span-2">
+        <h2><i class="ph ph-calendar-check" style="color:var(--accent);"></i> Календарь активности</h2>
+        <p class="muted" style="font-size:13px; margin-bottom:12px;">Твои тренировки и кардио за месяц</p>
+        ${renderCalendar()}
+      </div>
+
       <div class="card" style="display:flex; align-items:center; gap:20px; padding:20px;">
         <div style="flex:1;"><h2 style="margin-bottom:8px;">Карта мышц</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Нагрузка за 7 дней</p><div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#fa114f;"></div><span style="font-size:12px;">Восстановление</span></div><div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#a2ff00;"></div><span style="font-size:12px;">Готово</span></div><div style="display:flex; align-items:center; gap:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#2c2c2e;"></div><span style="font-size:12px;">Без нагрузки</span></div></div>
         <svg viewBox="0 0 100 200" class="muscle-svg"><circle cx="50" cy="20" r="12" fill="#2c2c2e"></circle><rect x="25" y="35" width="15" height="15" rx="5" fill="${getColor('Плечи')}"></rect><rect x="60" y="35" width="15" height="15" rx="5" fill="${getColor('Плечи')}"></rect><rect x="30" y="45" width="40" height="25" rx="5" fill="${getColor('Грудь')}"></rect><rect x="15" y="55" width="12" height="35" rx="5" fill="${getColor('Руки')}"></rect><rect x="73" y="55" width="12" height="35" rx="5" fill="${getColor('Руки')}"></rect><rect x="38" y="75" width="24" height="30" rx="5" fill="#2c2c2e"></rect><rect x="30" y="110" width="16" height="60" rx="5" fill="${getColor('Ноги')}"></rect><rect x="54" y="110" width="16" height="60" rx="5" fill="${getColor('Ноги')}"></rect></svg>
       </div>
+      
       <div class="card"><h2>Лидерборд</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Тоннаж за месяц</p>${friends.map((f, i) => `<div class="leaderboard-item"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:800; color:${i===0?'#ffd700':'var(--muted)'}">${i+1}</span><div class="avatar" style="background:${f.me ? 'var(--accent)' : 'var(--card-light)'}; color:${f.me ? '#000' : '#fff'}">${f.name[0]}</div><span style="font-weight:${f.me ? '800' : '500'}; color:${f.me ? 'var(--accent)' : 'var(--text)'}">${f.name}</span></div><span style="font-weight:700;">${f.ton.toLocaleString('ru')} кг</span></div>`).join('')}</div>
+      
+      <!-- ГРАФИК ВЕСА -->
       <div class="card glass-card span-2">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;"><div><h2 style="margin:0;">Вес тела</h2><div style="font-size:18px; font-weight:800; margin-top:8px; color:${deltaColor};">${deltaText}</div></div><div style="display:flex; gap:10px;"><input id="bw" type="number" placeholder="Вес" style="width:100px; margin:0; padding:10px;"><button style="width:44px; height:44px; margin:0; padding:0; border-radius:12px;" onclick="logBodyWeight()"><i class="ph ph-plus"></i></button></div></div>
         <div class="chart-container"><canvas id="weightChart"></canvas></div>
       </div>
-      <div class="card span-2">
-        <h2>Замеры тела (см)</h2>
+
+      <!-- ЗАМЕРЫ ТЕЛА -->
+      <div class="card glass-card span-2">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h2 style="margin:0;">Замеры тела</h2>
+          <select id="measure-select" onchange="drawMeasurementsChart()" style="width:auto; padding:8px 12px; margin:0; font-size:13px;">
+            <option value="chest">Грудь</option>
+            <option value="waist">Талия</option>
+            <option value="bicep">Бицепс</option>
+            <option value="thigh">Бедро</option>
+          </select>
+        </div>
+        <div class="chart-container" style="margin-bottom:16px;"><canvas id="measureChart"></canvas></div>
+        
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
           <div><label>Грудь</label><input type="number" id="m_chest" placeholder="0"></div>
           <div><label>Талия</label><input type="number" id="m_waist" placeholder="0"></div>
@@ -1340,6 +1644,7 @@ function renderProgress() {
         </div>
         <button class="secondary" onclick="saveMeasurements()">Сохранить замеры</button>
       </div>
+
       <div class="card span-2" style="text-align:center; padding:30px;"><h2>PDF Отчет для тренера</h2><p class="muted" style="margin-bottom:20px;">Скачай полную статистику тренировок</p><button onclick="downloadReport()"><i class="ph ph-file-pdf"></i> Скачать PDF</button></div>
     </div>`;
 }
@@ -1358,7 +1663,9 @@ function saveMeasurements() {
   checkAchievements();
   haptic('success');
   alert('Замеры сохранены!');
+  render();
 }
+
 function drawWeightChart() {
   const ctx = document.getElementById('weightChart');
   if (!ctx) return;
@@ -1375,6 +1682,31 @@ function drawWeightChart() {
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93' } }, x: { grid: { display: false }, ticks: { color: '#8e8e93' } } } }
   });
 }
+
+function drawMeasurementsChart() {
+  const ctx = document.getElementById('measureChart');
+  if (!ctx) return;
+  if (state.measureChartInstance) state.measureChartInstance.destroy();
+  
+  const select = document.getElementById('measure-select');
+  const field = select ? select.value : 'chest';
+  const fieldNames = { chest: 'Грудь', waist: 'Талия', bicep: 'Бицепс', thigh: 'Бедро' };
+  
+  const sorted = [...state.measurements].filter(m => m[field]).sort((a, b) => a.date.localeCompare(b.date));
+  let labels = sorted.length ? sorted.map(m => m.date.slice(5)) : ['Нет данных'];
+  let data = sorted.length ? sorted.map(m => m[field]) : [0];
+  
+  let gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 250);
+  gradient.addColorStop(0, 'rgba(0, 212, 255, 0.5)'); // Синий цвет
+  gradient.addColorStop(1, 'rgba(0, 212, 255, 0)');
+  
+  state.measureChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: { labels: labels, datasets: [{ label: fieldNames[field], data: data, borderColor: 'var(--stand)', backgroundColor: gradient, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#fff' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93' } }, x: { grid: { display: false }, ticks: { color: '#8e8e93' } } } }
+  });
+}
+
 function logBodyWeight() {
   const w = +document.getElementById('bw').value;
   if (!w) return;
@@ -1385,7 +1717,7 @@ function logBodyWeight() {
 }
 
 // ============================================
-// ПРОФИЛЬ
+// ПРОФИЛЬ (С витриной рекордов)
 // ============================================
 function renderProfile() {
   const t = getTargets();
@@ -1429,9 +1761,10 @@ function renderProfile() {
       </div>
     </div>
 
-    ${exList.length > 0 ? `<div class="card">
-      <h2><i class="ph ph-chart-line-up" style="color:var(--accent);"></i> Прогресс по упражнениям</h2>
-      <p class="muted" style="font-size:13px; margin-bottom:8px;">Тапни упражнение — увидишь график роста</p>
+    <!-- ВИТРИНА РЕКОРДОВ -->
+    ${exList.length > 0 ? `<div class="card glass-card">
+      <h2><i class="ph-fill ph-trophy" style="color:var(--premium);"></i> Витрина рекордов</h2>
+      <p class="muted" style="font-size:13px; margin-bottom:16px;">Твои лучшие результаты. Тапни для детального графика.</p>
       ${exList.map(exName => {
         const pr = getPR(exName);
         const last = getLastExerciseData(exName);
@@ -1441,8 +1774,7 @@ function renderProfile() {
             <div class="ex-meta">${last ? `Последний раз: ${last.date} • ${last.sets[0].weight}кг × ${last.sets[0].reps}` : 'Нет данных'}</div>
           </div>
           <div style="text-align:right;">
-            <div style="color:var(--premium); font-weight:800; font-size:15px;">${pr} кг</div>
-            <div class="ex-meta">Рекорд</div>
+            <div style="color:var(--premium); font-weight:800; font-size:18px;">${pr} <span style="font-size:12px; font-weight:600;">кг</span></div>
           </div>
         </div>`;
       }).join('')}
@@ -1475,9 +1807,6 @@ function showHistoryDetails(id) {
   document.getElementById('history-modal').classList.add('active');
 }
 
-// ============================================
-// ПРОГРЕСС ПО УПРАЖНЕНИЮ (С ПОНЯТНЫМ PR)
-// ============================================
 function showExerciseProgress(exName) {
   const history = [];
   state.workouts.forEach(w => {
@@ -1511,7 +1840,6 @@ function showExerciseProgress(exName) {
 
   document.getElementById('exp-subtitle').innerText = `Всего тренировок: ${history.length}`;
   
-  // Сделали понятные подписи вместо "PR"
   document.getElementById('exp-stats').innerHTML = `
     <div style="background:var(--card-light); padding:12px 8px; border-radius:12px; text-align:center;">
       <div style="font-size:20px; font-weight:800; color:var(--premium);">${pr}</div>
@@ -1561,11 +1889,7 @@ function showExerciseProgress(exName) {
         maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: (ctx) => `${ctx.parsed.y} кг`
-            }
-          }
+          tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.y} кг` } }
         },
         scales: {
           y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93' }, beginAtZero: false },
@@ -1576,9 +1900,6 @@ function showExerciseProgress(exName) {
   }, 100);
 }
 
-// ============================================
-// PDF ОТЧЁТ
-// ============================================
 function downloadReport() {
   const area = document.getElementById('report-area');
   const fat = calcBodyFat(state.profile);
@@ -1594,9 +1915,6 @@ function downloadReport() {
   });
 }
 
-// ============================================
-// STORY-ЭКСПОРТ
-// ============================================
 function exportWorkoutStory(id) {
   const w = state.workouts.find(x => x.id === id); if (!w) return;
   const area = document.getElementById('export-area');
@@ -1649,9 +1967,6 @@ function exportWorkoutStory(id) {
   });
 }
 
-// ============================================
-// ПЛАН ПИТАНИЯ
-// ============================================
 function showPlan(type) {
   const title = document.getElementById('plan-title'), content = document.getElementById('plan-content');
   if (type === 'food') {
