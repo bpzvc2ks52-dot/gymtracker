@@ -8,9 +8,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iI2EyZmYwMCIvPjxwYXRoIGQ9Ik0yNSA0NWgxMHYxMEgyNXpNNjUgNDVoMTB2MTBINjV6TTM1IDQ4aDMwdjRIMzV6IiBmaWxsPSIjMDAwIi8+PC9zdmc+">
+
+<!-- Иконки и графики -->
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- LEAFLET ДЛЯ КАРТ -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <style>
   :root {
     --bg: #000000; --card: #1c1c1e; --card-light: #2c2c2e;
@@ -35,7 +42,6 @@
   button.secondary { background: var(--card-light); color: var(--text); }
   button.danger { background: rgba(250,17,79,0.15); color: var(--move); }
   button.premium-btn { background: linear-gradient(90deg, #ffd700, #ffaa00); color: #000; }
-  button.sm-btn { padding: 8px 12px; font-size: 12px; width: auto; margin: 0; border-radius: 10px; }
   
   input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=number] { -moz-appearance: textfield; }
@@ -80,16 +86,19 @@
     transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 12px; touch-action: pan-y; }
   .set-row-wrapper.swiped .set-row { transform: translateX(-90px); }
 
-  .set-row { display: grid; grid-template-columns: 40px 1fr 1fr 44px; gap: 10px; align-items: center; padding: 6px; }
+  .set-row { display: grid; grid-template-columns: 40px 1fr 1fr 36px 36px; gap: 6px; align-items: center; padding: 6px; }
   .set-num { width: 40px; height: 40px; background: var(--card-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--muted); }
-  .set-row input { margin-bottom: 0; padding: 14px; font-size: 17px; border-radius: 12px; text-align: center; font-weight: 700; }
-  .btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 12px; background: var(--card-light); color: var(--text); border: none; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .set-row input { margin-bottom: 0; padding: 12px 4px; font-size: 16px; border-radius: 12px; text-align: center; font-weight: 700; }
+  .btn-icon { width: 36px; height: 36px; padding: 0; border-radius: 12px; background: var(--card-light); color: var(--text); border: none; display: flex; align-items: center; justify-content: center; font-size: 18px; }
 
-  .run-screen { display: flex; flex-direction: column; height: calc(100vh - 160px); justify-content: center; }
-  .run-time-big { font-size: 70px; font-weight: 800; line-height: 1; letter-spacing: -3px; font-variant-numeric: tabular-nums; text-align: center; margin-bottom: 20px; }
-  .run-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 40px; }
-  .run-metric-box { background: var(--card); padding: 24px; border-radius: var(--radius); text-align: center; }
-  .run-metric-val { font-size: 32px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 4px; }
+  .run-screen { display: flex; flex-direction: column; height: calc(100vh - 160px); justify-content: flex-start; }
+  .run-time-big { font-size: 60px; font-weight: 800; line-height: 1; letter-spacing: -2px; font-variant-numeric: tabular-nums; text-align: center; margin: 10px 0; }
+  .run-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .run-metric-box { background: var(--card); padding: 16px; border-radius: 20px; text-align: center; }
+  .run-metric-val { font-size: 24px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 4px; }
+  
+  #run-map { height: 200px; width: 100%; border-radius: 20px; margin-bottom: 20px; z-index: 1; }
+  #history-map { height: 200px; width: 100%; border-radius: 16px; margin-top: 10px; z-index: 1; }
 
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(10px); }
   .modal-overlay.active { display: flex; animation: slideUp 0.3s ease; }
@@ -103,6 +112,8 @@
   .color-swatch.active { border-color: #fff; transform: scale(1.1); }
 
   .chart-container { position:relative; height:220px; width:100%; background:var(--card-light); border-radius:16px; padding:10px; }
+  .chart-container.radar { height: 300px; }
+  
   .muscle-svg { width: 100px; height: 200px; fill: #2c2c2e; transition: fill 0.5s; }
   .leaderboard-item { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
   .avatar { width:32px; height:32px; border-radius:50%; background:var(--card-light); display:flex; align-items:center; justify-content:center; font-weight:bold; color:var(--accent); }
@@ -144,6 +155,7 @@
   .timer-ring-bg { fill: none; stroke: var(--card-light); stroke-width: 8; }
   .timer-ring-progress { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
   #timer-display { font-size: 56px !important; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); z-index: 1; position: relative; }
+  #fasting-display { font-size: 48px !important; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--stand); z-index: 1; position: relative; }
 
   .goal-card { background: var(--card-light); border-radius: 16px; padding: 14px 6px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
   .goal-card.selected { border-color: var(--accent); background: rgba(162,255,0,0.1); }
@@ -155,7 +167,6 @@
   .ex-name { font-weight: 700; color: var(--text); font-size: 15px; }
   .ex-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
 
-  /* КАЛЕНДАРЬ */
   .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
   .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; border-radius: 8px; background: var(--card-light); color: var(--muted); }
   .cal-day.empty { background: transparent; }
@@ -163,8 +174,9 @@
   .cal-day.run { background: var(--stand); color: #000; }
   .cal-day.both { background: linear-gradient(135deg, var(--exercise) 50%, var(--stand) 50%); color: #000; }
 
-  /* ПРОГРЕССИВНАЯ ПЕРЕГРУЗКА */
   .overload-hint { font-size: 11px; color: var(--accent); background: rgba(162,255,0,0.1); padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+
+  .note-badge { background: var(--premium); color: #000; font-size: 9px; font-weight: 800; padding: 2px 4px; border-radius: 4px; position: absolute; top: -4px; right: -4px; }
 
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px 24px 40px 24px; }
@@ -178,6 +190,7 @@
     .run-time-big { font-size: 110px; }
     .workout-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
     .achieve-grid { grid-template-columns: repeat(6, 1fr); }
+    #run-map { height: 300px; }
   }
 </style>
 </head>
@@ -271,6 +284,55 @@
     <button onclick="calc1RM()" style="margin-top:10px;">Рассчитать</button>
     <div id="rm-result" style="margin-top:16px; font-size:24px; font-weight:800; color:var(--accent);"></div>
     <button class="secondary" onclick="closeModal('rm-modal')">Закрыть</button>
+  </div>
+</div>
+
+<!-- ЗАМЕТКА К ПОДХОДУ -->
+<div id="set-note-modal" class="modal-overlay" onclick="closeModal('set-note-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0;">Заметка к подходу</h2>
+    <input type="text" id="set-note-input" placeholder="Например: болит плечо...">
+    <button onclick="saveSetNote()" style="margin-top:10px;">Сохранить</button>
+    <button class="secondary" onclick="closeModal('set-note-modal')">Отмена</button>
+  </div>
+</div>
+
+<!-- ТАЙМЕР ГОЛОДАНИЯ -->
+<div id="fasting-modal" class="modal-overlay" onclick="closeModal('fasting-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0;">Интервальное голодание (16/8)</h2>
+    <div class="timer-ring-wrap">
+      <svg class="timer-ring-svg" viewBox="0 0 220 220">
+        <circle class="timer-ring-bg" cx="110" cy="110" r="100"></circle>
+        <circle class="timer-ring-progress" id="fasting-ring" cx="110" cy="110" r="100" style="stroke:var(--stand); stroke-dasharray: 628; stroke-dashoffset: 0;"></circle>
+      </svg>
+      <div id="fasting-display">00:00:00</div>
+    </div>
+    <p class="muted" id="fasting-status" style="margin-bottom:20px;">Голодание не запущено</p>
+    <button onclick="toggleFasting()" id="fasting-btn" style="background:var(--stand); color:#000;">Начать голодание</button>
+    <button class="secondary" onclick="closeModal('fasting-modal')">Закрыть</button>
+  </div>
+</div>
+
+<!-- РАСТЯЖКА -->
+<div id="stretch-modal" class="modal-overlay" onclick="closeModal('stretch-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0;">Растяжка (5 мин)</h2>
+    <div style="text-align:center; font-size:64px; font-weight:800; color:var(--accent); margin: 20px 0;" id="stretch-timer">60</div>
+    <h3 id="stretch-exercise" style="margin-bottom:20px; color:var(--text);">Наклон вперед</h3>
+    <p class="muted" style="margin-bottom:20px;">Расслабься и дыши глубоко</p>
+    <button onclick="toggleStretch()" id="stretch-btn">Старт</button>
+    <button class="secondary" onclick="closeModal('stretch-modal')">Закрыть</button>
+  </div>
+</div>
+
+<!-- ИСТОРИЯ ПРОБЕЖКИ С КАРТОЙ -->
+<div id="run-history-modal" class="modal-overlay" onclick="closeModal('run-history-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
+    <h2 id="run-history-title" style="text-align:center;">Детали пробежки</h2>
+    <div id="run-history-stats" style="margin-bottom:16px;"></div>
+    <div id="history-map"></div>
+    <button class="secondary" style="margin-top:20px;" onclick="closeModal('run-history-modal')">Закрыть</button>
   </div>
 </div>
 
@@ -443,7 +505,7 @@ const STORAGE = {
   profile: 'fit_p10', workouts: 'fit_w10', bodyLog: 'fit_b10', daily: 'fit_d10', 
   runs: 'fit_r10', swims: 'fit_sw10', measurements: 'fit_m10', achievements: 'fit_a10', 
   premium: 'fit_prem10', themeColor: 'fit_color10', customEx: 'fit_custom10',
-  templates: 'fit_temp10'
+  templates: 'fit_temp10', fasting: 'fit_fast10'
 };
 
 const ACHIEVEMENTS_LIST = [
@@ -451,7 +513,8 @@ const ACHIEVEMENTS_LIST = [
   { id: 'run_5km', name: 'Бегун', icon: 'ph-person-simple-run', cond: (s) => s.runs.reduce((a, b) => a + b.distance, 0) >= 5 },
   { id: 'swim_1km', name: 'Дельфин', icon: 'ph-waves', cond: (s) => (s.swims || []).reduce((a, b) => a + b.dist, 0) >= 1000 },
   { id: 'ton_10k', name: 'Тонна', icon: 'ph-scales', cond: (s) => s.workouts.reduce((a, b) => a + b.tonnage, 0) >= 10000 },
-  { id: 'measure', name: 'Замеры', icon: 'ph-ruler', cond: (s) => (s.measurements || []).length > 0 }
+  { id: 'measure', name: 'Замеры', icon: 'ph-ruler', cond: (s) => (s.measurements || []).length > 0 },
+  { id: 'fast_16h', name: 'Голодание', icon: 'ph-timer', cond: (s) => s.fastingCompleted > 0 }
 ];
 
 const BASE_EXERCISES_DB = {
@@ -569,18 +632,30 @@ let state = {
   runs: load(STORAGE.runs) || [], swims: load(STORAGE.swims) || [], measurements: load(STORAGE.measurements) || [], achievements: load(STORAGE.achievements) || [],
   isPremium: load(STORAGE.premium) || false, customExercises: load(STORAGE.customEx) || {},
   templates: load(STORAGE.templates) || [],
+  fastingCompleted: load('fit_fasting_completed') || 0,
   themeColor: load(STORAGE.themeColor) || '#a2ff00',
   daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0, habits: { water: false, steps: false, sleep: false } },
-  screen: 'home', currentWorkout: null, chartInstance: null, exerciseChartInstance: null, tempMood: null, lastSavedWorkoutId: null
+  screen: 'home', currentWorkout: null, chartInstance: null, exerciseChartInstance: null, radarChartInstance: null, measureChartInstance: null, tempMood: null, lastSavedWorkoutId: null
 };
 
 if (!state.daily.habits) state.daily.habits = { water: false, steps: false, sleep: false };
 
 let timerInt = null, timerTotal = 90, timerRemaining = 90;
 let runInt = null, runTime = 0, runActive = false, gpsWatchId = null, lastPos = null, gpsDistance = 0;
+let currentRunPath = []; let runMapInstance = null; let runMarker = null; let runPolyline = null;
+let historyMapInstance = null;
 let obGoal = 'maintain';
 let obEditMode = false;
 let prShownThisWorkout = new Set();
+
+let fastingInterval = null;
+let stretchInterval = null;
+let stretchTime = 60;
+let stretchActive = false;
+let currentStretchIdx = 0;
+const STRETCH_EXERCISES = ['Наклон вперед (спина)', 'Растяжка квадрицепса', 'Растяжка грудных мышц', 'Поза ребенка (спина)', 'Растяжка трицепса'];
+
+let currentSetNoteTarget = { exIdx: null, setIdx: null };
 
 function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
@@ -589,6 +664,54 @@ document.documentElement.style.setProperty('--accent', state.themeColor);
 
 if (state.daily.date !== today()) { 
   state.daily = { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0, habits: { water: false, steps: false, sleep: false } }; save(STORAGE.daily, state.daily); 
+}
+
+// ============================================
+// УМНЫЕ СОВЕТЫ И ПРОГНОЗЫ
+// ============================================
+function getSmartAdvice() {
+  if (state.workouts.length === 0) return null;
+  const sorted = [...state.workouts].sort((a, b) => b.id - a.id);
+  const last = sorted[0];
+  const daysSince = Math.floor((new Date() - new Date(last.date)) / (1000 * 60 * 60 * 24));
+  
+  if (daysSince >= 3) {
+    return "Ты давно не тренировался! Самое время вернуться в зал.";
+  }
+  
+  const lastEx = last.exercises.map(e => getAllExercises()[e.name] || 'Другое');
+  if (lastEx.includes('Грудь') || lastEx.includes('Спина') || lastEx.includes('Плечи')) {
+    return "Верх тела еще восстанавливается. Сегодня лучше сделать ноги!";
+  }
+  if (lastEx.includes('Ноги')) {
+    return "Ноги отдыхают. Идеальный день для жима или тяги!";
+  }
+  return "Ты отлично восстанавливаешься. Продолжай в том же духе!";
+}
+
+function getWeightForecast() {
+  if (state.bodyLog.length < 3) return null;
+  const sorted = [...state.bodyLog].sort((a, b) => a.date.localeCompare(b.date));
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
+  const days = (new Date(last.date) - new Date(first.date)) / (1000 * 60 * 60 * 24);
+  if (days < 7) return null;
+  
+  const diff = last.weight - first.weight;
+  const perDay = diff / days;
+  if (Math.abs(perDay) < 0.005) return "Вес стабилен.";
+  
+  const target = state.profile.goal === 'cut' ? state.profile.weight - 5 : state.profile.goal === 'mass' ? state.profile.weight + 5 : null;
+  if (!target) return null;
+  
+  const daysToTarget = Math.abs((target - last.weight) / perDay);
+  if (daysToTarget > 365) return null;
+  
+  const targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() + daysToTarget);
+  const months = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+  
+  return `При текущем темпе ты достигнешь цели ~${Math.round(target)} кг к ${targetDate.getDate()} ${months[targetDate.getMonth()]}.`;
 }
 
 // ============================================
@@ -627,45 +750,135 @@ function calc1RM() {
     document.getElementById('rm-result').innerText = 'Введи корректные данные'; 
     return; 
   }
-  // Формула Эпли
   const rm = Math.round(w * (1 + r / 30));
   document.getElementById('rm-result').innerText = `~ ${rm} кг`;
   haptic('success');
 }
 
 // ============================================
-// ГЕНЕРАТОР РАЦИОНА ПОД ЦЕЛЬ
+// ГОЛОДАНИЕ (16/8)
 // ============================================
-function generateMealPlan() {
-  const goal = state.profile.goal || 'maintain';
-  const target = getTargets();
+function loadFastingState() {
+  const saved = load(STORAGE.fasting);
+  if (saved && saved.active && saved.startTime) {
+    const elapsed = (Date.now() - saved.startTime) / 1000;
+    if (elapsed > 16 * 3600) {
+      // Голодание завершилось, пока приложение было закрыто
+      saved.active = false;
+      state.fastingCompleted++;
+      save('fit_fasting_completed', state.fastingCompleted);
+      save(STORAGE.fasting, saved);
+      haptic('success');
+    } else {
+      startFastingTimer(saved.startTime);
+    }
+    updateFastingUI(saved.active, elapsed);
+  }
+}
 
-  const bCal = Math.round(target.calories * 0.25);
-  const lCal = Math.round(target.calories * 0.35);
-  const sCal = Math.round(target.calories * 0.15);
-  const dCal = Math.round(target.calories * 0.25);
+function toggleFasting() {
+  const saved = load(STORAGE.fasting) || { active: false, startTime: null };
+  if (saved.active) {
+    saved.active = false;
+    saved.startTime = null;
+    clearInterval(fastingInterval);
+    updateFastingUI(false);
+    haptic('warn');
+  } else {
+    saved.active = true;
+    saved.startTime = Date.now();
+    startFastingTimer(saved.startTime);
+    updateFastingUI(true, 0);
+    haptic('success');
+  }
+  save(STORAGE.fasting, saved);
+}
 
-  const plans = {
-    cut: [
-      { name: 'Завтрак', cal: bCal, p: 22, f: 10, cb: 35, desc: 'Омлет из 2 яиц, 50 г овсянки на воде, зелёный чай' },
-      { name: 'Обед', cal: lCal, p: 40, f: 8, cb: 55, desc: '150 г куриной грудки, 100 г гречки, овощной салат' },
-      { name: 'Перекус', cal: sCal, p: 20, f: 12, cb: 10, desc: '150 г творога 5%, горсть орехов (20 г)' },
-      { name: 'Ужин', cal: dCal, p: 35, f: 6, cb: 30, desc: '150 г трески, 100 г брокколи, 50 г риса' }
-    ],
-    mass: [
-      { name: 'Завтрак', cal: bCal, p: 30, f: 20, cb: 60, desc: '100 г овсянки с бананом и 30 г орехов, 3 яйца' },
-      { name: 'Обед', cal: lCal, p: 50, f: 10, cb: 90, desc: '200 г куриной грудки, 200 г риса, овощи' },
-      { name: 'Перекус', cal: sCal, p: 25, f: 8, cb: 40, desc: 'Творог 200 г, банан, чайная ложка мёда' },
-      { name: 'Ужин', cal: dCal, p: 40, f: 15, cb: 50, desc: '200 г рыбы, 200 г картофеля, салат с оливковым маслом' }
-    ],
-    maintain: [
-      { name: 'Завтрак', cal: bCal, p: 22, f: 14, cb: 50, desc: '80 г овсянки с ягодами, 2 яйца' },
-      { name: 'Обед', cal: lCal, p: 45, f: 10, cb: 65, desc: '180 г курицы, 150 г гречки, овощи' },
-      { name: 'Перекус', cal: sCal, p: 10, f: 5, cb: 25, desc: 'Йогурт 150 г, яблоко' },
-      { name: 'Ужин', cal: dCal, p: 32, f: 8, cb: 45, desc: '150 г рыбы, 150 г риса, салат' }
-    ]
-  };
-  return plans[goal] || plans.maintain;
+function startFastingTimer(startTime) {
+  clearInterval(fastingInterval);
+  fastingInterval = setInterval(() => {
+    const elapsed = (Date.now() - startTime) / 1000;
+    if (elapsed >= 16 * 3600) {
+      clearInterval(fastingInterval);
+      const saved = load(STORAGE.fasting) || {};
+      saved.active = false;
+      save(STORAGE.fasting, saved);
+      state.fastingCompleted++;
+      save('fit_fasting_completed', state.fastingCompleted);
+      updateFastingUI(false);
+      haptic('success');
+      showToast('🎉 16 часов голодания завершены!');
+    } else {
+      updateFastingUI(true, elapsed);
+    }
+  }, 1000);
+}
+
+function updateFastingUI(active, elapsed = 0) {
+  const display = document.getElementById('fasting-display');
+  const status = document.getElementById('fasting-status');
+  const btn = document.getElementById('fasting-btn');
+  const ring = document.getElementById('fasting-ring');
+  if (!display) return;
+
+  const h = Math.floor(elapsed / 3600);
+  const m = Math.floor((elapsed % 3600) / 60);
+  const s = Math.floor(elapsed % 60);
+  display.innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+  if (active) {
+    const pct = Math.min(elapsed / (16 * 3600), 1);
+    ring.style.strokeDashoffset = 628 * (1 - pct);
+    status.innerText = `Осталось: ${Math.max(0, 16 - Math.floor(elapsed / 3600))} ч`;
+    btn.innerText = 'Прервать голодание';
+    btn.style.background = 'var(--move)';
+    btn.style.color = '#fff';
+  } else {
+    ring.style.strokeDashoffset = 0;
+    status.innerText = 'Голодание не запущено';
+    btn.innerText = 'Начать голодание';
+    btn.style.background = 'var(--stand)';
+    btn.style.color = '#000';
+  }
+}
+
+// ============================================
+// РАСТЯЖКА
+// ============================================
+function openStretch() {
+  if (stretchActive) toggleStretch();
+  stretchTime = 60;
+  stretchActive = false;
+  currentStretchIdx = 0;
+  document.getElementById('stretch-timer').innerText = stretchTime;
+  document.getElementById('stretch-exercise').innerText = STRETCH_EXERCISES[0];
+  document.getElementById('stretch-btn').innerText = 'Старт';
+  document.getElementById('stretch-modal').classList.add('active');
+}
+
+function toggleStretch() {
+  const btn = document.getElementById('stretch-btn');
+  if (stretchActive) {
+    clearInterval(stretchInterval);
+    stretchActive = false;
+    btn.innerText = 'Старт';
+    haptic('warn');
+  } else {
+    stretchActive = true;
+    btn.innerText = 'Пауза';
+    haptic('light');
+    stretchInterval = setInterval(() => {
+      stretchTime--;
+      document.getElementById('stretch-timer').innerText = stretchTime;
+      if (stretchTime <= 0) {
+        currentStretchIdx = (currentStretchIdx + 1) % STRETCH_EXERCISES.length;
+        document.getElementById('stretch-exercise').innerText = STRETCH_EXERCISES[currentStretchIdx];
+        stretchTime = 60;
+        document.getElementById('stretch-timer').innerText = stretchTime;
+        haptic('medium');
+      }
+    }, 1000);
+  }
 }
 
 // ============================================
@@ -676,24 +889,16 @@ function getStreak() {
   const dates = [...new Set(state.workouts.map(w => w.date))].sort().reverse();
   let streak = 0;
   let checkDate = new Date();
-  
-  // Если сегодня нет тренировки, начинаем проверку со вчера
   const todayStr = today();
-  if (dates[0] !== todayStr) {
-    checkDate.setDate(checkDate.getDate() - 1);
-  }
+  if (dates[0] !== todayStr) checkDate.setDate(checkDate.getDate() - 1);
 
-  for (let i = 0; i < 365; i++) { // максимум год
+  for (let i = 0; i < 365; i++) {
     const dStr = checkDate.toISOString().slice(0, 10);
     if (dates.includes(dStr)) {
       streak++;
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
-      // Если пропустили 1 день, но тренировались до этого, стрик не рвется, если это был "вчера"
-      if (i === 0 && dates[0] !== todayStr) {
-         checkDate.setDate(checkDate.getDate() - 1);
-         continue; 
-      }
+      if (i === 0 && dates[0] !== todayStr) { checkDate.setDate(checkDate.getDate() - 1); continue; }
       break;
     }
   }
@@ -731,11 +936,7 @@ function loadTemplate(index) {
 function saveTemplate() {
   const name = document.getElementById('template-name-input').value.trim();
   if (!name) return alert('Введи название шаблона');
-  
-  state.templates.push({
-    name: name,
-    exercises: JSON.parse(JSON.stringify(state.currentWorkout.exercises))
-  });
+  state.templates.push({ name: name, exercises: JSON.parse(JSON.stringify(state.currentWorkout.exercises)) });
   save(STORAGE.templates, state.templates);
   closeModal('save-template-modal');
   haptic('success');
@@ -752,7 +953,6 @@ function acceptCookies() {
     splash.style.pointerEvents = 'none';
     splash.classList.add('fade-out');
     splash.style.opacity = '0';
-    
     const appEl = document.getElementById('app');
     if (appEl) appEl.innerHTML = renderSkeleton();
     
@@ -792,13 +992,11 @@ function updatePreview() {
   const weight = +document.getElementById('ob_weight').value;
   const height = +document.getElementById('ob_height').value;
   const age = +document.getElementById('ob_age').value;
-
   const previewEl = document.getElementById('ob_preview');
   if (!weight || !height || !age || !previewEl) {
     if (previewEl) previewEl.style.display = 'none';
     return;
   }
-
   const kbju = calculateKBJU({ sex, weight, height, age, goal: obGoal });
   previewEl.style.display = 'block';
   document.getElementById('ob_preview_content').innerHTML = `
@@ -816,14 +1014,12 @@ function completeOnboarding() {
   const weight = +document.getElementById('ob_weight').value;
   const height = +document.getElementById('ob_height').value;
   const age = +document.getElementById('ob_age').value;
-
   if (!weight || !height || !age) { alert('Заполни вес, рост и возраст'); return; }
   if (weight < 30 || weight > 300) { alert('Вес должен быть от 30 до 300 кг'); return; }
   if (height < 100 || height > 250) { alert('Рост должен быть от 100 до 250 см'); return; }
   if (age < 10 || age > 100) { alert('Возраст должен быть от 10 до 100 лет'); return; }
 
   const targets = calculateKBJU({ sex, weight, height, age, goal: obGoal });
-
   state.profile = {
     sex, weight, height, age,
     goal: obGoal,
@@ -832,19 +1028,16 @@ function completeOnboarding() {
     swim: state.profile?.swim || { time: 30, dist: 1000, style: 'Кроль (вольный стиль)' }
   };
   save(STORAGE.profile, state.profile);
-
   closeModal('onboarding-modal');
   const nav = document.getElementById('nav');
   if (nav) nav.style.display = 'flex';
   haptic('success');
-
   if (obEditMode) {
     obEditMode = false;
     document.getElementById('ob-cancel-btn').style.display = 'none';
     document.getElementById('ob-title').innerText = 'Давай познакомимся';
     document.getElementById('ob-submit-btn').innerHTML = '<i class="ph ph-check-circle"></i> Рассчитать и начать';
   }
-
   render();
 }
 
@@ -884,9 +1077,7 @@ function getPR(exName) {
   state.workouts.forEach(w => {
     const ex = w.exercises.find(e => e.name === exName);
     if (ex) {
-      ex.sets.filter(s => !s.isWarmup).forEach(s => {
-        if (s.weight > max) max = s.weight;
-      });
+      ex.sets.filter(s => !s.isWarmup).forEach(s => { if (s.weight > max) max = s.weight; });
     }
   });
   return max;
@@ -919,7 +1110,10 @@ function copyLastSets(i) {
   render();
 }
 
-function initApp() { render(); }
+function initApp() { 
+  loadFastingState();
+  render(); 
+}
 function getAllExercises() { return { ...BASE_EXERCISES_DB, ...state.customExercises }; }
 function calcTonnage(workout) { return (!workout || !workout.exercises) ? 0 : workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).reduce((sSum, s) => sSum + (s.weight * s.reps), 0), 0); }
 function calcBodyFat(p) { if (!p || !p.weight) return 0; const bmi = p.weight / Math.pow(p.height / 100, 2); let fat = (1.20 * bmi) + (0.23 * p.age) - (10.8 * (p.sex === 'male' ? 1 : 0)) - 5.4; return Math.max(3, Math.min(50, Math.round(fat))); }
@@ -966,16 +1160,17 @@ function render() {
   else if (state.screen === 'profile') app.innerHTML = renderProfile();
 }
   // ============================================
-// ГЛАВНАЯ (Сводка) — 4 кольца + Streak
+// ГЛАВНАЯ (Сводка)
 // ============================================
 function renderHome() {
   const targets = getTargets();
   const done = state.workouts.some(w => w.date === today());
   const streak = getStreak();
+  const advice = getSmartAdvice();
+  const forecast = getWeightForecast();
   
-  // Проценты для колец
   const waterMl = state.daily.water || 0;
-  const waterPct = Math.min((waterMl / 2000) * 100, 100); // 2л = 100%
+  const waterPct = Math.min((waterMl / 2000) * 100, 100);
   const stepsPct = Math.min((state.daily.steps / 10000) * 100, 100);
   const calPct = Math.min(((state.daily.calories || 0) / targets.calories) * 100, 100);
   const wPct = done ? 100 : 0;
@@ -985,9 +1180,8 @@ function renderHome() {
   return `
     <h1>Сводка</h1>
     
-    <!-- Виджет серии (Streak) -->
     ${streak > 0 ? `
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px; background:linear-gradient(90deg, rgba(250,17,79,0.15), transparent); padding:14px 20px; border-radius:20px; border-left:4px solid var(--move);">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; background:linear-gradient(90deg, rgba(250,17,79,0.15), transparent); padding:14px 20px; border-radius:20px; border-left:4px solid var(--move);">
       <span style="font-size:32px; line-height:1;">🔥</span>
       <div>
         <div style="font-weight:800; font-size:18px;">${streak} ${streak === 1 ? 'день' : (streak > 1 && streak < 5) ? 'дня' : 'дней'} подряд</div>
@@ -995,12 +1189,25 @@ function renderHome() {
       </div>
     </div>` : ''}
 
+    ${advice ? `
+    <div class="card glass-card" style="padding:16px; border-left:4px solid var(--accent); background:rgba(162,255,0,0.05); margin-bottom:16px;">
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <i class="ph-fill ph-lightbulb" style="color:var(--accent); font-size:24px;"></i>
+        <div><div style="font-weight:700; font-size:14px; margin-bottom:4px;">Умный совет</div><div style="font-size:13px; color:var(--text); line-height:1.4;">${advice}</div></div>
+      </div>
+    </div>` : ''}
+
+    ${forecast ? `
+    <div class="card glass-card" style="padding:16px; border-left:4px solid var(--stand); background:rgba(0,212,255,0.05); margin-bottom:16px;">
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <i class="ph-fill ph-chart-line-up" style="color:var(--stand); font-size:24px;"></i>
+        <div><div style="font-weight:700; font-size:14px; margin-bottom:4px;">Прогноз веса</div><div style="font-size:13px; color:var(--text); line-height:1.4;">${forecast}</div></div>
+      </div>
+    </div>` : ''}
+
     <div class="bento-grid">
       <div class="card glass-card span-2" style="padding: 30px 10px;">
-        
-        <!-- 4 кольца -->
         <div class="rings-container">
-          <!-- 1. Тренировка -->
           <div class="ring-wrap" style="width:${size}px; height:${size}px;">
             <svg class="ring-svg" viewBox="0 0 76 76">
               <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle>
@@ -1011,7 +1218,6 @@ function renderHome() {
               <span class="ring-val" style="font-size:10px;">${done ? '100%' : '0%'}</span>
             </div>
           </div>
-          <!-- 2. Калории -->
           <div class="ring-wrap" style="width:${size}px; height:${size}px;">
             <svg class="ring-svg" viewBox="0 0 76 76">
               <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle>
@@ -1022,7 +1228,6 @@ function renderHome() {
               <span class="ring-val" style="font-size:10px;">${Math.round(calPct)}%</span>
             </div>
           </div>
-          <!-- 3. Вода -->
           <div class="ring-wrap" style="width:${size}px; height:${size}px;">
             <svg class="ring-svg" viewBox="0 0 76 76">
               <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle>
@@ -1033,7 +1238,6 @@ function renderHome() {
               <span class="ring-val" style="font-size:10px;">${waterMl}</span>
             </div>
           </div>
-          <!-- 4. Шаги -->
           <div class="ring-wrap" style="width:${size}px; height:${size}px;">
             <svg class="ring-svg" viewBox="0 0 76 76">
               <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle>
@@ -1046,7 +1250,6 @@ function renderHome() {
           </div>
         </div>
 
-        <!-- Макронутриенты -->
         <div style="background:var(--card-light); padding:16px; border-radius:16px; margin-top:20px; display:flex; justify-content:space-between; text-align:center;">
           <div><div style="font-size:16px; font-weight:800; color:var(--premium);">${state.daily.calories}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.calories}</span></div><div class="muted" style="font-size:11px;">ККАЛ</div></div>
           <div><div style="font-size:16px; font-weight:800;">${state.daily.p}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.p}</span></div><div class="muted" style="font-size:11px;">БЕЛКИ</div></div>
@@ -1054,7 +1257,6 @@ function renderHome() {
           <div><div style="font-size:16px; font-weight:800;">${state.daily.cb}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.cb}</span></div><div class="muted" style="font-size:11px;">УГЛЕВ.</div></div>
         </div>
         
-        <!-- Кнопки воды и еды -->
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;">
           <button class="secondary" onclick="addWater(250)" style="margin:0; font-size:14px; padding:12px;"><i class="ph ph-plus"></i> 250мл</button>
           <button class="secondary" onclick="addWater(500)" style="margin:0; font-size:14px; padding:12px;"><i class="ph ph-plus"></i> 500мл</button>
@@ -1064,6 +1266,20 @@ function renderHome() {
         </div>
       </div>
       
+      <!-- НОВЫЕ ВИДЖЕТЫ: ГОЛОДАНИЕ И РАСТЯЖКА -->
+      <div class="bento-grid" style="grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="card glass-card" style="padding:20px; text-align:center; cursor:pointer;" onclick="document.getElementById('fasting-modal').classList.add('active')">
+           <i class="ph ph-timer" style="font-size:32px; color:var(--stand); margin-bottom:8px;"></i>
+           <div style="font-weight:700; font-size:14px;">Голодание</div>
+           <div class="muted" style="font-size:11px;">16/8</div>
+        </div>
+        <div class="card glass-card" style="padding:20px; text-align:center; cursor:pointer;" onclick="openStretch()">
+           <i class="ph ph-person-arms-spread" style="font-size:32px; color:var(--accent); margin-bottom:8px;"></i>
+           <div style="font-weight:700; font-size:14px;">Растяжка</div>
+           <div class="muted" style="font-size:11px;">5 минут</div>
+        </div>
+      </div>
+
       <div class="card span-2">
         <h2 style="margin-bottom:16px;"><i class="ph ph-check-square-offset"></i> Привычки на сегодня</h2>
         <div class="habit-item ${state.daily.habits.water ? 'done' : ''}" onclick="toggleHabit('water')"><span><i class="ph ph-drop" style="color:var(--stand)"></i> Выпить 2л воды</span><div class="habit-check">${state.daily.habits.water ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
@@ -1098,39 +1314,187 @@ function openFoodModal() { document.getElementById('food-input').value = ''; doc
 function processFoodInput() {
   const input = document.getElementById('food-input').value.toLowerCase().trim(); 
   if(!input) return;
-  
   let foundProduct = null; 
   let sortedKeys = Object.keys(FOOD_DB).sort((a, b) => b.length - a.length);
-  
-  for (const key of sortedKeys) { 
-    if (input.includes(key)) { foundProduct = key; break; } 
-  }
+  for (const key of sortedKeys) { if (input.includes(key)) { foundProduct = key; break; } }
   
   if (foundProduct) {
     const match = input.match(/(\d+)/); 
     const weight = match ? parseInt(match[1]) : 100; 
     const p = FOOD_DB[foundProduct]; 
     const multiplier = weight / 100;
-    
     state.daily.calories = (state.daily.calories || 0) + Math.round(p.c * multiplier);
     state.daily.p = (state.daily.p || 0) + Math.round(p.p * multiplier);
     state.daily.f = (state.daily.f || 0) + Math.round(p.f * multiplier);
     state.daily.cb = (state.daily.cb || 0) + Math.round(p.cb * multiplier);
-    
     save(STORAGE.daily, state.daily);
     closeModal('food-modal');
     haptic('success');
     showToast(`Добавлено: ${foundProduct} ${weight}г`);
     render();
-  } else { 
-    alert(`Продукт "${input}" не найден.\nПопробуй ввести по-другому (например: "курица 150" или "паста 200").`); 
-  }
+  } else { alert(`Продукт "${input}" не найден.`); }
 }
 
 function generateAIPlan() {
   const goal = state.profile.goal === 'mass' ? 'Набор массы' : state.profile.goal === 'cut' ? 'Похудение' : 'Удержание';
   document.getElementById('ai-content').innerHTML = `<p style="margin-bottom:16px; color:var(--muted);">На основе твоей цели (<b>${goal}</b>) AI сгенерировал сплит:</p><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 1: Push</b><br><span class="muted" style="font-size:14px;">Жим лёжа 4х8, Жим гантелей 3х10, Махи 3х15</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 2: Pull</b><br><span class="muted" style="font-size:14px;">Становая тяга 3х6, Подтягивания 4хмакс, Тяга блока 3х10</span></div><div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px;"><b>День 3: Legs</b><br><span class="muted" style="font-size:14px;">Приседания 4х8, Жим ногами 3х10, Выпады 3х12</span></div><button onclick="closeModal('ai-modal'); startWorkout();" style="margin-top:10px;">Применить план</button>`;
   document.getElementById('ai-modal').classList.add('active');
+}
+
+// ============================================
+// БЕГ С КАРТОЙ
+// ============================================
+function renderRunning() {
+  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600));
+  const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0;
+  const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` : '0:00';
+  
+  setTimeout(() => {
+    if (runActive && !runMapInstance) {
+      initRunMap();
+    }
+  }, 100);
+
+  return `
+  <div class="run-screen">
+    <div class="run-time-big" id="run-time">${formatTime(runTime)}</div>
+    <div class="run-metrics">
+      <div class="run-metric-box"><div class="run-metric-val" id="run-dist">${gpsDistance.toFixed(2)}</div><div class="stat-label">КМ (GPS)</div></div>
+      <div class="run-metric-box"><div class="run-metric-val" id="run-pace" style="color:var(--stand);">${paceStr}</div><div class="stat-label">ТЕМП</div></div>
+      <div class="run-metric-box" style="grid-column: span 2;"><div class="run-metric-val" id="run-cal" style="color:var(--accent);">${cal}</div><div class="stat-label">СОЖЖЕНО ККАЛ</div></div>
+    </div>
+    
+    <div id="run-map"></div>
+    
+    <button onclick="toggleRun()" id="run-btn" style="border-radius:99px; padding:20px; font-size:20px; background:${runActive ? 'var(--move)' : 'var(--accent)'}; color:${runActive ? '#fff' : '#000'}; margin-top:10px;">
+      <i class="ph ${runActive ? 'ph-pause' : 'ph-play'}"></i> ${runActive ? 'ПАУЗА' : 'СТАРТ'}
+    </button>
+    <button class="secondary" id="run-save-btn" style="display:${runActive || runTime === 0 ? 'none' : 'flex'};" onclick="saveRun(${cal})">Сохранить результат</button>
+    
+    <!-- Мини-история -->
+    ${state.runs.length > 0 ? `
+    <div style="margin-top:20px;">
+      <h2>История пробежек</h2>
+      ${state.runs.map((r, i) => `<div style="padding:12px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showRunHistory(${r.id})"><div><div style="font-weight:700;">${r.date}</div><div class="muted" style="font-size:12px;">${r.pace} мин/км</div></div><b>${r.distance} км</b></div>`).join('')}
+    </div>` : ''}
+  </div>`;
+}
+
+function initRunMap() {
+  if (runMapInstance) return;
+  try {
+    runMapInstance = L.map('run-map').setView([55.75, 37.61], 15); // Default Moscow
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(runMapInstance);
+    runPolyline = L.polyline([], {color: '#a2ff00', weight: 4}).addTo(runMapInstance);
+    runMarker = L.circleMarker([55.75, 37.61], {radius: 8, fillColor: '#fa114f', fillOpacity: 1, color: '#fff', weight: 2}).addTo(runMapInstance);
+  } catch(e) { console.error('Map init error', e); }
+}
+
+function formatTime(sec) { return `${Math.floor(sec/3600).toString().padStart(2,'0')}:${Math.floor((sec%3600)/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
+
+function toggleRun() {
+  runActive = !runActive;
+  haptic('medium');
+  
+  if (runActive) {
+    if (!runMapInstance) initRunMap();
+    runInt = setInterval(() => { runTime++; document.getElementById('run-time').innerText = formatTime(runTime); updateRunUI(); }, 1000);
+    if (navigator.geolocation) {
+      gpsWatchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          if (lastPos) {
+            const dist = getDistanceFromLatLonInKm(lastPos.lat, lastPos.lon, latitude, longitude);
+            if (dist > 0.003) { 
+              gpsDistance += dist; 
+              lastPos = { lat: latitude, lon: longitude }; 
+              currentRunPath.push([latitude, longitude]);
+              if (runMapInstance) {
+                runPolyline.addLatLng([latitude, longitude]);
+                runMarker.setLatLng([latitude, longitude]);
+                runMapInstance.panTo([latitude, longitude]);
+              }
+              updateRunUI(); 
+            }
+          } else { 
+            lastPos = { lat: latitude, lon: longitude }; 
+            currentRunPath.push([latitude, longitude]);
+            if (runMapInstance) {
+              runMapInstance.setView([latitude, longitude], 16);
+              runPolyline.addLatLng([latitude, longitude]);
+              runMarker.setLatLng([latitude, longitude]);
+            }
+          }
+        },
+        (err) => { console.warn('GPS:', err.message); },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+      );
+    }
+  } else {
+    clearInterval(runInt);
+    if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+  }
+  renderRunningUI();
+}
+
+function updateRunUI() {
+  const elTime = document.getElementById('run-time'), elDist = document.getElementById('run-dist'), elCal = document.getElementById('run-cal'), elPace = document.getElementById('run-pace');
+  if (elTime) elTime.innerText = formatTime(runTime);
+  if (elDist) elDist.innerText = gpsDistance.toFixed(2);
+  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600));
+  if (elCal) elCal.innerText = cal;
+  if (runTime > 0 && gpsDistance > 0) {
+    const paceMin = (runTime / 60) / gpsDistance;
+    if (elPace) elPace.innerText = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`;
+  }
+}
+
+function renderRunningUI() { document.getElementById('app').innerHTML = renderRunning(); }
+
+function saveRun(cal) {
+  if (gpsDistance === 0) return alert('Нет данных GPS.');
+  const paceMin = (runTime / 60) / gpsDistance;
+  state.runs.unshift({ 
+    id: Date.now(),
+    date: today(), 
+    distance: +gpsDistance.toFixed(2), 
+    time: formatTime(runTime), 
+    calories: cal, 
+    pace: `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`,
+    path: [...currentRunPath]
+  });
+  save(STORAGE.runs, state.runs);
+  checkAchievements();
+  haptic('success');
+  runTime = 0; runActive = false; gpsDistance = 0; lastPos = null; currentRunPath = [];
+  if (runMapInstance) { runMapInstance.remove(); runMapInstance = null; }
+  render();
+}
+
+function showRunHistory(id) {
+  const run = state.runs.find(r => r.id === id);
+  if (!run) return;
+  document.getElementById('run-history-title').innerText = `Пробежка ${run.date}`;
+  document.getElementById('run-history-stats').innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="card" style="padding:12px; text-align:center;"><div style="font-size:20px; font-weight:800; color:var(--accent);">${run.distance} км</div><div class="muted" style="font-size:11px;">Дистанция</div></div>
+      <div class="card" style="padding:12px; text-align:center;"><div style="font-size:20px; font-weight:800; color:var(--stand);">${run.pace}</div><div class="muted" style="font-size:11px;">Темп</div></div>
+    </div>
+  `;
+  document.getElementById('run-history-modal').classList.add('active');
+  
+  setTimeout(() => {
+    if (historyMapInstance) historyMapInstance.remove();
+    if (run.path && run.path.length > 1) {
+      document.getElementById('history-map').style.display = 'block';
+      historyMapInstance = L.map('history-map').setView(run.path[0], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(historyMapInstance);
+      L.polyline(run.path, {color: '#a2ff00', weight: 4}).addTo(historyMapInstance);
+      historyMapInstance.fitBounds(L.polyline(run.path).getBounds(), { padding: [20, 20] });
+    } else {
+      document.getElementById('history-map').style.display = 'none';
+    }
+  }, 200);
 }
 
 // ============================================
@@ -1163,7 +1527,6 @@ function renderNewWorkout() {
           const lastTime = getLastExerciseData(ex.name);
           const pr = getPR(ex.name);
           
-          // Логика прогрессивной перегрузки
           let hintHtml = '';
           if (lastTime && lastTime.sets.length > 0) {
             const bestSet = lastTime.sets.reduce((prev, current) => (prev.weight > current.weight) ? prev : current);
@@ -1189,7 +1552,17 @@ function renderNewWorkout() {
               ${lastTime ? `<button onclick="copyLastSets(${i})" style="width:auto; padding:4px 12px; margin:0; font-size:11px; border-radius:8px; background:rgba(162,255,0,0.15); color:var(--accent);"><i class="ph ph-copy"></i> Повторить</button>` : ''}
             </div>
             
-            ${ex.sets.map((s, j) => `<div class="set-row-wrapper"><div class="set-delete-bg" data-del-ex="${i}" data-del-set="${j}"><i class="ph ph-trash"></i></div><div class="set-row ${s.isWarmup ? 'warmup' : ''}"><div class="set-num">${s.isWarmup ? 'W' : j + 1}</div><input type="number" value="${s.weight}" onchange="updateSet(${i},${j},'weight',this.value)"><input type="number" value="${s.reps}" onchange="updateSet(${i},${j},'reps',this.value)"><button class="btn-icon" onclick="showPlatesFromRow(this)"><i class="ph ph-cookie"></i></button></div></div>`).join('')}
+            ${ex.sets.map((s, j) => `
+            <div class="set-row-wrapper">
+              <div class="set-delete-bg" data-del-ex="${i}" data-del-set="${j}"><i class="ph ph-trash"></i></div>
+              <div class="set-row ${s.isWarmup ? 'warmup' : ''}">
+                <div class="set-num">${s.isWarmup ? 'W' : j + 1}</div>
+                <input type="number" value="${s.weight}" onchange="updateSet(${i},${j},'weight',this.value)">
+                <input type="number" value="${s.reps}" onchange="updateSet(${i},${j},'reps',this.value)">
+                <button class="btn-icon" onclick="openSetNote(${i},${j})" style="position:relative;"><i class="ph ${s.note ? 'ph-note-pencil' : 'ph-note'}"></i>${s.note ? `<div class="note-badge">!</div>` : ''}</button>
+                <button class="btn-icon" onclick="showPlatesFromRow(this)"><i class="ph ph-cookie"></i></button>
+              </div>
+            </div>`).join('')}
             
             <div style="display:flex; gap:10px; margin-top:16px;">
               <button class="secondary" style="padding:12px; font-size:15px; margin:0;" onclick="addSet(${i})"><i class="ph ph-plus"></i> Подход</button>
@@ -1206,6 +1579,31 @@ function renderNewWorkout() {
       </div>
       <div><div class="card" style="padding:20px; margin-bottom:16px;"><h2>Все упражнения</h2><button class="secondary" onclick="openCustomExModal()" style="margin-bottom:12px; color:var(--accent);"><i class="ph ph-plus"></i> Свое упражнение</button><div style="max-height:300px; overflow-y:auto; padding-right:5px;">${Object.keys(getAllExercises()).map(ex => `<button class="secondary" style="justify-content:flex-start; padding:16px; margin-bottom:8px;" onclick="addExercise('${ex}')">${ex}</button>`).join('')}</div></div></div>
     </div>`;
+}
+
+function openSetNote(exIdx, setIdx) {
+  currentSetNoteTarget = { exIdx, setIdx };
+  const set = state.currentWorkout.exercises[exIdx].sets[setIdx];
+  document.getElementById('set-note-input').value = set.note || '';
+  document.getElementById('set-note-modal').classList.add('active');
+}
+
+function saveSetNote() {
+  const note = document.getElementById('set-note-input').value.trim();
+  const { exIdx, setIdx } = currentSetNoteTarget;
+  if (exIdx !== null && setIdx !== null) {
+    state.currentWorkout.exercises[exIdx].sets[setIdx].note = note;
+    closeModal('set-note-modal');
+    haptic('success');
+    render();
+  }
+}
+
+function open1RM() {
+  document.getElementById('rm-weight').value = '';
+  document.getElementById('rm-reps').value = '';
+  document.getElementById('rm-result').innerText = '';
+  document.getElementById('rm-modal').classList.add('active');
 }
 
 function openCustomExModal() { document.getElementById('custom-ex-modal').classList.add('active'); }
@@ -1337,7 +1735,6 @@ function removeSet(exIdx, setIdx) {
 function promptFinishWorkout() {
   if (state.currentWorkout.exercises.length === 0) return;
   
-  // 1. Сохраняем тренировку сразу
   const newW = { 
     ...state.currentWorkout, 
     id: Date.now(), 
@@ -1350,14 +1747,12 @@ function promptFinishWorkout() {
   checkAchievements();
   haptic('success');
 
-  // 2. Очищаем текущую и переходим на главную
   state.lastSavedWorkoutId = newW.id;
   state.currentWorkout = null;
   state.screen = 'home';
   render();
   setTimeout(() => exportWorkoutStory(newW.id), 300);
 
-  // 3. Открываем модалку фидбека
   state.tempMood = null;
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('workout-note').value = '';
@@ -1394,148 +1789,23 @@ function cancelWorkout() {
   }
 }
   // ============================================
-// БЕГ
-// ============================================
-function renderRunning() {
-  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600));
-  const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0;
-  const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` : '0:00';
-  return `<div class="run-screen"><div class="run-time-big" id="run-time">${formatTime(runTime)}</div><div class="run-metrics"><div class="run-metric-box"><div class="run-metric-val" id="run-dist">${gpsDistance.toFixed(2)}</div><div class="stat-label">КМ (GPS)</div></div><div class="run-metric-box"><div class="run-metric-val" id="run-pace" style="color:var(--stand);">${paceStr}</div><div class="stat-label">ТЕМП</div></div><div class="run-metric-box" style="grid-column: span 2;"><div class="run-metric-val" id="run-cal" style="color:var(--accent);">${cal}</div><div class="stat-label">СОЖЖЕНО ККАЛ</div></div></div><button onclick="toggleRun()" id="run-btn" style="border-radius:99px; padding:24px; font-size:22px; background:${runActive ? 'var(--move)' : 'var(--accent)'}; color:${runActive ? '#fff' : '#000'};"><i class="ph ${runActive ? 'ph-pause' : 'ph-play'}"></i> ${runActive ? 'ПАУЗА' : 'СТАРТ'}</button><button class="secondary" id="run-save-btn" style="display:${runActive || runTime === 0 ? 'none' : 'flex'};" onclick="saveRun(${cal})">Сохранить результат</button></div>`;
-}
-function formatTime(sec) { return `${Math.floor(sec/3600).toString().padStart(2,'0')}:${Math.floor((sec%3600)/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
-function toggleRun() {
-  runActive = !runActive;
-  haptic('medium');
-  if (runActive) {
-    runInt = setInterval(() => { runTime++; document.getElementById('run-time').innerText = formatTime(runTime); updateRunUI(); }, 1000);
-    if (navigator.geolocation) {
-      gpsWatchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          if (lastPos) {
-            const dist = getDistanceFromLatLonInKm(lastPos.lat, lastPos.lon, latitude, longitude);
-            if (dist > 0.003) { gpsDistance += dist; lastPos = { lat: latitude, lon: longitude }; updateRunUI(); }
-          } else { lastPos = { lat: latitude, lon: longitude }; }
-        },
-        (err) => { console.warn('GPS:', err.message); },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-      );
-    }
-  } else {
-    clearInterval(runInt);
-    if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
-  }
-  renderRunningUI();
-}
-function updateRunUI() {
-  const elTime = document.getElementById('run-time'), elDist = document.getElementById('run-dist'), elCal = document.getElementById('run-cal'), elPace = document.getElementById('run-pace');
-  if (elTime) elTime.innerText = formatTime(runTime);
-  if (elDist) elDist.innerText = gpsDistance.toFixed(2);
-  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600));
-  if (elCal) elCal.innerText = cal;
-  if (runTime > 0 && gpsDistance > 0) {
-    const paceMin = (runTime / 60) / gpsDistance;
-    if (elPace) elPace.innerText = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`;
-  }
-}
-function renderRunningUI() { document.getElementById('app').innerHTML = renderRunning(); }
-function saveRun(cal) {
-  if (gpsDistance === 0) return alert('Нет данных GPS.');
-  const paceMin = (runTime / 60) / gpsDistance;
-  state.runs.unshift({ date: today(), distance: +gpsDistance.toFixed(2), time: formatTime(runTime), calories: cal, pace: `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` });
-  save(STORAGE.runs, state.runs);
-  checkAchievements();
-  haptic('success');
-  runTime = 0; runActive = false; gpsDistance = 0; lastPos = null;
-  render();
-}
-
-// ============================================
-// ПЛАВАНИЕ
-// ============================================
-function renderSwimming() {
-  const sw = state.profile.swim || { time: 30, dist: 1000, style: 'Кроль (вольный стиль)' };
-  let muscles = "";
-  if (sw.style.includes('Кроль')) muscles = "Широчайшие мышцы спины, дельтовидные (плечи), трицепсы, пресс, ягодицы.";
-  else if (sw.style.includes('Брасс')) muscles = "Большая грудная, широчайшие, квадрицепсы, бицепсы бедер, ягодицы, трицепсы.";
-  else if (sw.style.includes('Баттерфляй')) muscles = "Грудные, широчайшие, дельтовидные, пресс, мышцы ног (движение дельфином).";
-  else if (sw.style.includes('На спине')) muscles = "Широчайшие, задние пучки дельтовидных, пресс, квадрицепсы, ягодицы.";
-  else if (sw.style.includes('Комплексное')) muscles = "Абсолютно все группы мышц (грудь, спина, ноги, руки, плечи, пресс).";
-  else if (sw.style.includes('С ластами')) muscles = "Мышцы ног (квадрицепс, бицепс бедра, икры), ягодицы, пресс, спина.";
-  else if (sw.style.includes('Колобашка')) muscles = "Изолированная нагрузка на ноги: квадрицепсы, бицепсы бедер, икроножные мышцы, ягодицы.";
-
-  return `
-    <h1>Плавание</h1>
-    <div class="bento-grid">
-      <div class="card glass-card span-2">
-        <h2>Параметры заплыва</h2>
-        <label>Стиль плавания</label>
-        <select id="swim-style" onchange="updateSwimStyle(this.value)">
-          <option value="Кроль (вольный стиль)" ${sw.style.includes('Кроль')?'selected':''}>Кроль (вольный стиль)</option>
-          <option value="Брасс" ${sw.style.includes('Брасс')?'selected':''}>Брасс</option>
-          <option value="Баттерфляй (Дельфин)" ${sw.style.includes('Баттерфляй')?'selected':''}>Баттерфляй (Дельфин)</option>
-          <option value="На спине" ${sw.style.includes('На спине')?'selected':''}>На спине</option>
-          <option value="Комплексное плавание" ${sw.style.includes('Комплексное')?'selected':''}>Комплексное плавание</option>
-          <option value="Плавание с ластами" ${sw.style.includes('С ластами')?'selected':''}>Плавание с ластами</option>
-          <option value="Колобашка (только ноги)" ${sw.style.includes('Колобашка')?'selected':''}>Колобашка (только ноги)</option>
-        </select>
-        <div style="display:flex; gap:10px;"><div style="flex:1;"><label>Время (мин)</label><input type="number" id="swim-time" value="${sw.time}"></div><div style="flex:1;"><label>Дистанция (м)</label><input type="number" id="swim-dist" value="${sw.dist}"></div></div>
-        <button style="margin-top:10px;" onclick="saveSwim()"><i class="ph ph-check"></i> Сохранить заплыв</button>
-      </div>
-      <div class="card span-2" style="border-left: 4px solid var(--stand);">
-        <h2 style="color: var(--stand);"><i class="ph ph-activity"></i> Восстановление мышц</h2>
-        <p class="muted" style="margin-bottom:10px;">При стиле <b>${sw.style}</b> основную нагрузку получают:</p>
-        <div style="background:var(--card-light); padding:16px; border-radius:12px; font-weight:600; color:var(--text); line-height: 1.5;">${muscles}</div>
-      </div>
-      <div class="card span-2">
-        <h2>История заплывов</h2>
-        ${(state.swims || []).map(s => `<div style="padding:12px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;"><span>${s.date} - ${s.style}</span> <b>${s.dist} м / ${s.time} мин</b></div>`).join('') || '<p class="muted">Пока пусто</p>'}
-      </div>
-    </div>`;
-}
-function updateSwimStyle(val) {
-  if (!state.profile.swim) state.profile.swim = { time: 30, dist: 1000, style: val };
-  state.profile.swim.style = val;
-  save(STORAGE.profile, state.profile);
-  render();
-}
-function saveSwim() {
-  const time = +document.getElementById('swim-time').value;
-  const dist = +document.getElementById('swim-dist').value;
-  const style = document.getElementById('swim-style').value;
-  state.profile.swim = { time, dist, style };
-  save(STORAGE.profile, state.profile);
-  state.swims = state.swims || [];
-  state.swims.unshift({ date: today(), time, dist, style });
-  save(STORAGE.swims, state.swims);
-  checkAchievements();
-  haptic('success');
-  alert('Заплыв сохранен!');
-  render();
-}
-
-// ============================================
 // КАЛЕНДАРЬ АКТИВНОСТИ
 // ============================================
 function renderCalendar() {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
-  const firstDay = new Date(year, month, 1).getDay(); // 0 = Вс, 1 = Пн
+  const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Сдвиг для Пн-первого дня
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1;
 
   const workoutDates = new Set(state.workouts.map(w => w.date));
   const runDates = new Set(state.runs.map(r => r.date));
 
   let html = `<div class="calendar-grid">`;
-  // Заголовки дней
   ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(d => { html += `<div style="text-align:center; font-size:10px; color:var(--muted); font-weight:700; margin-bottom:4px;">${d}</div>`; });
-  
-  // Пустые клетки до начала месяца
   for (let i = 0; i < startOffset; i++) html += `<div class="cal-day empty"></div>`;
 
-  // Дни месяца
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const hasW = workoutDates.has(dateStr);
@@ -1545,15 +1815,12 @@ function renderCalendar() {
     else if (hasW) cls += ' workout';
     else if (hasR) cls += ' run';
     
-    // Подсветка сегодняшнего дня
     const isToday = dateStr === today();
     const style = isToday ? 'border:2px solid #fff;' : '';
-    
     html += `<div class="${cls}" style="${style}" title="${dateStr}">${d}</div>`;
   }
   html += `</div>`;
   
-  // Легенда
   html += `<div style="display:flex; gap:12px; justify-content:center; margin-top:16px; font-size:11px; color:var(--muted);">
     <div style="display:flex; align-items:center; gap:4px;"><div style="width:10px; height:10px; border-radius:3px; background:var(--exercise);"></div> Зал</div>
     <div style="display:flex; align-items:center; gap:4px;"><div style="width:10px; height:10px; border-radius:3px; background:var(--stand);"></div> Кардио</div>
@@ -1570,6 +1837,7 @@ function renderProgress() {
   setTimeout(() => {
     drawWeightChart();
     drawMeasurementsChart();
+    drawRadarChart();
   }, 50);
   
   let deltaText = '', deltaColor = 'var(--muted)';
@@ -1580,7 +1848,8 @@ function renderProgress() {
     else if (diff < 0) { deltaText = `${diff.toFixed(1)} кг`; deltaColor = 'var(--accent)'; }
     else { deltaText = '0 кг'; }
   }
-  let muscleLoad = { 'Грудь': 0, 'Спина': 0, 'Ноги': 0, 'Руки': 0, 'Плечи': 0 };
+  
+  let muscleLoad = { 'Грудь': 0, 'Спина': 0, 'Ноги': 0, 'Руки': 0, 'Плечи': 0, 'Пресс': 0 };
   const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
   state.workouts.filter(w => new Date(w.date) >= weekAgo).forEach(w => {
     w.exercises.forEach(ex => {
@@ -1603,7 +1872,6 @@ function renderProgress() {
     <h1>Тренды</h1>
     <div class="bento-grid">
       
-      <!-- КАЛЕНДАРЬ -->
       <div class="card glass-card span-2">
         <h2><i class="ph ph-calendar-check" style="color:var(--accent);"></i> Календарь активности</h2>
         <p class="muted" style="font-size:13px; margin-bottom:12px;">Твои тренировки и кардио за месяц</p>
@@ -1617,13 +1885,18 @@ function renderProgress() {
       
       <div class="card"><h2>Лидерборд</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Тоннаж за месяц</p>${friends.map((f, i) => `<div class="leaderboard-item"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:800; color:${i===0?'#ffd700':'var(--muted)'}">${i+1}</span><div class="avatar" style="background:${f.me ? 'var(--accent)' : 'var(--card-light)'}; color:${f.me ? '#000' : '#fff'}">${f.name[0]}</div><span style="font-weight:${f.me ? '800' : '500'}; color:${f.me ? 'var(--accent)' : 'var(--text)'}">${f.name}</span></div><span style="font-weight:700;">${f.ton.toLocaleString('ru')} кг</span></div>`).join('')}</div>
       
-      <!-- ГРАФИК ВЕСА -->
+      <!-- БАЛАНС МЫШЦ (RADAR CHART) -->
+      <div class="card glass-card span-2">
+        <h2><i class="ph ph-polygon" style="color:var(--accent);"></i> Баланс мышц</h2>
+        <p class="muted" style="font-size:13px; margin-bottom:16px;">Распределение объема нагрузки за месяц</p>
+        <div class="chart-container radar"><canvas id="muscleRadarChart"></canvas></div>
+      </div>
+
       <div class="card glass-card span-2">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;"><div><h2 style="margin:0;">Вес тела</h2><div style="font-size:18px; font-weight:800; margin-top:8px; color:${deltaColor};">${deltaText}</div></div><div style="display:flex; gap:10px;"><input id="bw" type="number" placeholder="Вес" style="width:100px; margin:0; padding:10px;"><button style="width:44px; height:44px; margin:0; padding:0; border-radius:12px;" onclick="logBodyWeight()"><i class="ph ph-plus"></i></button></div></div>
         <div class="chart-container"><canvas id="weightChart"></canvas></div>
       </div>
 
-      <!-- ЗАМЕРЫ ТЕЛА -->
       <div class="card glass-card span-2">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
           <h2 style="margin:0;">Замеры тела</h2>
@@ -1697,13 +1970,59 @@ function drawMeasurementsChart() {
   let data = sorted.length ? sorted.map(m => m[field]) : [0];
   
   let gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 250);
-  gradient.addColorStop(0, 'rgba(0, 212, 255, 0.5)'); // Синий цвет
+  gradient.addColorStop(0, 'rgba(0, 212, 255, 0.5)');
   gradient.addColorStop(1, 'rgba(0, 212, 255, 0)');
   
   state.measureChartInstance = new Chart(ctx, {
     type: 'line',
     data: { labels: labels, datasets: [{ label: fieldNames[field], data: data, borderColor: 'var(--stand)', backgroundColor: gradient, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#fff' }] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93' } }, x: { grid: { display: false }, ticks: { color: '#8e8e93' } } } }
+  });
+}
+
+function drawRadarChart() {
+  const ctx = document.getElementById('muscleRadarChart');
+  if (!ctx) return;
+  if (state.radarChartInstance) state.radarChartInstance.destroy();
+
+  const load = { 'Грудь': 0, 'Спина': 0, 'Ноги': 0, 'Руки': 0, 'Плечи': 0, 'Пресс': 0 };
+  const monthAgo = new Date(); monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+  state.workouts.filter(w => new Date(w.date) >= monthAgo).forEach(w => {
+    w.exercises.forEach(ex => {
+      const group = getAllExercises()[ex.name];
+      if (load[group] !== undefined) {
+        load[group] += ex.sets.filter(s => !s.isWarmup).reduce((sum, s) => sum + (s.weight * s.reps), 0);
+      }
+    });
+  });
+
+  state.radarChartInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: Object.keys(load),
+      datasets: [{
+        label: 'Объем (кг)',
+        data: Object.values(load),
+        backgroundColor: 'rgba(162, 255, 0, 0.2)',
+        borderColor: 'var(--accent)',
+        pointBackgroundColor: 'var(--accent)',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          angleLines: { color: 'rgba(255,255,255,0.1)' },
+          grid: { color: 'rgba(255,255,255,0.1)' },
+          pointLabels: { color: '#fff', font: { size: 12, weight: 'bold' } },
+          ticks: { display: false, min: 0 }
+        }
+      }
+    }
   });
 }
 
@@ -1717,12 +2036,11 @@ function logBodyWeight() {
 }
 
 // ============================================
-// ПРОФИЛЬ (С витриной рекордов)
+// ПРОФИЛЬ
 // ============================================
 function renderProfile() {
   const t = getTargets();
   const goalNames = { cut: 'Похудение', mass: 'Набор массы', maintain: 'Удержание' };
-
   const allExNames = new Set();
   state.workouts.forEach(w => w.exercises.forEach(ex => allExNames.add(ex.name)));
   const exList = [...allExNames].sort();
@@ -1761,7 +2079,6 @@ function renderProfile() {
       </div>
     </div>
 
-    <!-- ВИТРИНА РЕКОРДОВ -->
     ${exList.length > 0 ? `<div class="card glass-card">
       <h2><i class="ph-fill ph-trophy" style="color:var(--premium);"></i> Витрина рекордов</h2>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">Твои лучшие результаты. Тапни для детального графика.</p>
@@ -1803,7 +2120,29 @@ function buyPremium() {
 function showHistoryDetails(id) {
   const w = state.workouts.find(x => x.id === id); if (!w) return;
   document.getElementById('history-title').innerText = `Тренировка от ${w.date}`;
-  document.getElementById('history-content').innerHTML = `<div style="text-align:center; font-size:36px; margin-bottom:20px;">${w.mood || '😐'}</div>${w.note ? `<div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:20px; font-style:italic;">"${w.note}"</div>` : ''}<div style="margin-bottom:16px; font-weight:700; color:var(--accent);">Тоннаж: ${w.tonnage} кг</div>${w.exercises.map(ex => `<div style="margin-bottom:16px;"><div style="font-weight:700; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;"><span>${ex.name}</span><button onclick="closeModal('history-modal'); showExerciseProgress('${ex.name.replace(/'/g, "\\'")}')" style="width:auto; padding:4px 10px; margin:0; font-size:11px; border-radius:8px; background:rgba(162,255,0,0.15); color:var(--accent);"><i class="ph ph-chart-line-up"></i> График</button></div><div style="display:flex; flex-wrap:wrap; gap:8px;">${ex.sets.map((s, i) => `<div style="background:var(--card-light); padding:8px 12px; border-radius:8px; font-size:14px; ${s.isWarmup ? 'color:var(--move)' : ''}">${s.isWarmup ? 'W' : i+1}: ${s.weight}кг × ${s.reps}</div>`).join('')}</div></div>`).join('')}`;
+  
+  document.getElementById('history-content').innerHTML = `
+    <div style="text-align:center; font-size:36px; margin-bottom:20px;">${w.mood || '😐'}</div>
+    ${w.note ? `<div style="background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:20px; font-style:italic;">"${w.note}"</div>` : ''}
+    <div style="margin-bottom:16px; font-weight:700; color:var(--accent);">Тоннаж: ${w.tonnage} кг</div>
+    
+    ${w.exercises.map(ex => `
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:700; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+          <span>${ex.name}</span>
+          <button onclick="closeModal('history-modal'); showExerciseProgress('${ex.name.replace(/'/g, "\\'")}')" style="width:auto; padding:4px 10px; margin:0; font-size:11px; border-radius:8px; background:rgba(162,255,0,0.15); color:var(--accent);"><i class="ph ph-chart-line-up"></i> График</button>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          ${ex.sets.map((s, i) => `
+            <div style="background:var(--card-light); padding:8px 12px; border-radius:8px; font-size:14px; ${s.isWarmup ? 'color:var(--move)' : ''}">
+              ${s.isWarmup ? 'W' : i+1}: ${s.weight}кг × ${s.reps}
+              ${s.note ? `<div style="font-size:10px; color:var(--premium); margin-top:2px;"><i class="ph ph-note"></i> ${s.note}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('')}
+  `;
   document.getElementById('history-modal').classList.add('active');
 }
 
@@ -2089,6 +2428,12 @@ function closeModal(id) {
   const el = document.getElementById(id);
   if (el) el.classList.remove('active');
   if (id === 'timer-modal') clearInterval(timerInt);
+  if (id === 'stretch-modal') {
+    clearInterval(stretchInterval);
+    stretchActive = false;
+    const btn = document.getElementById('stretch-btn');
+    if (btn) btn.innerText = 'Старт';
+  }
 }
 
 function resetApp() {
