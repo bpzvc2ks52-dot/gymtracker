@@ -114,7 +114,6 @@
   .chart-container { position:relative; height:220px; width:100%; background:var(--card-light); border-radius:16px; padding:10px; }
   .chart-container.radar { height: 300px; }
   
-  .muscle-svg { width: 100px; height: 200px; fill: #2c2c2e; transition: fill 0.5s; }
   .leaderboard-item { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
   .avatar { width:32px; height:32px; border-radius:50%; background:var(--card-light); display:flex; align-items:center; justify-content:center; font-weight:bold; color:var(--accent); }
 
@@ -155,7 +154,6 @@
   .timer-ring-bg { fill: none; stroke: var(--card-light); stroke-width: 8; }
   .timer-ring-progress { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
   #timer-display { font-size: 56px !important; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); z-index: 1; position: relative; }
-  #fasting-display { font-size: 48px !important; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--stand); z-index: 1; position: relative; }
 
   .goal-card { background: var(--card-light); border-radius: 16px; padding: 14px 6px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
   .goal-card.selected { border-color: var(--accent); background: rgba(162,255,0,0.1); }
@@ -175,8 +173,30 @@
   .cal-day.both { background: linear-gradient(135deg, var(--exercise) 50%, var(--stand) 50%); color: #000; }
 
   .overload-hint { font-size: 11px; color: var(--accent); background: rgba(162,255,0,0.1); padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; }
-
   .note-badge { background: var(--premium); color: #000; font-size: 9px; font-weight: 800; padding: 2px 4px; border-radius: 4px; position: absolute; top: -4px; right: -4px; }
+
+  /* БАРБЕЛЛ ВИЗУАЛИЗАТОР */
+  .barbell-container { display: flex; align-items: center; justify-content: center; height: 40px; margin: 10px 0; position: relative; }
+  .barbell-bar { width: 100%; height: 6px; background: #888; border-radius: 3px; position: absolute; z-index: 1; }
+  .barbell-plate { height: 36px; width: 10px; border-radius: 2px; z-index: 2; margin: 0 1px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #fff; font-weight: bold; border: 1px solid rgba(0,0,0,0.5); }
+  .plate-25 { background: #fa114f; height: 36px; }
+  .plate-20 { background: #00d4ff; height: 34px; }
+  .plate-15 { background: #ffd700; height: 32px; color: #000; }
+  .plate-10 { background: #a2ff00; height: 28px; color: #000; }
+  .plate-5 { background: #ffffff; height: 22px; color: #000; }
+  .plate-2_5 { background: #8e8e93; height: 18px; }
+  .plate-1_25 { background: #38383a; height: 14px; }
+
+  /* АНАТОМИЧЕСКАЯ КАРТА */
+  .anatomy-wrapper { display: flex; justify-content: space-around; gap: 10px; padding: 10px; }
+  .anatomy-svg { width: 120px; height: 240px; }
+  .anatomy-muscle { fill: #2c2c2e; cursor: pointer; transition: fill 0.3s; }
+  .anatomy-muscle:hover { fill: var(--accent); }
+  .anatomy-muscle.active { fill: var(--move); }
+
+  /* ПРОГРАММЫ */
+  .program-card { background: var(--card-light); padding: 16px; border-radius: 16px; margin-bottom: 12px; cursor: pointer; text-align: left; border: 2px solid transparent; transition: 0.2s; }
+  .program-card:hover { border-color: var(--accent); }
 
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px 24px 40px 24px; }
@@ -238,7 +258,7 @@
       </div>
       <div class="goal-card selected" data-goal="maintain" onclick="selectGoal('maintain')">
         <div style="font-size:26px; margin-bottom:4px;">⚖️</div>
-        <div style="font-size:12px; font-weight:700;">Удержание</div>
+        <div style="font-weight:700; font-size:12px;">Удержание</div>
       </div>
       <div class="goal-card" data-goal="mass" onclick="selectGoal('mass')">
         <div style="font-size:26px; margin-bottom:4px;">📈</div>
@@ -251,6 +271,39 @@
     </div>
     <button onclick="completeOnboarding()" id="ob-submit-btn"><i class="ph ph-check-circle"></i> Рассчитать и начать</button>
     <button class="secondary" id="ob-cancel-btn" style="display:none;" onclick="closeModal('onboarding-modal')">Отмена</button>
+  </div>
+</div>
+
+<!-- ДНЕВНИК ТРАВМ -->
+<div id="injury-modal" class="modal-overlay" onclick="closeModal('injury-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
+    <h2 style="margin-top:0; text-align:center; color:var(--move);">⚠️ Дневник травм</h2>
+    <p class="muted" style="font-size:13px; margin-bottom:16px; text-align:center;">Отметь, что у тебя болит. Мы предупредим тебя в зале.</p>
+    <div id="injury-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;"></div>
+    <button onclick="saveInjuries()">Сохранить</button>
+    <button class="secondary" onclick="closeModal('injury-modal')">Отмена</button>
+  </div>
+</div>
+
+<!-- ПРОГРАММЫ ТРЕНИРОВОК -->
+<div id="programs-modal" class="modal-overlay" onclick="closeModal('programs-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
+    <h2 style="margin-top:0; text-align:center;">Выбор программы</h2>
+    <p class="muted" style="font-size:13px; margin-bottom:16px; text-align:center;">Готовые сплиты для разных целей</p>
+    <div id="programs-list"></div>
+    <button class="secondary" style="margin-top:16px;" onclick="closeModal('programs-modal')">Закрыть</button>
+  </div>
+</div>
+
+<!-- ТЕХНИКА УПРАЖНЕНИЯ (GIF) -->
+<div id="exercise-info-modal" class="modal-overlay" onclick="closeModal('exercise-info-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 id="ex-info-title" style="margin-top:0;">Техника</h2>
+    <div style="background:var(--card-light); border-radius:16px; padding:10px; margin-bottom:16px;">
+      <img id="ex-info-gif" src="" alt="GIF" style="width:100%; border-radius:12px; min-height:200px; object-fit:cover;">
+    </div>
+    <p id="ex-info-desc" class="muted" style="font-size:14px; line-height:1.5; margin-bottom:20px;"></p>
+    <button class="secondary" onclick="closeModal('exercise-info-modal')">Понятно</button>
   </div>
 </div>
 
@@ -294,35 +347,6 @@
     <input type="text" id="set-note-input" placeholder="Например: болит плечо...">
     <button onclick="saveSetNote()" style="margin-top:10px;">Сохранить</button>
     <button class="secondary" onclick="closeModal('set-note-modal')">Отмена</button>
-  </div>
-</div>
-
-<!-- ТАЙМЕР ГОЛОДАНИЯ -->
-<div id="fasting-modal" class="modal-overlay" onclick="closeModal('fasting-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-top:0;">Интервальное голодание (16/8)</h2>
-    <div class="timer-ring-wrap">
-      <svg class="timer-ring-svg" viewBox="0 0 220 220">
-        <circle class="timer-ring-bg" cx="110" cy="110" r="100"></circle>
-        <circle class="timer-ring-progress" id="fasting-ring" cx="110" cy="110" r="100" style="stroke:var(--stand); stroke-dasharray: 628; stroke-dashoffset: 0;"></circle>
-      </svg>
-      <div id="fasting-display">00:00:00</div>
-    </div>
-    <p class="muted" id="fasting-status" style="margin-bottom:20px;">Голодание не запущено</p>
-    <button onclick="toggleFasting()" id="fasting-btn" style="background:var(--stand); color:#000;">Начать голодание</button>
-    <button class="secondary" onclick="closeModal('fasting-modal')">Закрыть</button>
-  </div>
-</div>
-
-<!-- РАСТЯЖКА -->
-<div id="stretch-modal" class="modal-overlay" onclick="closeModal('stretch-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-top:0;">Растяжка (5 мин)</h2>
-    <div style="text-align:center; font-size:64px; font-weight:800; color:var(--accent); margin: 20px 0;" id="stretch-timer">60</div>
-    <h3 id="stretch-exercise" style="margin-bottom:20px; color:var(--text);">Наклон вперед</h3>
-    <p class="muted" style="margin-bottom:20px;">Расслабься и дыши глубоко</p>
-    <button onclick="toggleStretch()" id="stretch-btn">Старт</button>
-    <button class="secondary" onclick="closeModal('stretch-modal')">Закрыть</button>
   </div>
 </div>
 
@@ -474,7 +498,7 @@
 window.addEventListener('error', (e) => console.error('🔴 JS error:', e.error || e.message));
 window.addEventListener('unhandledrejection', (e) => console.error('🔴 Promise rejection:', e.reason));
 
-// АНИМАЦИЯ ДЛЯ ВСЕХ ИКОНОК
+// АНИМАЦИЯ ДЛЯ ИКОНОК
 const styleAnim = document.createElement('style');
 styleAnim.innerHTML = `@keyframes bounceAnim { from { transform: translateY(0) scale(1); } to { transform: translateY(-4px) scale(1.15); } } .nav-item.active i { animation: bounceAnim 0.4s infinite alternate; color: var(--accent); }`;
 document.head.appendChild(styleAnim);
@@ -505,7 +529,7 @@ const STORAGE = {
   profile: 'fit_p10', workouts: 'fit_w10', bodyLog: 'fit_b10', daily: 'fit_d10', 
   runs: 'fit_r10', swims: 'fit_sw10', measurements: 'fit_m10', achievements: 'fit_a10', 
   premium: 'fit_prem10', themeColor: 'fit_color10', customEx: 'fit_custom10',
-  templates: 'fit_temp10', fasting: 'fit_fast10'
+  templates: 'fit_temp10', injuries: 'fit_injuries10'
 };
 
 const ACHIEVEMENTS_LIST = [
@@ -514,7 +538,7 @@ const ACHIEVEMENTS_LIST = [
   { id: 'swim_1km', name: 'Дельфин', icon: 'ph-waves', cond: (s) => (s.swims || []).reduce((a, b) => a + b.dist, 0) >= 1000 },
   { id: 'ton_10k', name: 'Тонна', icon: 'ph-scales', cond: (s) => s.workouts.reduce((a, b) => a + b.tonnage, 0) >= 10000 },
   { id: 'measure', name: 'Замеры', icon: 'ph-ruler', cond: (s) => (s.measurements || []).length > 0 },
-  { id: 'fast_16h', name: 'Голодание', icon: 'ph-timer', cond: (s) => s.fastingCompleted > 0 }
+  { id: 'program', name: 'По программе', icon: 'ph-clipboard-text', cond: (s) => s.completedPrograms > 0 }
 ];
 
 const BASE_EXERCISES_DB = {
@@ -528,10 +552,61 @@ const BASE_EXERCISES_DB = {
 };
 
 // ============================================
-// МЕГА-БАЗА ПРОДУКТОВ (на 100 грамм)
+// БАЗА ПРОГРАММ ТРЕНИРОВОК
+// ============================================
+const PROGRAMS_DB = {
+  'ppl': {
+    name: 'Push / Pull / Legs',
+    desc: 'Классический сплит для набора массы. 3-6 дней в неделю.',
+    workouts: [
+      { name: 'Push (Грудь, плечи, трицепс)', exercises: ['Жим лёжа', 'Жим гантелей лёжа', 'Махи гантелями в стороны', 'Французский жим'] },
+      { name: 'Pull (Спина, бицепс)', exercises: ['Становая тяга', 'Подтягивания', 'Тяга штанги в наклоне', 'Подъём штанги на бицепс'] },
+      { name: 'Legs (Ноги, пресс)', exercises: ['Приседания со штангой', 'Жим ногами', 'Выпады с гантелями', 'Икры в тренажере'] }
+    ]
+  },
+  'sl5x5': {
+    name: 'StrongLifts 5x5',
+    desc: 'Программа для роста силы. 3 дня в неделю, база.',
+    workouts: [
+      { name: 'Тренировка A', exercises: ['Приседания со штангой', 'Жим лёжа', 'Тяга штанги в наклоне'] },
+      { name: 'Тренировка B', exercises: ['Приседания со штангой', 'Жим стоя', 'Становая тяга'] }
+    ]
+  },
+  'fullbody': {
+    name: 'Full Body (Новичок)',
+    desc: 'Всё тело за одну тренировку. Идеально для старта.',
+    workouts: [
+      { name: 'Всё тело', exercises: ['Приседания со штангой', 'Жим лёжа', 'Подтягивания', 'Планка'] }
+    ]
+  }
+};
+
+// ============================================
+// БАЗА ТРАВМ
+// ============================================
+const INJURIES_LIST = ['Плечо', 'Колено', 'Поясница', 'Локоть', 'Запястье', 'Шея', 'Голеностоп', 'Тазобедренный'];
+
+// ============================================
+// GIF-АНИМАЦИИ (Заглушки/Примеры)
+// ============================================
+const EXERCISE_GIFS = {
+  'Жим лёжа': 'https://media.giphy.com/media/3o6Zt0f8t5H1o7bK2A/giphy.gif',
+  'Приседания со штангой': 'https://media.giphy.com/media/l0HlMW77YjD5VgHX2/giphy.gif',
+  'Становая тяга': 'https://media.giphy.com/media/3o7TKuA4w9y3uXq3MY/giphy.gif',
+  'Подтягивания': 'https://media.giphy.com/media/3o7TKqnB1Xq1hOqQ5W/giphy.gif',
+  'default': 'https://media.giphy.com/media/3oKIPnAiaMCws8nOsE/giphy.gif'
+};
+const EXERCISE_DESCS = {
+  'Жим лёжа': 'Лёжа на скамье, опустите штангу к груди, затем выжмите вверх. Локти под углом 45 градусов.',
+  'Приседания со штангой': 'Штанга на плечах. Приседайте, отводя таз назад, колени не выходят за носки. Спина прямая.',
+  'Становая тяга': 'Тяните штангу с пола за счет разгибания ног и спины. Гриф идет близко к ногам.',
+  'default': 'Следите за дыханием и правильной техникой. Спина всегда должна быть прямой. Не делайте резких рывков.'
+};
+
+// ============================================
+// МЕГА-БАЗА ПРОДУКТОВ (сокращена для экономии места, оставляем самое ходовое + блюда)
 // ============================================
 const FOOD_DB = {
-  // Мясо и птица
   'курица': { c: 165, p: 31, f: 3.6, cb: 0 }, 'куриная грудка': { c: 165, p: 31, f: 3.6, cb: 0 },
   'куриное бедро': { c: 210, p: 26, f: 11, cb: 0 }, 'куриное филе': { c: 113, p: 23.6, f: 1.9, cb: 0 },
   'индейка': { c: 150, p: 29, f: 3, cb: 0 }, 'говядина': { c: 250, p: 26, f: 15, cb: 0 },
@@ -542,15 +617,11 @@ const FOOD_DB = {
   'бекон': { c: 541, p: 37, f: 45, cb: 1 }, 'ветчина': { c: 145, p: 21, f: 6, cb: 1 },
   'печень': { c: 135, p: 20, f: 5, cb: 4 }, 'котлета': { c: 260, p: 15, f: 18, cb: 8 },
   'наггетсы': { c: 296, p: 15, f: 18, cb: 18 }, 'куриные крылья': { c: 203, p: 19, f: 14, cb: 0 },
-  
-  // Рыба и морепродукты
   'рыба': { c: 120, p: 20, f: 4, cb: 0 }, 'лосось': { c: 208, p: 20, f: 13, cb: 0 },
   'тунец': { c: 130, p: 29, f: 1, cb: 0 }, 'треска': { c: 82, p: 18, f: 0.7, cb: 0 },
   'минтай': { c: 72, p: 16, f: 1, cb: 0 }, 'скумбрия': { c: 191, p: 19, f: 13, cb: 0 },
   'сельдь': { c: 217, p: 18, f: 15, cb: 0 }, 'креветки': { c: 99, p: 24, f: 0.3, cb: 0.2 },
   'кальмар': { c: 92, p: 15, f: 2, cb: 3 }, 'икра': { c: 250, p: 25, f: 15, cb: 4 },
-
-  // Молочные продукты и яйца
   'творог': { c: 180, p: 18, f: 2, cb: 2 }, 'творог обезжиренный': { c: 80, p: 18, f: 0, cb: 2 },
   'яйцо': { c: 155, p: 13, f: 11, cb: 1.1 }, 'яичный белок': { c: 52, p: 11, f: 0, cb: 0.7 },
   'сыр': { c: 350, p: 25, f: 27, cb: 0 }, 'моцарелла': { c: 280, p: 22, f: 22, cb: 2 },
@@ -558,8 +629,6 @@ const FOOD_DB = {
   'греческий йогурт': { c: 97, p: 9, f: 5, cb: 3.9 }, 'кефир': { c: 40, p: 3, f: 1, cb: 4 },
   'сметана': { c: 210, p: 2, f: 20, cb: 3 }, 'масло сливочное': { c: 717, p: 0.8, f: 81, cb: 0.1 },
   'сырок глазированный': { c: 407, p: 6, f: 22, cb: 45 }, 'протеин': { c: 380, p: 75, f: 5, cb: 10 },
-
-  // Крупы, макароны, картофель
   'рис': { c: 344, p: 6.7, f: 0.7, cb: 78 }, 'гречка': { c: 343, p: 12.6, f: 3.3, cb: 62 },
   'макароны': { c: 350, p: 12, f: 1.5, cb: 70 }, 'паста': { c: 350, p: 12, f: 1.5, cb: 70 },
   'овсянка': { c: 350, p: 12, f: 6, cb: 60 }, 'геркулес': { c: 350, p: 12, f: 6, cb: 60 },
@@ -569,8 +638,6 @@ const FOOD_DB = {
   'батат': { c: 86, p: 1.6, f: 0.1, cb: 20 }, 'хлеб': { c: 265, p: 9, f: 3, cb: 49 },
   'батон': { c: 270, p: 8, f: 2, cb: 52 }, 'лаваш': { c: 275, p: 9, f: 1, cb: 56 },
   'хлебцы': { c: 300, p: 10, f: 3, cb: 60 }, 'мука': { c: 364, p: 10, f: 1, cb: 76 },
-
-  // Овощи, зелень, бобовые
   'салат': { c: 80, p: 2, f: 5, cb: 6 }, 'огурец': { c: 15, p: 0.6, f: 0.1, cb: 3.6 },
   'помидор': { c: 18, p: 0.9, f: 0.2, cb: 3.9 }, 'капуста': { c: 25, p: 1.3, f: 0.1, cb: 5.8 },
   'брокколи': { c: 34, p: 2.8, f: 0.4, cb: 6.6 }, 'морковь': { c: 41, p: 0.9, f: 0.2, cb: 9.6 },
@@ -579,8 +646,6 @@ const FOOD_DB = {
   'кабачок': { c: 17, p: 1.2, f: 0.3, cb: 3.1 }, 'баклажан': { c: 25, p: 1, f: 0.2, cb: 6 },
   'горошек': { c: 81, p: 5, f: 0.4, cb: 14 }, 'кукуруза': { c: 86, p: 3, f: 1.2, cb: 19 },
   'фасоль': { c: 333, p: 24, f: 1, cb: 60 }, 'грибы': { c: 22, p: 3, f: 0.5, cb: 3 },
-
-  // Фрукты, ягоды, орехи
   'банан': { c: 89, p: 1.1, f: 0.3, cb: 22.8 }, 'яблоко': { c: 52, p: 0.3, f: 0.2, cb: 14 },
   'апельсин': { c: 47, p: 0.9, f: 0.1, cb: 12 }, 'груша': { c: 57, p: 0.4, f: 0.1, cb: 15 },
   'виноград': { c: 69, p: 0.7, f: 0.2, cb: 18 }, 'арбуз': { c: 30, p: 0.6, f: 0.2, cb: 8 },
@@ -590,8 +655,6 @@ const FOOD_DB = {
   'орехи': { c: 600, p: 20, f: 55, cb: 15 }, 'миндаль': { c: 579, p: 21, f: 49, cb: 22 },
   'грецкий орех': { c: 654, p: 15, f: 65, cb: 14 }, 'арахис': { c: 567, p: 26, f: 49, cb: 16 },
   'изюм': { c: 299, p: 3, f: 0.6, cb: 79 }, 'финики': { c: 282, p: 2.5, f: 0.5, cb: 75 },
-
-  // Готовые блюда и фастфуд
   'шаурма': { c: 250, p: 12, f: 15, cb: 20 }, 'бургер': { c: 295, p: 15, f: 14, cb: 27 },
   'чизбургер': { c: 320, p: 17, f: 16, cb: 28 }, 'картошка фри': { c: 312, p: 3.4, f: 15, cb: 41 },
   'пицца': { c: 266, p: 11, f: 10, cb: 33 }, 'хот-дог': { c: 290, p: 10, f: 17, cb: 24 },
@@ -607,8 +670,6 @@ const FOOD_DB = {
   'шашлык из свинины': { c: 300, p: 20, f: 25, cb: 0 }, 'шашлык из курицы': { c: 200, p: 22, f: 12, cb: 0 },
   'салат цезарь': { c: 190, p: 10, f: 14, cb: 8 }, 'оливье': { c: 200, p: 5, f: 16, cb: 10 },
   'греческий салат': { c: 120, p: 4, f: 10, cb: 6 }, 'винегрет': { c: 80, p: 2, f: 4, cb: 9 },
-
-  // Сладкое, снеки, соусы
   'шоколад': { c: 546, p: 5, f: 31, cb: 61 }, 'печенье': { c: 450, p: 5, f: 20, cb: 65 },
   'чипсы': { c: 536, p: 7, f: 35, cb: 53 }, 'мороженое': { c: 207, p: 3.5, f: 11, cb: 24 },
   'мед': { c: 304, p: 0.3, f: 0, cb: 82 }, 'сахар': { c: 387, p: 0, f: 0, cb: 100 },
@@ -616,8 +677,6 @@ const FOOD_DB = {
   'зефир': { c: 326, p: 0.8, f: 0.1, cb: 80 }, 'майонез': { c: 680, p: 1, f: 75, cb: 3 },
   'кетчуп': { c: 100, p: 1, f: 0, cb: 25 }, 'соевый соус': { c: 50, p: 5, f: 0, cb: 5 },
   'масло оливковое': { c: 884, p: 0, f: 100, cb: 0 }, 'масло растительное': { c: 899, p: 0, f: 99.9, cb: 0 },
-
-  // Напитки
   'кофе': { c: 2, p: 0.1, f: 0, cb: 0 }, 'чай': { c: 1, p: 0, f: 0, cb: 0 },
   'кофе с молоком': { c: 35, p: 1.5, f: 1.5, cb: 4 }, 'капучино': { c: 40, p: 2, f: 2, cb: 4 },
   'сок': { c: 45, p: 0.5, f: 0, cb: 10 }, 'кола': { c: 42, p: 0, f: 0, cb: 10.6 },
@@ -632,7 +691,8 @@ let state = {
   runs: load(STORAGE.runs) || [], swims: load(STORAGE.swims) || [], measurements: load(STORAGE.measurements) || [], achievements: load(STORAGE.achievements) || [],
   isPremium: load(STORAGE.premium) || false, customExercises: load(STORAGE.customEx) || {},
   templates: load(STORAGE.templates) || [],
-  fastingCompleted: load('fit_fasting_completed') || 0,
+  injuries: load(STORAGE.injuries) || [],
+  completedPrograms: load('fit_completed_programs') || 0,
   themeColor: load(STORAGE.themeColor) || '#a2ff00',
   daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0, habits: { water: false, steps: false, sleep: false } },
   screen: 'home', currentWorkout: null, chartInstance: null, exerciseChartInstance: null, radarChartInstance: null, measureChartInstance: null, tempMood: null, lastSavedWorkoutId: null
@@ -647,15 +707,8 @@ let historyMapInstance = null;
 let obGoal = 'maintain';
 let obEditMode = false;
 let prShownThisWorkout = new Set();
-
-let fastingInterval = null;
-let stretchInterval = null;
-let stretchTime = 60;
-let stretchActive = false;
-let currentStretchIdx = 0;
-const STRETCH_EXERCISES = ['Наклон вперед (спина)', 'Растяжка квадрицепса', 'Растяжка грудных мышц', 'Поза ребенка (спина)', 'Растяжка трицепса'];
-
 let currentSetNoteTarget = { exIdx: null, setIdx: null };
+let currentInjuriesTemp = [];
 
 function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
@@ -667,6 +720,114 @@ if (state.daily.date !== today()) {
 }
 
 // ============================================
+// ВИЗУАЛИЗАТОР ШТАНГИ
+// ============================================
+function renderBarbell(weight) {
+  if (!weight || weight <= 20) return '';
+  let target = (weight - 20) / 2;
+  const plates = [
+    { w: 25, c: 'plate-25' }, { w: 20, c: 'plate-20' }, { w: 15, c: 'plate-15' },
+    { w: 10, c: 'plate-10' }, { w: 5, c: 'plate-5' }, { w: 2.5, c: 'plate-2_5' }, { w: 1.25, c: 'plate-1_25' }
+  ];
+  
+  let leftHtml = '', rightHtml = '';
+  plates.forEach(p => {
+    let count = Math.floor(target / p.w);
+    for (let i = 0; i < count; i++) {
+      leftHtml += `<div class="barbell-plate ${p.c}" title="${p.w} кг"></div>`;
+      rightHtml = `<div class="barbell-plate ${p.c}" title="${p.w} кг"></div>` + rightHtml;
+    }
+    target -= count * p.w;
+  });
+  
+  return `<div class="barbell-container"><div class="barbell-bar"></div>${leftHtml}<div style="width:20px; height:8px; background:#ccc; z-index:2; border-radius:2px; margin:0 2px;"></div>${rightHtml}</div>`;
+}
+
+// ============================================
+// ДНЕВНИК ТРАВМ
+// ============================================
+function openInjuryModal() {
+  currentInjuriesTemp = [...state.injuries];
+  renderInjuryList();
+  document.getElementById('injury-modal').classList.add('active');
+}
+
+function renderInjuryList() {
+  const list = document.getElementById('injury-list');
+  list.innerHTML = INJURIES_LIST.map(inj => {
+    const active = currentInjuriesTemp.includes(inj);
+    return `<div onclick="toggleInjury('${inj}')" style="padding:12px; border-radius:12px; text-align:center; font-weight:700; cursor:pointer; border:2px solid ${active ? 'var(--move)' : 'var(--card-light)'}; background:${active ? 'rgba(250,17,79,0.1)' : 'var(--card-light)'}; color:${active ? 'var(--move)' : 'var(--text)'};">${inj}</div>`;
+  }).join('');
+}
+
+function toggleInjury(inj) {
+  if (currentInjuriesTemp.includes(inj)) {
+    currentInjuriesTemp = currentInjuriesTemp.filter(i => i !== inj);
+  } else {
+    currentInjuriesTemp.push(inj);
+  }
+  haptic('light');
+  renderInjuryList();
+}
+
+function saveInjuries() {
+  state.injuries = [...currentInjuriesTemp];
+  save(STORAGE.injuries, state.injuries);
+  closeModal('injury-modal');
+  haptic('success');
+  showToast('Дневник травм обновлен');
+  render();
+}
+
+// ============================================
+// ПРОГРАММЫ ТРЕНИРОВОК
+// ============================================
+function openProgramsModal() {
+  const list = document.getElementById('programs-list');
+  list.innerHTML = Object.keys(PROGRAMS_DB).map(key => {
+    const p = PROGRAMS_DB[key];
+    return `<div class="program-card" onclick="loadProgram('${key}')">
+      <div style="font-size:16px; font-weight:800; color:var(--accent); margin-bottom:4px;">${p.name}</div>
+      <div class="muted" style="font-size:12px; line-height:1.4;">${p.desc}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('programs-modal').classList.add('active');
+}
+
+function loadProgram(key) {
+  const p = PROGRAMS_DB[key];
+  closeModal('programs-modal');
+  haptic('success');
+  
+  // Создаем тренировку на основе программы (берем первую тренировку из программы для примера)
+  state.currentWorkout = { date: today(), exercises: [], mood: null, note: '' };
+  p.workouts[0].exercises.forEach(exName => {
+    addExercise(exName, false);
+  });
+  
+  state.screen = 'newWorkout';
+  prShownThisWorkout = new Set();
+  showToast(`Загружена программа: ${p.name}`);
+  render();
+}
+
+// ============================================
+// ТЕХНИКА УПРАЖНЕНИЯ (GIF)
+// ============================================
+function openExerciseInfo(exName) {
+  document.getElementById('ex-info-title').innerText = exName;
+  const gif = EXERCISE_GIFS[exName] || EXERCISE_GIFS['default'];
+  const desc = EXERCISE_DESCS[exName] || EXERCISE_DESCS['default'];
+  
+  const img = document.getElementById('ex-info-gif');
+  img.src = gif;
+  img.onerror = () => { img.src = EXERCISE_GIFS['default']; };
+  
+  document.getElementById('ex-info-desc').innerText = desc;
+  document.getElementById('exercise-info-modal').classList.add('active');
+}
+
+// ============================================
 // УМНЫЕ СОВЕТЫ И ПРОГНОЗЫ
 // ============================================
 function getSmartAdvice() {
@@ -675,17 +836,11 @@ function getSmartAdvice() {
   const last = sorted[0];
   const daysSince = Math.floor((new Date() - new Date(last.date)) / (1000 * 60 * 60 * 24));
   
-  if (daysSince >= 3) {
-    return "Ты давно не тренировался! Самое время вернуться в зал.";
-  }
+  if (daysSince >= 3) return "Ты давно не тренировался! Самое время вернуться в зал.";
   
   const lastEx = last.exercises.map(e => getAllExercises()[e.name] || 'Другое');
-  if (lastEx.includes('Грудь') || lastEx.includes('Спина') || lastEx.includes('Плечи')) {
-    return "Верх тела еще восстанавливается. Сегодня лучше сделать ноги!";
-  }
-  if (lastEx.includes('Ноги')) {
-    return "Ноги отдыхают. Идеальный день для жима или тяги!";
-  }
+  if (lastEx.includes('Грудь') || lastEx.includes('Спина') || lastEx.includes('Плечи')) return "Верх тела еще восстанавливается. Сегодня лучше сделать ноги!";
+  if (lastEx.includes('Ноги')) return "Ноги отдыхают. Идеальный день для жима или тяги!";
   return "Ты отлично восстанавливаешься. Продолжай в том же духе!";
 }
 
@@ -756,132 +911,6 @@ function calc1RM() {
 }
 
 // ============================================
-// ГОЛОДАНИЕ (16/8)
-// ============================================
-function loadFastingState() {
-  const saved = load(STORAGE.fasting);
-  if (saved && saved.active && saved.startTime) {
-    const elapsed = (Date.now() - saved.startTime) / 1000;
-    if (elapsed > 16 * 3600) {
-      // Голодание завершилось, пока приложение было закрыто
-      saved.active = false;
-      state.fastingCompleted++;
-      save('fit_fasting_completed', state.fastingCompleted);
-      save(STORAGE.fasting, saved);
-      haptic('success');
-    } else {
-      startFastingTimer(saved.startTime);
-    }
-    updateFastingUI(saved.active, elapsed);
-  }
-}
-
-function toggleFasting() {
-  const saved = load(STORAGE.fasting) || { active: false, startTime: null };
-  if (saved.active) {
-    saved.active = false;
-    saved.startTime = null;
-    clearInterval(fastingInterval);
-    updateFastingUI(false);
-    haptic('warn');
-  } else {
-    saved.active = true;
-    saved.startTime = Date.now();
-    startFastingTimer(saved.startTime);
-    updateFastingUI(true, 0);
-    haptic('success');
-  }
-  save(STORAGE.fasting, saved);
-}
-
-function startFastingTimer(startTime) {
-  clearInterval(fastingInterval);
-  fastingInterval = setInterval(() => {
-    const elapsed = (Date.now() - startTime) / 1000;
-    if (elapsed >= 16 * 3600) {
-      clearInterval(fastingInterval);
-      const saved = load(STORAGE.fasting) || {};
-      saved.active = false;
-      save(STORAGE.fasting, saved);
-      state.fastingCompleted++;
-      save('fit_fasting_completed', state.fastingCompleted);
-      updateFastingUI(false);
-      haptic('success');
-      showToast('🎉 16 часов голодания завершены!');
-    } else {
-      updateFastingUI(true, elapsed);
-    }
-  }, 1000);
-}
-
-function updateFastingUI(active, elapsed = 0) {
-  const display = document.getElementById('fasting-display');
-  const status = document.getElementById('fasting-status');
-  const btn = document.getElementById('fasting-btn');
-  const ring = document.getElementById('fasting-ring');
-  if (!display) return;
-
-  const h = Math.floor(elapsed / 3600);
-  const m = Math.floor((elapsed % 3600) / 60);
-  const s = Math.floor(elapsed % 60);
-  display.innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-
-  if (active) {
-    const pct = Math.min(elapsed / (16 * 3600), 1);
-    ring.style.strokeDashoffset = 628 * (1 - pct);
-    status.innerText = `Осталось: ${Math.max(0, 16 - Math.floor(elapsed / 3600))} ч`;
-    btn.innerText = 'Прервать голодание';
-    btn.style.background = 'var(--move)';
-    btn.style.color = '#fff';
-  } else {
-    ring.style.strokeDashoffset = 0;
-    status.innerText = 'Голодание не запущено';
-    btn.innerText = 'Начать голодание';
-    btn.style.background = 'var(--stand)';
-    btn.style.color = '#000';
-  }
-}
-
-// ============================================
-// РАСТЯЖКА
-// ============================================
-function openStretch() {
-  if (stretchActive) toggleStretch();
-  stretchTime = 60;
-  stretchActive = false;
-  currentStretchIdx = 0;
-  document.getElementById('stretch-timer').innerText = stretchTime;
-  document.getElementById('stretch-exercise').innerText = STRETCH_EXERCISES[0];
-  document.getElementById('stretch-btn').innerText = 'Старт';
-  document.getElementById('stretch-modal').classList.add('active');
-}
-
-function toggleStretch() {
-  const btn = document.getElementById('stretch-btn');
-  if (stretchActive) {
-    clearInterval(stretchInterval);
-    stretchActive = false;
-    btn.innerText = 'Старт';
-    haptic('warn');
-  } else {
-    stretchActive = true;
-    btn.innerText = 'Пауза';
-    haptic('light');
-    stretchInterval = setInterval(() => {
-      stretchTime--;
-      document.getElementById('stretch-timer').innerText = stretchTime;
-      if (stretchTime <= 0) {
-        currentStretchIdx = (currentStretchIdx + 1) % STRETCH_EXERCISES.length;
-        document.getElementById('stretch-exercise').innerText = STRETCH_EXERCISES[currentStretchIdx];
-        stretchTime = 60;
-        document.getElementById('stretch-timer').innerText = stretchTime;
-        haptic('medium');
-      }
-    }, 1000);
-  }
-}
-
-// ============================================
 // СТРИК (СЕРИЯ ТРЕНИРОВОК)
 // ============================================
 function getStreak() {
@@ -944,7 +973,7 @@ function saveTemplate() {
 }
 
 // ============================================
-// КНОПКА «ПРОДОЛЖИТЬ» + ОНБОРДИНГ
+// ОНБОРДИНГ И УТИЛИТЫ
 // ============================================
 function acceptCookies() {
   const splash = document.getElementById('splash-screen');
@@ -1057,9 +1086,6 @@ function openOnboardingEdit() {
   document.getElementById('onboarding-modal').classList.add('active');
 }
 
-// ============================================
-// «ПРОШЛЫЙ РАЗ» + PR + TOAST + УТИЛИТЫ
-// ============================================
 function getLastExerciseData(exName) {
   const sorted = [...state.workouts].sort((a, b) => b.id - a.id);
   for (const w of sorted) {
@@ -1111,7 +1137,6 @@ function copyLastSets(i) {
 }
 
 function initApp() { 
-  loadFastingState();
   render(); 
 }
 function getAllExercises() { return { ...BASE_EXERCISES_DB, ...state.customExercises }; }
@@ -1186,6 +1211,14 @@ function renderHome() {
       <div>
         <div style="font-weight:800; font-size:18px;">${streak} ${streak === 1 ? 'день' : (streak > 1 && streak < 5) ? 'дня' : 'дней'} подряд</div>
         <div class="muted" style="font-size:12px;">Не разрывай серию! Тренируйся сегодня.</div>
+      </div>
+    </div>` : ''}
+
+    ${state.injuries && state.injuries.length > 0 ? `
+    <div class="card glass-card" style="padding:16px; border-left:4px solid var(--move); background:rgba(250,17,79,0.05); margin-bottom:16px;">
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <i class="ph-fill ph-warning-circle" style="color:var(--move); font-size:24px;"></i>
+        <div><div style="font-weight:700; font-size:14px; margin-bottom:4px;">Внимание, травмы!</div><div style="font-size:13px; color:var(--text); line-height:1.4;">Ты отметил: <b>${state.injuries.join(', ')}</b>. Будь осторожен в зале.</div></div>
       </div>
     </div>` : ''}
 
@@ -1266,20 +1299,6 @@ function renderHome() {
         </div>
       </div>
       
-      <!-- НОВЫЕ ВИДЖЕТЫ: ГОЛОДАНИЕ И РАСТЯЖКА -->
-      <div class="bento-grid" style="grid-template-columns:1fr 1fr; gap:10px;">
-        <div class="card glass-card" style="padding:20px; text-align:center; cursor:pointer;" onclick="document.getElementById('fasting-modal').classList.add('active')">
-           <i class="ph ph-timer" style="font-size:32px; color:var(--stand); margin-bottom:8px;"></i>
-           <div style="font-weight:700; font-size:14px;">Голодание</div>
-           <div class="muted" style="font-size:11px;">16/8</div>
-        </div>
-        <div class="card glass-card" style="padding:20px; text-align:center; cursor:pointer;" onclick="openStretch()">
-           <i class="ph ph-person-arms-spread" style="font-size:32px; color:var(--accent); margin-bottom:8px;"></i>
-           <div style="font-weight:700; font-size:14px;">Растяжка</div>
-           <div class="muted" style="font-size:11px;">5 минут</div>
-        </div>
-      </div>
-
       <div class="card span-2">
         <h2 style="margin-bottom:16px;"><i class="ph ph-check-square-offset"></i> Привычки на сегодня</h2>
         <div class="habit-item ${state.daily.habits.water ? 'done' : ''}" onclick="toggleHabit('water')"><span><i class="ph ph-drop" style="color:var(--stand)"></i> Выпить 2л воды</span><div class="habit-check">${state.daily.habits.water ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
@@ -1287,7 +1306,7 @@ function renderHome() {
         <div class="habit-item ${state.daily.habits.sleep ? 'done' : ''}" onclick="toggleHabit('sleep')"><span><i class="ph ph-moon" style="color:var(--purple)"></i> Спать 8 часов</span><div class="habit-check">${state.daily.habits.sleep ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
       </div>
       
-      <div class="card glass-card" style="min-height:180px;"><h2 style="margin-bottom:10px;">План тренировок</h2><p class="muted">Программа на неделю</p><button style="margin-top:20px;" onclick="generateAIPlan()">AI План</button></div>
+      <div class="card glass-card" style="min-height:180px;"><h2 style="margin-bottom:10px;">План тренировок</h2><p class="muted">Программа на неделю</p><button style="margin-top:20px;" onclick="openProgramsModal()">Выбрать программу</button></div>
       <div class="card" style="min-height:180px;"><h2 style="margin-bottom:10px;">План питания</h2><p class="muted">Меню под твою цель</p><button style="margin-top:20px;" onclick="showPlan('food')">Смотреть меню</button></div>
       <div class="card span-2"><button onclick="startWorkout()" style="margin:0;"><i class="ph ph-play"></i> Начать тренировку</button></div>
     </div>`;
@@ -1371,7 +1390,6 @@ function renderRunning() {
     </button>
     <button class="secondary" id="run-save-btn" style="display:${runActive || runTime === 0 ? 'none' : 'flex'};" onclick="saveRun(${cal})">Сохранить результат</button>
     
-    <!-- Мини-история -->
     ${state.runs.length > 0 ? `
     <div style="margin-top:20px;">
       <h2>История пробежек</h2>
@@ -1383,7 +1401,7 @@ function renderRunning() {
 function initRunMap() {
   if (runMapInstance) return;
   try {
-    runMapInstance = L.map('run-map').setView([55.75, 37.61], 15); // Default Moscow
+    runMapInstance = L.map('run-map').setView([55.75, 37.61], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(runMapInstance);
     runPolyline = L.polyline([], {color: '#a2ff00', weight: 4}).addTo(runMapInstance);
     runMarker = L.circleMarker([55.75, 37.61], {radius: 8, fillColor: '#fa114f', fillOpacity: 1, color: '#fff', weight: 2}).addTo(runMapInstance);
@@ -1498,6 +1516,72 @@ function showRunHistory(id) {
 }
 
 // ============================================
+// ПЛАВАНИЕ
+// ============================================
+function renderSwimming() {
+  const sw = state.profile.swim || { time: 30, dist: 1000, style: 'Кроль (вольный стиль)' };
+  let muscles = "";
+  if (sw.style.includes('Кроль')) muscles = "Широчайшие мышцы спины, дельтовидные (плечи), трицепсы, пресс, ягодицы.";
+  else if (sw.style.includes('Брасс')) muscles = "Большая грудная, широчайшие, квадрицепсы, бицепсы бедер, ягодицы, трицепсы.";
+  else if (sw.style.includes('Баттерфляй')) muscles = "Грудные, широчайшие, дельтовидные, пресс, мышцы ног (движение дельфином).";
+  else if (sw.style.includes('На спине')) muscles = "Широчайшие, задние пучки дельтовидных, пресс, квадрицепсы, ягодицы.";
+  else if (sw.style.includes('Комплексное')) muscles = "Абсолютно все группы мышц (грудь, спина, ноги, руки, плечи, пресс).";
+  else if (sw.style.includes('С ластами')) muscles = "Мышцы ног (квадрицепс, бицепс бедра, икры), ягодицы, пресс, спина.";
+  else if (sw.style.includes('Колобашка')) muscles = "Изолированная нагрузка на ноги: квадрицепсы, бицепсы бедер, икроножные мышцы, ягодицы.";
+
+  return `
+    <h1>Плавание</h1>
+    <div class="bento-grid">
+      <div class="card glass-card span-2">
+        <h2>Параметры заплыва</h2>
+        <label>Стиль плавания</label>
+        <select id="swim-style" onchange="updateSwimStyle(this.value)">
+          <option value="Кроль (вольный стиль)" ${sw.style.includes('Кроль')?'selected':''}>Кроль (вольный стиль)</option>
+          <option value="Брасс" ${sw.style.includes('Брасс')?'selected':''}>Брасс</option>
+          <option value="Баттерфляй (Дельфин)" ${sw.style.includes('Баттерфляй')?'selected':''}>Баттерфляй (Дельфин)</option>
+          <option value="На спине" ${sw.style.includes('На спине')?'selected':''}>На спине</option>
+          <option value="Комплексное плавание" ${sw.style.includes('Комплексное')?'selected':''}>Комплексное плавание</option>
+          <option value="Плавание с ластами" ${sw.style.includes('С ластами')?'selected':''}>Плавание с ластами</option>
+          <option value="Колобашка (только ноги)" ${sw.style.includes('Колобашка')?'selected':''}>Колобашка (только ноги)</option>
+        </select>
+        <div style="display:flex; gap:10px;"><div style="flex:1;"><label>Время (мин)</label><input type="number" id="swim-time" value="${sw.time}"></div><div style="flex:1;"><label>Дистанция (м)</label><input type="number" id="swim-dist" value="${sw.dist}"></div></div>
+        <button style="margin-top:10px;" onclick="saveSwim()"><i class="ph ph-check"></i> Сохранить заплыв</button>
+      </div>
+      <div class="card span-2" style="border-left: 4px solid var(--stand);">
+        <h2 style="color: var(--stand);"><i class="ph ph-activity"></i> Восстановление мышц</h2>
+        <p class="muted" style="margin-bottom:10px;">При стиле <b>${sw.style}</b> основную нагрузку получают:</p>
+        <div style="background:var(--card-light); padding:16px; border-radius:12px; font-weight:600; color:var(--text); line-height: 1.5;">${muscles}</div>
+      </div>
+      <div class="card span-2">
+        <h2>История заплывов</h2>
+        ${(state.swims || []).map(s => `<div style="padding:12px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;"><span>${s.date} - ${s.style}</span> <b>${s.dist} м / ${s.time} мин</b></div>`).join('') || '<p class="muted">Пока пусто</p>'}
+      </div>
+    </div>`;
+}
+
+function updateSwimStyle(val) {
+  if (!state.profile.swim) state.profile.swim = { time: 30, dist: 1000, style: val };
+  state.profile.swim.style = val;
+  save(STORAGE.profile, state.profile);
+  render();
+}
+
+function saveSwim() {
+  const time = +document.getElementById('swim-time').value;
+  const dist = +document.getElementById('swim-dist').value;
+  const style = document.getElementById('swim-style').value;
+  state.profile.swim = { time, dist, style };
+  save(STORAGE.profile, state.profile);
+  state.swims = state.swims || [];
+  state.swims.unshift({ date: today(), time, dist, style });
+  save(STORAGE.swims, state.swims);
+  checkAchievements();
+  haptic('success');
+  alert('Заплыв сохранен!');
+  render();
+}
+
+// ============================================
 // ТРЕНИРОВКА В ЗАЛЕ
 // ============================================
 function startWorkout() {
@@ -1527,23 +1611,43 @@ function renderNewWorkout() {
           const lastTime = getLastExerciseData(ex.name);
           const pr = getPR(ex.name);
           
+          // Проверка на травмы
+          const exGroup = getAllExercises()[ex.name] || 'Другое';
+          let injuryWarning = '';
+          if (state.injuries && state.injuries.length > 0) {
+            const isRisk = state.injuries.some(inj => 
+              (inj === 'Плечо' && exGroup === 'Плечи') || 
+              (inj === 'Колено' && exGroup === 'Ноги') || 
+              (inj === 'Поясница' && exGroup === 'Спина') ||
+              (inj === 'Локоть' && exGroup === 'Руки')
+            );
+            if (isRisk) {
+              injuryWarning = `<div style="font-size:11px; color:#fff; background:var(--move); padding:4px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px; margin-bottom:8px;"><i class="ph-bold ph-warning"></i> Осторожно: риск для спины/суставов</div>`;
+            }
+          }
+
           let hintHtml = '';
           if (lastTime && lastTime.sets.length > 0) {
             const bestSet = lastTime.sets.reduce((prev, current) => (prev.weight > current.weight) ? prev : current);
             hintHtml = `<div class="overload-hint"><i class="ph ph-lightbulb"></i> Попробуй: <b>${bestSet.weight + 2.5} кг</b> × ${bestSet.reps}</div>`;
           }
 
+          // Находим максимальный вес в текущих подходах для визуализатора
+          const maxWeight = Math.max(...ex.sets.map(s => s.weight), 0);
+
           return `
           <div class="card" style="margin-bottom:16px; padding:20px;">
             <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
               <strong style="font-size:20px;">${ex.name}</strong>
               <div style="display:flex; gap:8px;">
+                <button class="btn-icon" onclick="openExerciseInfo('${ex.name.replace(/'/g, "\\'")}')" title="Техника"><i class="ph ph-play-circle"></i></button>
                 <button class="btn-icon" onclick="open1RM()" title="Калькулятор 1ПМ"><i class="ph ph-calculator"></i></button>
                 <button class="btn-icon" onclick="startTimer()"><i class="ph ph-timer"></i></button>
                 <button class="btn-icon" style="color:var(--move);" onclick="removeExercise(${i})"><i class="ph ph-trash"></i></button>
               </div>
             </div>
             
+            ${injuryWarning}
             ${hintHtml}
             
             <div style="font-size:12px; color:var(--muted); margin-bottom:12px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
@@ -1551,6 +1655,8 @@ function renderNewWorkout() {
               ${pr > 0 ? `<span style="color:var(--premium); font-weight:700;" title="Личный рекорд"><i class="ph-fill ph-trophy"></i> Рекорд: ${pr} кг</span>` : ''}
               ${lastTime ? `<button onclick="copyLastSets(${i})" style="width:auto; padding:4px 12px; margin:0; font-size:11px; border-radius:8px; background:rgba(162,255,0,0.15); color:var(--accent);"><i class="ph ph-copy"></i> Повторить</button>` : ''}
             </div>
+
+            ${renderBarbell(maxWeight)}
             
             ${ex.sets.map((s, j) => `
             <div class="set-row-wrapper">
@@ -1831,6 +1937,100 @@ function renderCalendar() {
 }
 
 // ============================================
+// АНАТОМИЧЕСКАЯ КАРТА (Восстановление)
+// ============================================
+function getRecoveryColor(group) {
+  const now = new Date();
+  let lastTrained = null;
+  state.workouts.forEach(w => {
+    w.exercises.forEach(ex => {
+      const g = getAllExercises()[ex.name] || 'Другое';
+      if (g === group) {
+        if (!lastTrained || new Date(w.date) > new Date(lastTrained)) {
+          lastTrained = w.date;
+        }
+      }
+    });
+  });
+
+  if (!lastTrained) return '#2c2c2e'; // Никогда не качал (серый)
+  
+  const days = Math.floor((now - new Date(lastTrained)) / (1000 * 60 * 60 * 24));
+  if (days <= 1) return '#fa114f'; // 0-1 день (красный, восстанавливается)
+  if (days <= 3) return '#ffd700'; // 2-3 дня (желтый, почти готов)
+  return '#a2ff00'; // 4+ дней (зеленый, готов)
+}
+
+function renderAnatomyMap() {
+  const cChest = getRecoveryColor('Грудь');
+  const cBack = getRecoveryColor('Спина');
+  const cLegs = getRecoveryColor('Ноги');
+  const cArms = getRecoveryColor('Руки');
+  const cShoulders = getRecoveryColor('Плечи');
+  const cAbs = getRecoveryColor('Пресс');
+
+  return `
+  <div class="anatomy-wrapper">
+    <!-- ПЕРЕДНЯЯ ЧАСТЬ -->
+    <div style="text-align:center;">
+      <svg viewBox="0 0 100 200" class="anatomy-svg">
+        <text x="50" y="15" fill="#fff" font-size="12" text-anchor="middle" font-weight="bold">Front</text>
+        <!-- Голова -->
+        <circle cx="50" cy="35" r="12" fill="#2c2c2e"></circle>
+        <!-- Плечи (Передние дельты) -->
+        <path d="M30,45 Q20,50 22,60 L35,55 Z" fill="${cShoulders}" class="anatomy-muscle"></path>
+        <path d="M70,45 Q80,50 78,60 L65,55 Z" fill="${cShoulders}" class="anatomy-muscle"></path>
+        <!-- Грудь -->
+        <path d="M35,55 Q50,50 65,55 L65,70 Q50,75 35,70 Z" fill="${cChest}" class="anatomy-muscle"></path>
+        <!-- Бицепсы -->
+        <path d="M22,62 L32,58 L30,85 L20,80 Z" fill="${cArms}" class="anatomy-muscle"></path>
+        <path d="M78,62 L68,58 L70,85 L80,80 Z" fill="${cArms}" class="anatomy-muscle"></path>
+        <!-- Пресс -->
+        <rect x="38" y="75" width="24" height="35" rx="4" fill="${cAbs}" class="anatomy-muscle"></rect>
+        <!-- Квадрицепсы -->
+        <path d="M35,115 L48,115 L48,160 L32,160 Z" fill="${cLegs}" class="anatomy-muscle"></path>
+        <path d="M52,115 L65,115 L68,160 L52,160 Z" fill="${cLegs}" class="anatomy-muscle"></path>
+        <!-- Голени -->
+        <rect x="35" y="165" width="10" height="25" rx="3" fill="#2c2c2e"></rect>
+        <rect x="55" y="165" width="10" height="25" rx="3" fill="#2c2c2e"></rect>
+      </svg>
+    </div>
+    
+    <!-- ЗАДНЯЯ ЧАСТЬ -->
+    <div style="text-align:center;">
+      <svg viewBox="0 0 100 200" class="anatomy-svg">
+        <text x="50" y="15" fill="#fff" font-size="12" text-anchor="middle" font-weight="bold">Back</text>
+        <!-- Голова -->
+        <circle cx="50" cy="35" r="12" fill="#2c2c2e"></circle>
+        <!-- Трапеции -->
+        <path d="M35,45 Q50,55 65,45 L60,60 Q50,65 40,60 Z" fill="${cShoulders}" class="anatomy-muscle"></path>
+        <!-- Спина (Широчайшие) -->
+        <path d="M30,60 L70,60 L65,100 L35,100 Z" fill="${cBack}" class="anatomy-muscle"></path>
+        <!-- Трицепсы -->
+        <path d="M22,62 L32,58 L30,85 L20,80 Z" fill="${cArms}" class="anatomy-muscle"></path>
+        <path d="M78,62 L68,58 L70,85 L80,80 Z" fill="${cArms}" class="anatomy-muscle"></path>
+        <!-- Ягодицы -->
+        <circle cx="42" cy="110" r="10" fill="${cLegs}" class="anatomy-muscle"></circle>
+        <circle cx="58" cy="110" r="10" fill="${cLegs}" class="anatomy-muscle"></circle>
+        <!-- Бицепсы бедра -->
+        <path d="M35,125 L48,125 L48,160 L32,160 Z" fill="${cLegs}" class="anatomy-muscle"></path>
+        <path d="M52,125 L65,125 L68,160 L52,160 Z" fill="${cLegs}" class="anatomy-muscle"></path>
+        <!-- Икры -->
+        <rect x="35" y="165" width="10" height="25" rx="3" fill="#2c2c2e"></rect>
+        <rect x="55" y="165" width="10" height="25" rx="3" fill="#2c2c2e"></rect>
+      </svg>
+    </div>
+  </div>
+  <div style="display:flex; justify-content:center; gap:12px; margin-top:10px; font-size:11px; color:var(--muted);">
+    <div style="display:flex; align-items:center; gap:4px;"><div style="width:10px; height:10px; border-radius:50%; background:#fa114f;"></div> Восстановление</div>
+    <div style="display:flex; align-items:center; gap:4px;"><div style="width:10px; height:10px; border-radius:50%; background:#ffd700;"></div> Почти готово</div>
+    <div style="display:flex; align-items:center; gap:4px;"><div style="width:10px; height:10px; border-radius:50%; background:#a2ff00;"></div> Готово</div>
+    <div style="display:flex; align-items:center; gap:4px;"><div style="width:10px; height:10px; border-radius:50%; background:#2c2c2e;"></div> Без нагрузки</div>
+  </div>
+  `;
+}
+
+// ============================================
 // ТРЕНДЫ
 // ============================================
 function renderProgress() {
@@ -1849,17 +2049,6 @@ function renderProgress() {
     else { deltaText = '0 кг'; }
   }
   
-  let muscleLoad = { 'Грудь': 0, 'Спина': 0, 'Ноги': 0, 'Руки': 0, 'Плечи': 0, 'Пресс': 0 };
-  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-  state.workouts.filter(w => new Date(w.date) >= weekAgo).forEach(w => {
-    w.exercises.forEach(ex => {
-      const group = getAllExercises()[ex.name] || 'Другое';
-      if (muscleLoad[group] !== undefined) {
-        muscleLoad[group] += ex.sets.filter(s => !s.isWarmup).reduce((sum, s) => sum + (s.weight * s.reps), 0);
-      }
-    });
-  });
-  const getColor = (group) => { const load = muscleLoad[group]; if (load === 0) return '#2c2c2e'; if (load > 1000) return '#fa114f'; return '#a2ff00'; };
   const myTon = state.workouts.reduce((sum, w) => sum + w.tonnage, 0);
   const friends = [
     { name: "Макс", ton: myTon + 1500 },
@@ -1878,14 +2067,15 @@ function renderProgress() {
         ${renderCalendar()}
       </div>
 
-      <div class="card" style="display:flex; align-items:center; gap:20px; padding:20px;">
-        <div style="flex:1;"><h2 style="margin-bottom:8px;">Карта мышц</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Нагрузка за 7 дней</p><div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#fa114f;"></div><span style="font-size:12px;">Восстановление</span></div><div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#a2ff00;"></div><span style="font-size:12px;">Готово</span></div><div style="display:flex; align-items:center; gap:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#2c2c2e;"></div><span style="font-size:12px;">Без нагрузки</span></div></div>
-        <svg viewBox="0 0 100 200" class="muscle-svg"><circle cx="50" cy="20" r="12" fill="#2c2c2e"></circle><rect x="25" y="35" width="15" height="15" rx="5" fill="${getColor('Плечи')}"></rect><rect x="60" y="35" width="15" height="15" rx="5" fill="${getColor('Плечи')}"></rect><rect x="30" y="45" width="40" height="25" rx="5" fill="${getColor('Грудь')}"></rect><rect x="15" y="55" width="12" height="35" rx="5" fill="${getColor('Руки')}"></rect><rect x="73" y="55" width="12" height="35" rx="5" fill="${getColor('Руки')}"></rect><rect x="38" y="75" width="24" height="30" rx="5" fill="#2c2c2e"></rect><rect x="30" y="110" width="16" height="60" rx="5" fill="${getColor('Ноги')}"></rect><rect x="54" y="110" width="16" height="60" rx="5" fill="${getColor('Ноги')}"></rect></svg>
+      <!-- АНАТОМИЧЕСКАЯ КАРТА -->
+      <div class="card glass-card span-2">
+        <h2><i class="ph ph-person" style="color:var(--accent);"></i> Карта восстановления</h2>
+        <p class="muted" style="font-size:13px; margin-bottom:16px;">Наведи на мышцу, чтобы увидеть её готовность</p>
+        ${renderAnatomyMap()}
       </div>
       
       <div class="card"><h2>Лидерборд</h2><p class="muted" style="font-size:13px; margin-bottom:16px;">Тоннаж за месяц</p>${friends.map((f, i) => `<div class="leaderboard-item"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:800; color:${i===0?'#ffd700':'var(--muted)'}">${i+1}</span><div class="avatar" style="background:${f.me ? 'var(--accent)' : 'var(--card-light)'}; color:${f.me ? '#000' : '#fff'}">${f.name[0]}</div><span style="font-weight:${f.me ? '800' : '500'}; color:${f.me ? 'var(--accent)' : 'var(--text)'}">${f.name}</span></div><span style="font-weight:700;">${f.ton.toLocaleString('ru')} кг</span></div>`).join('')}</div>
       
-      <!-- БАЛАНС МЫШЦ (RADAR CHART) -->
       <div class="card glass-card span-2">
         <h2><i class="ph ph-polygon" style="color:var(--accent);"></i> Баланс мышц</h2>
         <p class="muted" style="font-size:13px; margin-bottom:16px;">Распределение объема нагрузки за месяц</p>
@@ -2059,6 +2249,7 @@ function renderProfile() {
       }
       <div style="margin-top:20px; margin-bottom:20px;"><label>Цвет интерфейса</label><div style="display:flex; justify-content:center; gap:12px; margin-top:10px;">${COLORS.map(c => `<div class="color-swatch ${state.themeColor === c.hex ? 'active' : ''}" style="background:${c.hex}" onclick="changeThemeColor('${c.hex}')"></div>`).join('')}</div></div>
       <button class="secondary" onclick="openOnboardingEdit()" style="font-size:14px; padding:12px; margin-bottom:8px;"><i class="ph ph-pencil-simple"></i> Изменить параметры и КБЖУ</button>
+      <button class="secondary" onclick="openInjuryModal()" style="font-size:14px; padding:12px; margin-bottom:8px; color:var(--move);"><i class="ph ph-first-aid"></i> Дневник травм</button>
       <button class="secondary" onclick="downloadBackup()" style="font-size:14px; padding:12px; margin-bottom:8px;"><i class="ph ph-download-simple"></i> Скачать бэкап</button>
       <div style="position:relative;">
         <input type="file" accept=".json" onchange="uploadBackup(event)" style="opacity:0; position:absolute; top:0; left:0; width:100%; height:100%; cursor:pointer; z-index:2;">
@@ -2428,12 +2619,6 @@ function closeModal(id) {
   const el = document.getElementById(id);
   if (el) el.classList.remove('active');
   if (id === 'timer-modal') clearInterval(timerInt);
-  if (id === 'stretch-modal') {
-    clearInterval(stretchInterval);
-    stretchActive = false;
-    const btn = document.getElementById('stretch-btn');
-    if (btn) btn.innerText = 'Старт';
-  }
 }
 
 function resetApp() {
