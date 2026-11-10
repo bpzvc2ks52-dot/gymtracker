@@ -14,10 +14,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-<!-- LEAFLET ДЛЯ КАРТ -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <style>
   :root {
     --bg: #000000; --card: #1c1c1e; --card-light: #2c2c2e;
@@ -77,28 +73,28 @@
   .ring-icon { margin-bottom: 2px; }
   .ring-val { font-weight: 800; }
 
-  .set-row-wrapper { position: relative; overflow: hidden; border-radius: 12px; margin-bottom: 12px; }
-  .set-row-wrapper .set-delete-bg { position: absolute; top: 0; right: 0; bottom: 0; width: 90px; background: var(--move);
+  /* ОБНОВЛЕННАЯ СТРОКА ПОДХОДА */
+  .set-row-wrapper { position: relative; overflow: hidden; border-radius: 16px; margin-bottom: 8px; }
+  .set-row-wrapper .set-delete-bg { position: absolute; top: 0; right: 0; bottom: 0; width: 80px; background: var(--move);
     display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; cursor: pointer;
-    border-radius: 0 12px 12px 0; opacity: 0; transition: opacity 0.15s; z-index: 0; }
+    border-radius: 0 16px 16px 0; opacity: 0; transition: opacity 0.15s; z-index: 0; }
   .set-row-wrapper.swiped .set-delete-bg { opacity: 1; }
-  .set-row-wrapper .set-row { margin-bottom: 0; background: var(--card); position: relative; z-index: 1;
-    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 12px; touch-action: pan-y; }
-  .set-row-wrapper.swiped .set-row { transform: translateX(-90px); }
+  .set-row-wrapper .set-row { margin-bottom: 0; background: var(--card-light); position: relative; z-index: 1;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 16px; touch-action: pan-y; }
+  .set-row-wrapper.swiped .set-row { transform: translateX(-80px); }
 
-  .set-row { display: grid; grid-template-columns: 40px 1fr 1fr 36px 36px; gap: 6px; align-items: center; padding: 6px; }
-  .set-num { width: 40px; height: 40px; background: var(--card-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--muted); }
-  .set-row input { margin-bottom: 0; padding: 12px 4px; font-size: 16px; border-radius: 12px; text-align: center; font-weight: 700; }
-  .btn-icon { width: 36px; height: 36px; padding: 0; border-radius: 12px; background: var(--card-light); color: var(--text); border: none; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .set-row { display: flex; align-items: center; gap: 8px; padding: 8px; }
+  .set-num { width: 32px; text-align: center; font-size: 14px; font-weight: 800; color: var(--muted); }
+  .set-inputs { display: flex; flex: 1; gap: 8px; }
+  .set-inputs input { margin-bottom: 0; padding: 12px; font-size: 18px; font-weight: 800; background: var(--card); border-radius: 12px; }
+  .set-check { width: 44px; height: 44px; border-radius: 12px; background: var(--card); color: var(--muted); border: none; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+  .set-check.completed { background: var(--accent); color: #000; }
 
-  .run-screen { display: flex; flex-direction: column; height: calc(100vh - 160px); justify-content: flex-start; }
-  .run-time-big { font-size: 60px; font-weight: 800; line-height: 1; letter-spacing: -2px; font-variant-numeric: tabular-nums; text-align: center; margin: 10px 0; }
-  .run-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-  .run-metric-box { background: var(--card); padding: 16px; border-radius: 20px; text-align: center; }
-  .run-metric-val { font-size: 24px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 4px; }
-  
-  #run-map { height: 200px; width: 100%; border-radius: 20px; margin-bottom: 20px; z-index: 1; }
-  #history-map { height: 200px; width: 100%; border-radius: 16px; margin-top: 10px; z-index: 1; }
+  .run-screen { display: flex; flex-direction: column; height: calc(100vh - 160px); justify-content: center; }
+  .run-time-big { font-size: 70px; font-weight: 800; line-height: 1; letter-spacing: -3px; font-variant-numeric: tabular-nums; text-align: center; margin-bottom: 20px; }
+  .run-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 40px; }
+  .run-metric-box { background: var(--card); padding: 24px; border-radius: var(--radius); text-align: center; }
+  .run-metric-val { font-size: 32px; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 4px; }
 
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(10px); }
   .modal-overlay.active { display: flex; animation: slideUp 0.3s ease; }
@@ -175,18 +171,6 @@
   .overload-hint { font-size: 11px; color: var(--accent); background: rgba(162,255,0,0.1); padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; }
   .note-badge { background: var(--premium); color: #000; font-size: 9px; font-weight: 800; padding: 2px 4px; border-radius: 4px; position: absolute; top: -4px; right: -4px; }
 
-  /* БАРБЕЛЛ ВИЗУАЛИЗАТОР */
-  .barbell-container { display: flex; align-items: center; justify-content: center; height: 40px; margin: 10px 0; position: relative; }
-  .barbell-bar { width: 100%; height: 6px; background: #888; border-radius: 3px; position: absolute; z-index: 1; }
-  .barbell-plate { height: 36px; width: 10px; border-radius: 2px; z-index: 2; margin: 0 1px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #fff; font-weight: bold; border: 1px solid rgba(0,0,0,0.5); }
-  .plate-25 { background: #fa114f; height: 36px; }
-  .plate-20 { background: #00d4ff; height: 34px; }
-  .plate-15 { background: #ffd700; height: 32px; color: #000; }
-  .plate-10 { background: #a2ff00; height: 28px; color: #000; }
-  .plate-5 { background: #ffffff; height: 22px; color: #000; }
-  .plate-2_5 { background: #8e8e93; height: 18px; }
-  .plate-1_25 { background: #38383a; height: 14px; }
-
   /* АНАТОМИЧЕСКАЯ КАРТА */
   .anatomy-wrapper { display: flex; justify-content: space-around; gap: 10px; padding: 10px; }
   .anatomy-svg { width: 120px; height: 240px; }
@@ -197,6 +181,10 @@
   /* ПРОГРАММЫ */
   .program-card { background: var(--card-light); padding: 16px; border-radius: 16px; margin-bottom: 12px; cursor: pointer; text-align: left; border: 2px solid transparent; transition: 0.2s; }
   .program-card:hover { border-color: var(--accent); }
+
+  /* КРАСИВАЯ ШТАНГА (SVG) */
+  .barbell-svg-wrap { display: flex; justify-content: center; align-items: center; height: 60px; margin: 10px 0; background: var(--card-light); border-radius: 16px; padding: 10px; overflow: hidden; }
+  .barbell-svg { height: 100%; max-width: 100%; }
 
   @media (min-width: 768px) {
     body { max-width: 900px; padding: 24px 24px 40px 24px; }
@@ -210,7 +198,6 @@
     .run-time-big { font-size: 110px; }
     .workout-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
     .achieve-grid { grid-template-columns: repeat(6, 1fr); }
-    #run-map { height: 300px; }
   }
 </style>
 </head>
@@ -295,12 +282,12 @@
   </div>
 </div>
 
-<!-- ТЕХНИКА УПРАЖНЕНИЯ (GIF) -->
+<!-- ТЕХНИКА УПРАЖНЕНИЯ (Картинка) -->
 <div id="exercise-info-modal" class="modal-overlay" onclick="closeModal('exercise-info-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 id="ex-info-title" style="margin-top:0;">Техника</h2>
-    <div style="background:var(--card-light); border-radius:16px; padding:10px; margin-bottom:16px;">
-      <img id="ex-info-gif" src="" alt="GIF" style="width:100%; border-radius:12px; min-height:200px; object-fit:cover;">
+    <div style="background:var(--card-light); border-radius:16px; padding:10px; margin-bottom:16px; display:flex; justify-content:center;">
+      <img id="ex-info-gif" src="" alt="Техника" style="width:100%; max-height:300px; border-radius:12px; object-fit:contain;">
     </div>
     <p id="ex-info-desc" class="muted" style="font-size:14px; line-height:1.5; margin-bottom:20px;"></p>
     <button class="secondary" onclick="closeModal('exercise-info-modal')">Понятно</button>
@@ -350,16 +337,6 @@
   </div>
 </div>
 
-<!-- ИСТОРИЯ ПРОБЕЖКИ С КАРТОЙ -->
-<div id="run-history-modal" class="modal-overlay" onclick="closeModal('run-history-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
-    <h2 id="run-history-title" style="text-align:center;">Детали пробежки</h2>
-    <div id="run-history-stats" style="margin-bottom:16px;"></div>
-    <div id="history-map"></div>
-    <button class="secondary" style="margin-top:20px;" onclick="closeModal('run-history-modal')">Закрыть</button>
-  </div>
-</div>
-
 <!-- ПРЕМИУМ -->
 <div id="premium-modal" class="modal-overlay" onclick="closeModal('premium-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
@@ -379,7 +356,7 @@
 <div id="food-modal" class="modal-overlay" onclick="closeModal('food-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Добавить еду</h2>
-    <p class="muted" style="font-size:13px; margin-top:-10px; margin-bottom:16px;">Введи блюдо и вес (например: курица 150, паста 200)</p>
+    <p class="muted" style="font-size:13px; margin-top:-10px; margin-bottom:16px;">Введи блюдо и вес (например: курица 150)</p>
     <input type="text" id="food-input" placeholder="Название и вес..." style="text-align:center; margin-bottom:20px;">
     <button onclick="processFoodInput()"><i class="ph ph-check"></i> Добавить в дневник</button>
   </div>
@@ -434,7 +411,7 @@
     <p id="exp-subtitle" class="muted" style="text-align:center; font-size:13px; margin-top:0; margin-bottom:16px;"></p>
     <div id="exp-stats" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px;"></div>
     <div class="chart-container" style="height:240px;"><canvas id="exerciseChart"></canvas></div>
-    <div style="font-size:12px; color:var(--muted); text-align:center; margin-top:16px; line-height:1.4;">Рекорд — это лучший результат за 1 подход (максимальный вес, который ты когда-либо поднимал).</div>
+    <div style="font-size:12px; color:var(--muted); text-align:center; margin-top:16px; line-height:1.4;">Рекорд — это лучший результат за 1 подход.</div>
     <button class="secondary" style="margin-top:24px;" onclick="closeModal('exercise-progress-modal')">Закрыть</button>
   </div>
 </div>
@@ -552,7 +529,7 @@ const BASE_EXERCISES_DB = {
 };
 
 // ============================================
-// БАЗА ПРОГРАММ ТРЕНИРОВОК
+// ПРОГРАММЫ И ТРАВМЫ
 // ============================================
 const PROGRAMS_DB = {
   'ppl': {
@@ -581,21 +558,21 @@ const PROGRAMS_DB = {
   }
 };
 
-// ============================================
-// БАЗА ТРАВМ
-// ============================================
 const INJURIES_LIST = ['Плечо', 'Колено', 'Поясница', 'Локоть', 'Запястье', 'Шея', 'Голеностоп', 'Тазобедренный'];
 
 // ============================================
-// GIF-АНИМАЦИИ (Заглушки/Примеры)
+// КАРТИНКИ ТЕХНИКИ (Статичные JPG с надежного GitHub-репозитория)
 // ============================================
-const EXERCISE_GIFS = {
-  'Жим лёжа': 'https://media.giphy.com/media/3o6Zt0f8t5H1o7bK2A/giphy.gif',
-  'Приседания со штангой': 'https://media.giphy.com/media/l0HlMW77YjD5VgHX2/giphy.gif',
-  'Становая тяга': 'https://media.giphy.com/media/3o7TKuA4w9y3uXq3MY/giphy.gif',
-  'Подтягивания': 'https://media.giphy.com/media/3o7TKqnB1Xq1hOqQ5W/giphy.gif',
-  'default': 'https://media.giphy.com/media/3oKIPnAiaMCws8nOsE/giphy.gif'
+const EXERCISE_IMAGES = {
+  'Жим лёжа': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Bench_Press_-_Medium_Grip/0.jpg',
+  'Приседания со штангой': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Squat/0.jpg',
+  'Становая тяга': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Deadlift/0.jpg',
+  'Подтягивания': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Pullups/0.jpg',
+  'Жим стоя': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Shoulder_Press/0.jpg',
+  'Тяга штанги в наклоне': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Barbell_Row/0.jpg',
+  'default': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Squat/0.jpg'
 };
+
 const EXERCISE_DESCS = {
   'Жим лёжа': 'Лёжа на скамье, опустите штангу к груди, затем выжмите вверх. Локти под углом 45 градусов.',
   'Приседания со штангой': 'Штанга на плечах. Приседайте, отводя таз назад, колени не выходят за носки. Спина прямая.',
@@ -604,84 +581,44 @@ const EXERCISE_DESCS = {
 };
 
 // ============================================
-// МЕГА-БАЗА ПРОДУКТОВ (сокращена для экономии места, оставляем самое ходовое + блюда)
+// МЕГА-БАЗА ПРОДУКТОВ
 // ============================================
 const FOOD_DB = {
   'курица': { c: 165, p: 31, f: 3.6, cb: 0 }, 'куриная грудка': { c: 165, p: 31, f: 3.6, cb: 0 },
   'куриное бедро': { c: 210, p: 26, f: 11, cb: 0 }, 'куриное филе': { c: 113, p: 23.6, f: 1.9, cb: 0 },
   'индейка': { c: 150, p: 29, f: 3, cb: 0 }, 'говядина': { c: 250, p: 26, f: 15, cb: 0 },
-  'свинина': { c: 260, p: 27, f: 16, cb: 0 }, 'баранина': { c: 294, p: 25, f: 21, cb: 0 },
-  'фарш': { c: 250, p: 20, f: 18, cb: 0 }, 'фарш куриный': { c: 143, p: 17, f: 8, cb: 0 },
+  'свинина': { c: 260, p: 27, f: 16, cb: 0 }, 'фарш': { c: 250, p: 20, f: 18, cb: 0 },
   'стейк': { c: 271, p: 25, f: 19, cb: 0 }, 'шашлык': { c: 280, p: 22, f: 20, cb: 2 },
   'сосиски': { c: 257, p: 13, f: 22, cb: 2 }, 'колбаса': { c: 300, p: 15, f: 25, cb: 2 },
   'бекон': { c: 541, p: 37, f: 45, cb: 1 }, 'ветчина': { c: 145, p: 21, f: 6, cb: 1 },
-  'печень': { c: 135, p: 20, f: 5, cb: 4 }, 'котлета': { c: 260, p: 15, f: 18, cb: 8 },
-  'наггетсы': { c: 296, p: 15, f: 18, cb: 18 }, 'куриные крылья': { c: 203, p: 19, f: 14, cb: 0 },
   'рыба': { c: 120, p: 20, f: 4, cb: 0 }, 'лосось': { c: 208, p: 20, f: 13, cb: 0 },
   'тунец': { c: 130, p: 29, f: 1, cb: 0 }, 'треска': { c: 82, p: 18, f: 0.7, cb: 0 },
-  'минтай': { c: 72, p: 16, f: 1, cb: 0 }, 'скумбрия': { c: 191, p: 19, f: 13, cb: 0 },
-  'сельдь': { c: 217, p: 18, f: 15, cb: 0 }, 'креветки': { c: 99, p: 24, f: 0.3, cb: 0.2 },
-  'кальмар': { c: 92, p: 15, f: 2, cb: 3 }, 'икра': { c: 250, p: 25, f: 15, cb: 4 },
-  'творог': { c: 180, p: 18, f: 2, cb: 2 }, 'творог обезжиренный': { c: 80, p: 18, f: 0, cb: 2 },
-  'яйцо': { c: 155, p: 13, f: 11, cb: 1.1 }, 'яичный белок': { c: 52, p: 11, f: 0, cb: 0.7 },
-  'сыр': { c: 350, p: 25, f: 27, cb: 0 }, 'моцарелла': { c: 280, p: 22, f: 22, cb: 2 },
-  'молоко': { c: 52, p: 3, f: 2.5, cb: 4.7 }, 'йогурт': { c: 60, p: 5, f: 3, cb: 3 },
-  'греческий йогурт': { c: 97, p: 9, f: 5, cb: 3.9 }, 'кефир': { c: 40, p: 3, f: 1, cb: 4 },
-  'сметана': { c: 210, p: 2, f: 20, cb: 3 }, 'масло сливочное': { c: 717, p: 0.8, f: 81, cb: 0.1 },
-  'сырок глазированный': { c: 407, p: 6, f: 22, cb: 45 }, 'протеин': { c: 380, p: 75, f: 5, cb: 10 },
+  'креветки': { c: 99, p: 24, f: 0.3, cb: 0.2 }, 'икра': { c: 250, p: 25, f: 15, cb: 4 },
+  'творог': { c: 180, p: 18, f: 2, cb: 2 }, 'яйцо': { c: 155, p: 13, f: 11, cb: 1.1 },
+  'сыр': { c: 350, p: 25, f: 27, cb: 0 }, 'молоко': { c: 52, p: 3, f: 2.5, cb: 4.7 },
+  'йогурт': { c: 60, p: 5, f: 3, cb: 3 }, 'кефир': { c: 40, p: 3, f: 1, cb: 4 },
   'рис': { c: 344, p: 6.7, f: 0.7, cb: 78 }, 'гречка': { c: 343, p: 12.6, f: 3.3, cb: 62 },
   'макароны': { c: 350, p: 12, f: 1.5, cb: 70 }, 'паста': { c: 350, p: 12, f: 1.5, cb: 70 },
-  'овсянка': { c: 350, p: 12, f: 6, cb: 60 }, 'геркулес': { c: 350, p: 12, f: 6, cb: 60 },
-  'булгур': { c: 342, p: 12, f: 1.3, cb: 75 }, 'кускус': { c: 376, p: 13, f: 0.6, cb: 77 },
-  'киноа': { c: 368, p: 14, f: 6, cb: 64 }, 'чечевица': { c: 350, p: 24, f: 1, cb: 60 },
-  'картофель': { c: 77, p: 2, f: 0.1, cb: 17 }, 'пюре': { c: 100, p: 2, f: 3, cb: 15 },
+  'овсянка': { c: 350, p: 12, f: 6, cb: 60 }, 'картофель': { c: 77, p: 2, f: 0.1, cb: 17 },
   'батат': { c: 86, p: 1.6, f: 0.1, cb: 20 }, 'хлеб': { c: 265, p: 9, f: 3, cb: 49 },
-  'батон': { c: 270, p: 8, f: 2, cb: 52 }, 'лаваш': { c: 275, p: 9, f: 1, cb: 56 },
-  'хлебцы': { c: 300, p: 10, f: 3, cb: 60 }, 'мука': { c: 364, p: 10, f: 1, cb: 76 },
   'салат': { c: 80, p: 2, f: 5, cb: 6 }, 'огурец': { c: 15, p: 0.6, f: 0.1, cb: 3.6 },
   'помидор': { c: 18, p: 0.9, f: 0.2, cb: 3.9 }, 'капуста': { c: 25, p: 1.3, f: 0.1, cb: 5.8 },
-  'брокколи': { c: 34, p: 2.8, f: 0.4, cb: 6.6 }, 'морковь': { c: 41, p: 0.9, f: 0.2, cb: 9.6 },
-  'лук': { c: 40, p: 1.1, f: 0.1, cb: 9.3 }, 'перец': { c: 31, p: 1, f: 0.3, cb: 6 },
-  'авокадо': { c: 160, p: 2, f: 15, cb: 9 }, 'шпинат': { c: 23, p: 2.9, f: 0.4, cb: 3.6 },
-  'кабачок': { c: 17, p: 1.2, f: 0.3, cb: 3.1 }, 'баклажан': { c: 25, p: 1, f: 0.2, cb: 6 },
-  'горошек': { c: 81, p: 5, f: 0.4, cb: 14 }, 'кукуруза': { c: 86, p: 3, f: 1.2, cb: 19 },
-  'фасоль': { c: 333, p: 24, f: 1, cb: 60 }, 'грибы': { c: 22, p: 3, f: 0.5, cb: 3 },
+  'брокколи': { c: 34, p: 2.8, f: 0.4, cb: 6.6 }, 'авокадо': { c: 160, p: 2, f: 15, cb: 9 },
   'банан': { c: 89, p: 1.1, f: 0.3, cb: 22.8 }, 'яблоко': { c: 52, p: 0.3, f: 0.2, cb: 14 },
-  'апельсин': { c: 47, p: 0.9, f: 0.1, cb: 12 }, 'груша': { c: 57, p: 0.4, f: 0.1, cb: 15 },
-  'виноград': { c: 69, p: 0.7, f: 0.2, cb: 18 }, 'арбуз': { c: 30, p: 0.6, f: 0.2, cb: 8 },
-  'дыня': { c: 34, p: 0.8, f: 0.2, cb: 8 }, 'клубника': { c: 32, p: 0.7, f: 0.3, cb: 7.7 },
-  'черника': { c: 57, p: 0.7, f: 0.3, cb: 14 }, 'лимон': { c: 29, p: 1.1, f: 0.3, cb: 9 },
-  'манго': { c: 60, p: 0.8, f: 0.4, cb: 15 }, 'киви': { c: 61, p: 1.1, f: 0.5, cb: 14.6 },
-  'орехи': { c: 600, p: 20, f: 55, cb: 15 }, 'миндаль': { c: 579, p: 21, f: 49, cb: 22 },
-  'грецкий орех': { c: 654, p: 15, f: 65, cb: 14 }, 'арахис': { c: 567, p: 26, f: 49, cb: 16 },
-  'изюм': { c: 299, p: 3, f: 0.6, cb: 79 }, 'финики': { c: 282, p: 2.5, f: 0.5, cb: 75 },
-  'шаурма': { c: 250, p: 12, f: 15, cb: 20 }, 'бургер': { c: 295, p: 15, f: 14, cb: 27 },
-  'чизбургер': { c: 320, p: 17, f: 16, cb: 28 }, 'картошка фри': { c: 312, p: 3.4, f: 15, cb: 41 },
-  'пицца': { c: 266, p: 11, f: 10, cb: 33 }, 'хот-дог': { c: 290, p: 10, f: 17, cb: 24 },
+  'апельсин': { c: 47, p: 0.9, f: 0.1, cb: 12 }, 'орехи': { c: 600, p: 20, f: 55, cb: 15 },
+  'миндаль': { c: 579, p: 21, f: 49, cb: 22 }, 'шаурма': { c: 250, p: 12, f: 15, cb: 20 },
+  'бургер': { c: 295, p: 15, f: 14, cb: 27 }, 'пицца': { c: 266, p: 11, f: 10, cb: 33 },
   'суши': { c: 150, p: 6, f: 2, cb: 26 }, 'роллы': { c: 180, p: 7, f: 5, cb: 28 },
-  'борщ': { c: 50, p: 2, f: 2, cb: 6 }, 'суп': { c: 40, p: 2, f: 1.5, cb: 5 },
-  'щи': { c: 45, p: 2, f: 2, cb: 5 }, 'солянка': { c: 80, p: 4, f: 5, cb: 6 },
-  'пельмени': { c: 275, p: 11, f: 12, cb: 30 }, 'вареники': { c: 220, p: 7, f: 4, cb: 38 },
+  'борщ': { c: 50, p: 2, f: 2, cb: 6 }, 'пельмени': { c: 275, p: 11, f: 12, cb: 30 },
   'омлет': { c: 150, p: 10, f: 11, cb: 2 }, 'блины': { c: 230, p: 6, f: 10, cb: 30 },
-  'сырники': { c: 220, p: 14, f: 10, cb: 20 }, 'плов': { c: 180, p: 8, f: 6, cb: 25 },
-  'макароны по-флотски': { c: 200, p: 10, f: 8, cb: 25 }, 'голубцы': { c: 120, p: 8, f: 6, cb: 10 },
-  'паста с креветками': { c: 180, p: 12, f: 7, cb: 22 }, 'паста карбонара': { c: 250, p: 14, f: 12, cb: 28 },
-  'гречка с мясом': { c: 160, p: 10, f: 6, cb: 20 }, 'рис с курицей': { c: 170, p: 12, f: 5, cb: 22 },
-  'шашлык из свинины': { c: 300, p: 20, f: 25, cb: 0 }, 'шашлык из курицы': { c: 200, p: 22, f: 12, cb: 0 },
-  'салат цезарь': { c: 190, p: 10, f: 14, cb: 8 }, 'оливье': { c: 200, p: 5, f: 16, cb: 10 },
-  'греческий салат': { c: 120, p: 4, f: 10, cb: 6 }, 'винегрет': { c: 80, p: 2, f: 4, cb: 9 },
+  'плов': { c: 180, p: 8, f: 6, cb: 25 }, 'паста с креветками': { c: 180, p: 12, f: 7, cb: 22 },
   'шоколад': { c: 546, p: 5, f: 31, cb: 61 }, 'печенье': { c: 450, p: 5, f: 20, cb: 65 },
   'чипсы': { c: 536, p: 7, f: 35, cb: 53 }, 'мороженое': { c: 207, p: 3.5, f: 11, cb: 24 },
-  'мед': { c: 304, p: 0.3, f: 0, cb: 82 }, 'сахар': { c: 387, p: 0, f: 0, cb: 100 },
-  'конфеты': { c: 400, p: 3, f: 15, cb: 70 }, 'торт': { c: 350, p: 5, f: 18, cb: 45 },
-  'зефир': { c: 326, p: 0.8, f: 0.1, cb: 80 }, 'майонез': { c: 680, p: 1, f: 75, cb: 3 },
-  'кетчуп': { c: 100, p: 1, f: 0, cb: 25 }, 'соевый соус': { c: 50, p: 5, f: 0, cb: 5 },
-  'масло оливковое': { c: 884, p: 0, f: 100, cb: 0 }, 'масло растительное': { c: 899, p: 0, f: 99.9, cb: 0 },
+  'мед': { c: 304, p: 0.3, f: 0, cb: 82 }, 'майонез': { c: 680, p: 1, f: 75, cb: 3 },
   'кофе': { c: 2, p: 0.1, f: 0, cb: 0 }, 'чай': { c: 1, p: 0, f: 0, cb: 0 },
-  'кофе с молоком': { c: 35, p: 1.5, f: 1.5, cb: 4 }, 'капучино': { c: 40, p: 2, f: 2, cb: 4 },
-  'сок': { c: 45, p: 0.5, f: 0, cb: 10 }, 'кола': { c: 42, p: 0, f: 0, cb: 10.6 },
-  'кола зеро': { c: 0.3, p: 0, f: 0, cb: 0 }, 'пиво': { c: 43, p: 0.5, f: 0, cb: 3.6 },
-  'вино': { c: 83, p: 0.1, f: 0, cb: 2.6 }, 'вода': { c: 0, p: 0, f: 0, cb: 0 }
+  'кофе с молоком': { c: 35, p: 1.5, f: 1.5, cb: 4 }, 'сок': { c: 45, p: 0.5, f: 0, cb: 10 },
+  'кола': { c: 42, p: 0, f: 0, cb: 10.6 }, 'пиво': { c: 43, p: 0.5, f: 0, cb: 3.6 },
+  'вода': { c: 0, p: 0, f: 0, cb: 0 }
 };
 
 const COLORS = [{ id: 'green', hex: '#a2ff00' }, { id: 'pink', hex: '#fa114f' }, { id: 'blue', hex: '#00d4ff' }, { id: 'orange', hex: '#ff9f0a' }, { id: 'purple', hex: '#bf5af2' }];
@@ -701,9 +638,7 @@ let state = {
 if (!state.daily.habits) state.daily.habits = { water: false, steps: false, sleep: false };
 
 let timerInt = null, timerTotal = 90, timerRemaining = 90;
-let runInt = null, runTime = 0, runActive = false, gpsWatchId = null, lastPos = null, gpsDistance = 0;
-let currentRunPath = []; let runMapInstance = null; let runMarker = null; let runPolyline = null;
-let historyMapInstance = null;
+let runInt = null, runTime = 0, runActive = false;
 let obGoal = 'maintain';
 let obEditMode = false;
 let prShownThisWorkout = new Set();
@@ -720,27 +655,57 @@ if (state.daily.date !== today()) {
 }
 
 // ============================================
-// ВИЗУАЛИЗАТОР ШТАНГИ
+// КРАСИВАЯ ШТАНГА (SVG)
 // ============================================
 function renderBarbell(weight) {
   if (!weight || weight <= 20) return '';
-  let target = (weight - 20) / 2;
+  let target = (weight - 20) / 2; // Вес на одну сторону
+  if (target > 300) target = 300; // Ограничитель для визуала (если 1000 кг, рисуем 300)
+  
   const plates = [
-    { w: 25, c: 'plate-25' }, { w: 20, c: 'plate-20' }, { w: 15, c: 'plate-15' },
-    { w: 10, c: 'plate-10' }, { w: 5, c: 'plate-5' }, { w: 2.5, c: 'plate-2_5' }, { w: 1.25, c: 'plate-1_25' }
+    { w: 25, color: '#fa114f' }, { w: 20, color: '#00d4ff' }, { w: 15, color: '#ffd700' },
+    { w: 10, color: '#a2ff00' }, { w: 5, color: '#ffffff' }, { w: 2.5, color: '#8e8e93' }, { w: 1.25, color: '#38383a' }
   ];
   
-  let leftHtml = '', rightHtml = '';
+  let platesHtml = '';
+  let offsetX = 0;
+  
   plates.forEach(p => {
     let count = Math.floor(target / p.w);
     for (let i = 0; i < count; i++) {
-      leftHtml += `<div class="barbell-plate ${p.c}" title="${p.w} кг"></div>`;
-      rightHtml = `<div class="barbell-plate ${p.c}" title="${p.w} кг"></div>` + rightHtml;
+      // Левая сторона (сдвиг влево от центра)
+      const xLeft = 130 - offsetX - 8;
+      // Правая сторона (сдвиг вправо от центра)
+      const xRight = 162 + offsetX;
+      
+      // Отрисовка блина (высота зависит от веса)
+      const h = 20 + (p.w * 1.5); // 25кг = 57.5, 5кг = 27.5
+      const y = 30 - (h / 2);
+      
+      platesHtml += `<rect x="${xLeft}" y="${y}" width="8" height="${h}" rx="2" fill="${p.color}" stroke="#000" stroke-width="1" />`;
+      platesHtml += `<rect x="${xRight}" y="${y}" width="8" height="${h}" rx="2" fill="${p.color}" stroke="#000" stroke-width="1" />`;
+      
+      offsetX += 10; // Сдвиг для следующего блина
     }
     target -= count * p.w;
   });
-  
-  return `<div class="barbell-container"><div class="barbell-bar"></div>${leftHtml}<div style="width:20px; height:8px; background:#ccc; z-index:2; border-radius:2px; margin:0 2px;"></div>${rightHtml}</div>`;
+
+  return `
+    <div class="barbell-svg-wrap">
+      <svg class="barbell-svg" viewBox="0 0 300 60" preserveAspectRatio="xMidYMid meet">
+        <!-- Гриф -->
+        <rect x="0" y="26" width="300" height="8" fill="#a0a0a0" rx="4" />
+        <!-- Замки -->
+        <rect x="125" y="22" width="6" height="16" fill="#555" rx="2" />
+        <rect x="169" y="22" width="6" height="16" fill="#555" rx="2" />
+        <!-- Втулки -->
+        <rect x="131" y="24" width="31" height="12" fill="#666" />
+        
+        <!-- Блины -->
+        ${platesHtml}
+      </svg>
+    </div>
+  `;
 }
 
 // ============================================
@@ -799,7 +764,6 @@ function loadProgram(key) {
   closeModal('programs-modal');
   haptic('success');
   
-  // Создаем тренировку на основе программы (берем первую тренировку из программы для примера)
   state.currentWorkout = { date: today(), exercises: [], mood: null, note: '' };
   p.workouts[0].exercises.forEach(exName => {
     addExercise(exName, false);
@@ -812,16 +776,16 @@ function loadProgram(key) {
 }
 
 // ============================================
-// ТЕХНИКА УПРАЖНЕНИЯ (GIF)
+// ТЕХНИКА УПРАЖНЕНИЯ (Статичные фото)
 // ============================================
 function openExerciseInfo(exName) {
   document.getElementById('ex-info-title').innerText = exName;
-  const gif = EXERCISE_GIFS[exName] || EXERCISE_GIFS['default'];
+  const img = EXERCISE_IMAGES[exName] || EXERCISE_IMAGES['default'];
   const desc = EXERCISE_DESCS[exName] || EXERCISE_DESCS['default'];
   
-  const img = document.getElementById('ex-info-gif');
-  img.src = gif;
-  img.onerror = () => { img.src = EXERCISE_GIFS['default']; };
+  const imgEl = document.getElementById('ex-info-gif');
+  imgEl.src = img;
+  imgEl.onerror = () => { imgEl.src = EXERCISE_IMAGES['default']; }; // Если ссылка битая, ставим дефолт
   
   document.getElementById('ex-info-desc').innerText = desc;
   document.getElementById('exercise-info-modal').classList.add('active');
@@ -1130,7 +1094,7 @@ function copyLastSets(i) {
   const ex = state.currentWorkout.exercises[i];
   const last = getLastExerciseData(ex.name);
   if (!last) return;
-  ex.sets = last.sets.map(s => ({ weight: s.weight, reps: s.reps, isWarmup: false }));
+  ex.sets = last.sets.map(s => ({ weight: s.weight, reps: s.reps, isWarmup: false, completed: false }));
   haptic('success');
   showToast(`Скопированы подходы: ${ex.name}`);
   render();
@@ -1142,7 +1106,6 @@ function initApp() {
 function getAllExercises() { return { ...BASE_EXERCISES_DB, ...state.customExercises }; }
 function calcTonnage(workout) { return (!workout || !workout.exercises) ? 0 : workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).reduce((sSum, s) => sSum + (s.weight * s.reps), 0), 0); }
 function calcBodyFat(p) { if (!p || !p.weight) return 0; const bmi = p.weight / Math.pow(p.height / 100, 2); let fat = (1.20 * bmi) + (0.23 * p.age) - (10.8 * (p.sex === 'male' ? 1 : 0)) - 5.4; return Math.max(3, Math.min(50, Math.round(fat))); }
-function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) { const R = 6371; const dLat = (lat2 - lat1) * (Math.PI / 180); const dLon = (lon2 - lon1) * (Math.PI / 180); const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))); }
 
 function checkAchievements() {
   ACHIEVEMENTS_LIST.forEach(ach => {
@@ -1361,31 +1324,27 @@ function generateAIPlan() {
 }
 
 // ============================================
-// БЕГ С КАРТОЙ
+// БЕГ (БЕЗ GPS, ТОЛЬКО РУЧНОЙ ВВОД)
 // ============================================
 function renderRunning() {
   const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600));
-  const paceMin = runTime > 0 && gpsDistance > 0 ? (runTime / 60) / gpsDistance : 0;
-  const paceStr = paceMin > 0 ? `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}` : '0:00';
   
-  setTimeout(() => {
-    if (runActive && !runMapInstance) {
-      initRunMap();
-    }
-  }, 100);
-
   return `
   <div class="run-screen">
     <div class="run-time-big" id="run-time">${formatTime(runTime)}</div>
+    
     <div class="run-metrics">
-      <div class="run-metric-box"><div class="run-metric-val" id="run-dist">${gpsDistance.toFixed(2)}</div><div class="stat-label">КМ (GPS)</div></div>
-      <div class="run-metric-box"><div class="run-metric-val" id="run-pace" style="color:var(--stand);">${paceStr}</div><div class="stat-label">ТЕМП</div></div>
-      <div class="run-metric-box" style="grid-column: span 2;"><div class="run-metric-val" id="run-cal" style="color:var(--accent);">${cal}</div><div class="stat-label">СОЖЖЕНО ККАЛ</div></div>
+      <div class="run-metric-box" style="grid-column: span 2; background:var(--card-light);">
+        <div class="muted" style="font-size:12px; margin-bottom:8px;">Введи дистанцию после пробежки (км)</div>
+        <input type="number" id="run-dist-input" value="${state.tempRunDist || ''}" placeholder="0.0" style="margin:0; font-size:24px; font-weight:800; padding:12px;" onchange="state.tempRunDist = +this.value">
+      </div>
+      <div class="run-metric-box" style="grid-column: span 2;">
+        <div class="run-metric-val" style="color:var(--accent);">${cal}</div>
+        <div class="stat-label">СОЖЖЕНО ККАЛ (примерно)</div>
+      </div>
     </div>
     
-    <div id="run-map"></div>
-    
-    <button onclick="toggleRun()" id="run-btn" style="border-radius:99px; padding:20px; font-size:20px; background:${runActive ? 'var(--move)' : 'var(--accent)'}; color:${runActive ? '#fff' : '#000'}; margin-top:10px;">
+    <button onclick="toggleRun()" id="run-btn" style="border-radius:99px; padding:24px; font-size:22px; background:${runActive ? 'var(--move)' : 'var(--accent)'}; color:${runActive ? '#fff' : '#000'};">
       <i class="ph ${runActive ? 'ph-pause' : 'ph-play'}"></i> ${runActive ? 'ПАУЗА' : 'СТАРТ'}
     </button>
     <button class="secondary" id="run-save-btn" style="display:${runActive || runTime === 0 ? 'none' : 'flex'};" onclick="saveRun(${cal})">Сохранить результат</button>
@@ -1393,19 +1352,9 @@ function renderRunning() {
     ${state.runs.length > 0 ? `
     <div style="margin-top:20px;">
       <h2>История пробежек</h2>
-      ${state.runs.map((r, i) => `<div style="padding:12px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="showRunHistory(${r.id})"><div><div style="font-weight:700;">${r.date}</div><div class="muted" style="font-size:12px;">${r.pace} мин/км</div></div><b>${r.distance} км</b></div>`).join('')}
+      ${state.runs.map((r, i) => `<div style="padding:12px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;"><div><div style="font-weight:700;">${r.date}</div><div class="muted" style="font-size:12px;">${r.calories} ккал</div></div><b>${r.distance} км</b></div>`).join('')}
     </div>` : ''}
   </div>`;
-}
-
-function initRunMap() {
-  if (runMapInstance) return;
-  try {
-    runMapInstance = L.map('run-map').setView([55.75, 37.61], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(runMapInstance);
-    runPolyline = L.polyline([], {color: '#a2ff00', weight: 4}).addTo(runMapInstance);
-    runMarker = L.circleMarker([55.75, 37.61], {radius: 8, fillColor: '#fa114f', fillOpacity: 1, color: '#fff', weight: 2}).addTo(runMapInstance);
-  } catch(e) { console.error('Map init error', e); }
 }
 
 function formatTime(sec) { return `${Math.floor(sec/3600).toString().padStart(2,'0')}:${Math.floor((sec%3600)/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
@@ -1415,104 +1364,36 @@ function toggleRun() {
   haptic('medium');
   
   if (runActive) {
-    if (!runMapInstance) initRunMap();
-    runInt = setInterval(() => { runTime++; document.getElementById('run-time').innerText = formatTime(runTime); updateRunUI(); }, 1000);
-    if (navigator.geolocation) {
-      gpsWatchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          if (lastPos) {
-            const dist = getDistanceFromLatLonInKm(lastPos.lat, lastPos.lon, latitude, longitude);
-            if (dist > 0.003) { 
-              gpsDistance += dist; 
-              lastPos = { lat: latitude, lon: longitude }; 
-              currentRunPath.push([latitude, longitude]);
-              if (runMapInstance) {
-                runPolyline.addLatLng([latitude, longitude]);
-                runMarker.setLatLng([latitude, longitude]);
-                runMapInstance.panTo([latitude, longitude]);
-              }
-              updateRunUI(); 
-            }
-          } else { 
-            lastPos = { lat: latitude, lon: longitude }; 
-            currentRunPath.push([latitude, longitude]);
-            if (runMapInstance) {
-              runMapInstance.setView([latitude, longitude], 16);
-              runPolyline.addLatLng([latitude, longitude]);
-              runMarker.setLatLng([latitude, longitude]);
-            }
-          }
-        },
-        (err) => { console.warn('GPS:', err.message); },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-      );
-    }
+    runInt = setInterval(() => { 
+      runTime++; 
+      const el = document.getElementById('run-time');
+      if(el) el.innerText = formatTime(runTime); 
+    }, 1000);
   } else {
     clearInterval(runInt);
-    if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
   }
   renderRunningUI();
-}
-
-function updateRunUI() {
-  const elTime = document.getElementById('run-time'), elDist = document.getElementById('run-dist'), elCal = document.getElementById('run-cal'), elPace = document.getElementById('run-pace');
-  if (elTime) elTime.innerText = formatTime(runTime);
-  if (elDist) elDist.innerText = gpsDistance.toFixed(2);
-  const cal = Math.round(9.8 * state.profile.weight * (runTime / 3600));
-  if (elCal) elCal.innerText = cal;
-  if (runTime > 0 && gpsDistance > 0) {
-    const paceMin = (runTime / 60) / gpsDistance;
-    if (elPace) elPace.innerText = `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`;
-  }
 }
 
 function renderRunningUI() { document.getElementById('app').innerHTML = renderRunning(); }
 
 function saveRun(cal) {
-  if (gpsDistance === 0) return alert('Нет данных GPS.');
-  const paceMin = (runTime / 60) / gpsDistance;
+  const distInput = document.getElementById('run-dist-input');
+  const dist = distInput ? +distInput.value : 0;
+  if (!dist || dist <= 0) return alert('Введи дистанцию (км), чтобы сохранить.');
+  
   state.runs.unshift({ 
     id: Date.now(),
     date: today(), 
-    distance: +gpsDistance.toFixed(2), 
+    distance: dist, 
     time: formatTime(runTime), 
-    calories: cal, 
-    pace: `${Math.floor(paceMin)}:${Math.round((paceMin%1)*60).toString().padStart(2,'0')}`,
-    path: [...currentRunPath]
+    calories: cal
   });
   save(STORAGE.runs, state.runs);
   checkAchievements();
   haptic('success');
-  runTime = 0; runActive = false; gpsDistance = 0; lastPos = null; currentRunPath = [];
-  if (runMapInstance) { runMapInstance.remove(); runMapInstance = null; }
+  runTime = 0; runActive = false; state.tempRunDist = null;
   render();
-}
-
-function showRunHistory(id) {
-  const run = state.runs.find(r => r.id === id);
-  if (!run) return;
-  document.getElementById('run-history-title').innerText = `Пробежка ${run.date}`;
-  document.getElementById('run-history-stats').innerHTML = `
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-      <div class="card" style="padding:12px; text-align:center;"><div style="font-size:20px; font-weight:800; color:var(--accent);">${run.distance} км</div><div class="muted" style="font-size:11px;">Дистанция</div></div>
-      <div class="card" style="padding:12px; text-align:center;"><div style="font-size:20px; font-weight:800; color:var(--stand);">${run.pace}</div><div class="muted" style="font-size:11px;">Темп</div></div>
-    </div>
-  `;
-  document.getElementById('run-history-modal').classList.add('active');
-  
-  setTimeout(() => {
-    if (historyMapInstance) historyMapInstance.remove();
-    if (run.path && run.path.length > 1) {
-      document.getElementById('history-map').style.display = 'block';
-      historyMapInstance = L.map('history-map').setView(run.path[0], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(historyMapInstance);
-      L.polyline(run.path, {color: '#a2ff00', weight: 4}).addTo(historyMapInstance);
-      historyMapInstance.fitBounds(L.polyline(run.path).getBounds(), { padding: [20, 20] });
-    } else {
-      document.getElementById('history-map').style.display = 'none';
-    }
-  }, 200);
 }
 
 // ============================================
@@ -1582,7 +1463,7 @@ function saveSwim() {
 }
 
 // ============================================
-// ТРЕНИРОВКА В ЗАЛЕ
+// ТРЕНИРОВКА В ЗАЛЕ (ОБНОВЛЕННЫЙ ДИЗАЙН)
 // ============================================
 function startWorkout() {
   state.currentWorkout = { date: today(), exercises: [], mood: null, note: '' };
@@ -1629,46 +1510,65 @@ function renderNewWorkout() {
           let hintHtml = '';
           if (lastTime && lastTime.sets.length > 0) {
             const bestSet = lastTime.sets.reduce((prev, current) => (prev.weight > current.weight) ? prev : current);
-            hintHtml = `<div class="overload-hint"><i class="ph ph-lightbulb"></i> Попробуй: <b>${bestSet.weight + 2.5} кг</b> × ${bestSet.reps}</div>`;
+            hintHtml = `<div class="overload-hint"><i class="ph ph-lightbulb"></i> Попробуй сегодня: <b>${bestSet.weight + 2.5} кг</b> × ${bestSet.reps}</div>`;
           }
 
-          // Находим максимальный вес в текущих подходах для визуализатора
           const maxWeight = Math.max(...ex.sets.map(s => s.weight), 0);
 
           return `
           <div class="card" style="margin-bottom:16px; padding:20px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            
+            <!-- Заголовок упражнения -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
               <strong style="font-size:20px;">${ex.name}</strong>
-              <div style="display:flex; gap:8px;">
-                <button class="btn-icon" onclick="openExerciseInfo('${ex.name.replace(/'/g, "\\'")}')" title="Техника"><i class="ph ph-play-circle"></i></button>
-                <button class="btn-icon" onclick="open1RM()" title="Калькулятор 1ПМ"><i class="ph ph-calculator"></i></button>
-                <button class="btn-icon" onclick="startTimer()"><i class="ph ph-timer"></i></button>
-                <button class="btn-icon" style="color:var(--move);" onclick="removeExercise(${i})"><i class="ph ph-trash"></i></button>
-              </div>
+              <button class="btn-icon" style="color:var(--move); width:36px; height:36px;" onclick="removeExercise(${i})"><i class="ph ph-trash"></i></button>
             </div>
             
-            ${injuryWarning}
-            ${hintHtml}
-            
+            <!-- Вспомогательная информация -->
             <div style="font-size:12px; color:var(--muted); margin-bottom:12px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
               ${lastTime ? `<span><i class="ph ph-clock-counter-clockwise"></i> Прошлый раз: <b style="color:var(--text);">${lastTime.sets.map(s => `${s.weight}×${s.reps}`).join(' • ')}</b></span>` : '<span><i class="ph ph-sparkle"></i> Первое выполнение</span>'}
               ${pr > 0 ? `<span style="color:var(--premium); font-weight:700;" title="Личный рекорд"><i class="ph-fill ph-trophy"></i> Рекорд: ${pr} кг</span>` : ''}
-              ${lastTime ? `<button onclick="copyLastSets(${i})" style="width:auto; padding:4px 12px; margin:0; font-size:11px; border-radius:8px; background:rgba(162,255,0,0.15); color:var(--accent);"><i class="ph ph-copy"></i> Повторить</button>` : ''}
             </div>
 
+            <!-- Кнопки действий (Техника, Блины, Таймер, Копировать) -->
+            <div style="display:flex; gap:8px; margin-bottom:16px; overflow-x:auto; padding-bottom:4px;">
+              <button class="secondary" style="padding:8px 12px; font-size:12px; margin:0; border-radius:10px; width:auto;" onclick="openExerciseInfo('${ex.name.replace(/'/g, "\\'")}')"><i class="ph ph-play-circle"></i> Техника</button>
+              <button class="secondary" style="padding:8px 12px; font-size:12px; margin:0; border-radius:10px; width:auto;" onclick="showPlates(${ex.sets[0]?.weight || 0})"><i class="ph ph-cookie"></i> Блины</button>
+              <button class="secondary" style="padding:8px 12px; font-size:12px; margin:0; border-radius:10px; width:auto;" onclick="startTimer()"><i class="ph ph-timer"></i> Таймер</button>
+              ${lastTime ? `<button class="secondary" style="padding:8px 12px; font-size:12px; margin:0; border-radius:10px; width:auto; color:var(--accent);" onclick="copyLastSets(${i})"><i class="ph ph-copy"></i> Повторить</button>` : ''}
+            </div>
+
+            <!-- Предупреждения -->
+            ${injuryWarning}
+            ${hintHtml}
+
+            <!-- Визуализатор штанги -->
             ${renderBarbell(maxWeight)}
             
-            ${ex.sets.map((s, j) => `
-            <div class="set-row-wrapper">
-              <div class="set-delete-bg" data-del-ex="${i}" data-del-set="${j}"><i class="ph ph-trash"></i></div>
-              <div class="set-row ${s.isWarmup ? 'warmup' : ''}">
-                <div class="set-num">${s.isWarmup ? 'W' : j + 1}</div>
-                <input type="number" value="${s.weight}" onchange="updateSet(${i},${j},'weight',this.value)">
-                <input type="number" value="${s.reps}" onchange="updateSet(${i},${j},'reps',this.value)">
-                <button class="btn-icon" onclick="openSetNote(${i},${j})" style="position:relative;"><i class="ph ${s.note ? 'ph-note-pencil' : 'ph-note'}"></i>${s.note ? `<div class="note-badge">!</div>` : ''}</button>
-                <button class="btn-icon" onclick="showPlatesFromRow(this)"><i class="ph ph-cookie"></i></button>
+            <!-- Подходы -->
+            <div style="margin-top:16px;">
+              <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--muted); font-weight:700; text-transform:uppercase; padding:0 8px; margin-bottom:4px;">
+                <span>Подход</span>
+                <span style="flex:1; text-align:center;">Вес (кг)</span>
+                <span style="flex:1; text-align:center;">Повторы</span>
+                <span style="width:44px; text-align:center;">Готово</span>
               </div>
-            </div>`).join('')}
+              
+              ${ex.sets.map((s, j) => `
+              <div class="set-row-wrapper">
+                <div class="set-delete-bg" data-del-ex="${i}" data-del-set="${j}"><i class="ph ph-trash"></i></div>
+                <div class="set-row ${s.isWarmup ? 'warmup' : ''}">
+                  <div class="set-num">${s.isWarmup ? 'W' : j + 1}</div>
+                  <div class="set-inputs">
+                    <input type="number" value="${s.weight}" onchange="updateSet(${i},${j},'weight',this.value)">
+                    <input type="number" value="${s.reps}" onchange="updateSet(${i},${j},'reps',this.value)">
+                  </div>
+                  <button class="set-check ${s.completed ? 'completed' : ''}" onclick="toggleSetComplete(${i},${j})">
+                    <i class="ph-bold ${s.completed ? 'ph-check' : 'ph-circle'}"></i>
+                  </button>
+                </div>
+              </div>`).join('')}
+            </div>
             
             <div style="display:flex; gap:10px; margin-top:16px;">
               <button class="secondary" style="padding:12px; font-size:15px; margin:0;" onclick="addSet(${i})"><i class="ph ph-plus"></i> Подход</button>
@@ -1685,6 +1585,15 @@ function renderNewWorkout() {
       </div>
       <div><div class="card" style="padding:20px; margin-bottom:16px;"><h2>Все упражнения</h2><button class="secondary" onclick="openCustomExModal()" style="margin-bottom:12px; color:var(--accent);"><i class="ph ph-plus"></i> Свое упражнение</button><div style="max-height:300px; overflow-y:auto; padding-right:5px;">${Object.keys(getAllExercises()).map(ex => `<button class="secondary" style="justify-content:flex-start; padding:16px; margin-bottom:8px;" onclick="addExercise('${ex}')">${ex}</button>`).join('')}</div></div></div>
     </div>`;
+}
+
+function toggleSetComplete(i, j) {
+  const ex = state.currentWorkout.exercises[i];
+  if (!ex) return;
+  const set = ex.sets[j];
+  set.completed = !set.completed;
+  haptic(set.completed ? 'success' : 'light');
+  render();
 }
 
 function openSetNote(exIdx, setIdx) {
@@ -1724,7 +1633,7 @@ function saveCustomExercise() {
   render();
 }
 function addExercise(name, reRender = true) {
-  state.currentWorkout.exercises.push({ name, sets: [{ weight: 0, reps: 8, isWarmup: false }] });
+  state.currentWorkout.exercises.push({ name, sets: [{ weight: 0, reps: 8, isWarmup: false, completed: false }] });
   haptic('light');
   if (reRender) render();
 }
@@ -1736,7 +1645,7 @@ function removeExercise(i) {
 function addSet(i) {
   const ex = state.currentWorkout.exercises[i];
   const l = ex.sets.filter(s => !s.isWarmup).pop() || { weight: 0, reps: 8 };
-  ex.sets.push({ weight: l.weight, reps: l.reps, isWarmup: false });
+  ex.sets.push({ weight: l.weight, reps: l.reps, isWarmup: false, completed: false });
   haptic('light');
   render();
 }
@@ -1762,8 +1671,8 @@ function addWarmup(i) {
   const ex = state.currentWorkout.exercises[i];
   const w = ex.sets[0]?.weight || 20;
   ex.sets.unshift(
-    { weight: Math.round((w*0.5)/2.5)*2.5, reps: 10, isWarmup: true },
-    { weight: Math.round((w*0.7)/2.5)*2.5, reps: 8, isWarmup: true }
+    { weight: Math.round((w*0.5)/2.5)*2.5, reps: 10, isWarmup: true, completed: false },
+    { weight: Math.round((w*0.7)/2.5)*2.5, reps: 8, isWarmup: true, completed: false }
   );
   haptic('light');
   render();
@@ -2533,19 +2442,19 @@ function showPlan(type) {
   // ============================================
 // БЛИНЫ (калькулятор)
 // ============================================
-function showPlatesFromRow(btn) {
-  const input = btn.parentElement.querySelector('input');
-  if (input) showPlates(+input.value);
-}
 function showPlates(totalWeight) {
-  let target = (totalWeight - 20) / 2;
-  const plates = [25, 20, 15, 10, 5, 2.5, 1.25];
-  let res = [];
-  plates.forEach(p => {
-    let count = Math.floor(target / p);
-    if (count > 0) { res.push(`${count} × ${p} кг`); target -= count * p; }
-  });
-  document.getElementById('plates-result').innerHTML = res.length ? res.join('<br>') : "Гриф";
+  if (!totalWeight || totalWeight <= 20) {
+    document.getElementById('plates-result').innerHTML = "Пустой гриф (20 кг)";
+  } else {
+    let target = (totalWeight - 20) / 2;
+    const plates = [25, 20, 15, 10, 5, 2.5, 1.25];
+    let res = [];
+    plates.forEach(p => {
+      let count = Math.floor(target / p);
+      if (count > 0) { res.push(`${count} × ${p} кг`); target -= count * p; }
+    });
+    document.getElementById('plates-result').innerHTML = res.length ? res.join('<br>') : "Гриф";
+  }
   document.getElementById('plates-modal').classList.add('active');
   haptic('light');
 }
