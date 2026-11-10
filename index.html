@@ -115,7 +115,7 @@
   .mood-btn { font-size: 36px; background: var(--card-light); border-radius: 16px; padding: 10px; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; }
   .mood-btn.selected { border-color: var(--accent); background: rgba(162,255,0,0.1); }
   
-  .color-swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; }
+  .color-swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; }
   .color-swatch.active { border-color: var(--text); transform: scale(1.1); }
 
   .chart-container { position:relative; height:220px; width:100%; background:var(--card-light); border-radius:16px; padding:10px; transition: background 0.3s; }
@@ -184,9 +184,8 @@
 
   .anatomy-wrapper { display: flex; justify-content: space-around; gap: 10px; padding: 10px; }
   .anatomy-svg { width: 120px; height: 240px; }
-  .anatomy-muscle { fill: #2c2c2e; cursor: pointer; transition: fill 0.3s; }
+  .anatomy-muscle { cursor: pointer; transition: fill 0.3s; }
   .anatomy-muscle:hover { fill: var(--accent); }
-  .anatomy-muscle.active { fill: var(--move); }
 
   .program-card { background: var(--card-light); padding: 16px; border-radius: 16px; margin-bottom: 12px; cursor: pointer; text-align: left; border: 2px solid transparent; transition: 0.2s; }
   .program-card:hover { border-color: var(--accent); }
@@ -695,7 +694,6 @@ if (state.daily.date !== today()) {
 // ============================================
 function generateShoppingItems() {
   const goal = state.profile.goal || 'maintain';
-  // Базовый набор продуктов в зависимости от цели
   if (goal === 'mass') {
     return ['Куриная грудка (1.5 кг)', 'Рис (1 кг)', 'Овсянка (500 г)', 'Яйца (20 шт)', 'Творог (1 кг)', 'Банан (1 кг)', 'Орехи (200 г)', 'Рыба (1 кг)', 'Картофель (1 кг)', 'Овощи для салата', 'Оливковое масло'];
   } else if (goal === 'cut') {
@@ -729,7 +727,6 @@ function toggleShoppingItem(item) {
   save('fit_shopping_list', state.shoppingList);
   haptic('light');
   
-  // Обновляем только модалку, чтобы не перерисовывать весь экран
   const listEl = document.getElementById('shopping-list');
   const items = generateShoppingItems();
   listEl.innerHTML = items.map(it => {
@@ -959,25 +956,25 @@ function getRecoveryColor(group) {
   const now = new Date();
   now.setHours(0, 0, 0, 0); 
   
-  let lastTrained = null;
+  let lastTrainedDate = null;
   
   state.workouts.forEach(w => {
     w.exercises.forEach(ex => {
       const g = getAllExercises()[ex.name] || 'Другое';
       if (g === group) {
-        if (!lastTrained || new Date(w.date) > new Date(lastTrained)) {
-          lastTrained = w.date;
+        const wDate = new Date(w.date);
+        wDate.setHours(0, 0, 0, 0);
+        
+        if (!lastTrainedDate || wDate > lastTrainedDate) {
+          lastTrainedDate = wDate;
         }
       }
     });
   });
 
-  if (!lastTrained) return '#2c2c2e';
+  if (!lastTrainedDate) return '#2c2c2e';
   
-  const lastDate = new Date(lastTrained);
-  lastDate.setHours(0, 0, 0, 0);
-  
-  const diffTime = Math.abs(now - lastDate);
+  const diffTime = now.getTime() - lastTrainedDate.getTime();
   const days = Math.round(diffTime / (1000 * 60 * 60 * 24));
   
   if (days <= 1) return '#fa114f';
@@ -1957,31 +1954,31 @@ function renderCalendar() {
 }
 
 // ============================================
-// АНАТОМИЧЕСКАЯ КАРТА (Восстановление)
+// АНАТОМИЧЕСКАЯ КАРТА (ИСПРАВЛЕННАЯ)
 // ============================================
 function getRecoveryColor(group) {
   const now = new Date();
   now.setHours(0, 0, 0, 0); 
   
-  let lastTrained = null;
+  let lastTrainedDate = null;
   
   state.workouts.forEach(w => {
     w.exercises.forEach(ex => {
       const g = getAllExercises()[ex.name] || 'Другое';
       if (g === group) {
-        if (!lastTrained || new Date(w.date) > new Date(lastTrained)) {
-          lastTrained = w.date;
+        const wDate = new Date(w.date);
+        wDate.setHours(0, 0, 0, 0);
+        
+        if (!lastTrainedDate || wDate > lastTrainedDate) {
+          lastTrainedDate = wDate;
         }
       }
     });
   });
 
-  if (!lastTrained) return '#2c2c2e';
+  if (!lastTrainedDate) return '#2c2c2e';
   
-  const lastDate = new Date(lastTrained);
-  lastDate.setHours(0, 0, 0, 0);
-  
-  const diffTime = Math.abs(now - lastDate);
+  const diffTime = now.getTime() - lastTrainedDate.getTime();
   const days = Math.round(diffTime / (1000 * 60 * 60 * 24));
   
   if (days <= 1) return '#fa114f';
@@ -1997,56 +1994,39 @@ function renderAnatomyMap() {
   const cShoulders = getRecoveryColor('Плечи');
   const cAbs = getRecoveryColor('Пресс');
   
-  // Для темной темы используем темно-серый по умолчанию, для светлой - светло-серый
   const defaultFill = state.themeMode === 'light' ? '#d1d1d6' : '#2c2c2e';
 
   return `
   <div class="anatomy-wrapper">
-    <!-- ПЕРЕДНЯЯ ЧАСТЬ -->
     <div style="text-align:center;">
       <svg viewBox="0 0 100 200" class="anatomy-svg">
         <text x="50" y="15" fill="var(--text)" font-size="12" text-anchor="middle" font-weight="bold">Front</text>
-        <!-- Голова -->
         <circle cx="50" cy="35" r="12" fill="${defaultFill}"></circle>
-        <!-- Плечи -->
         <path d="M30,45 Q20,50 22,60 L35,55 Z" fill="${cShoulders}" class="anatomy-muscle"></path>
         <path d="M70,45 Q80,50 78,60 L65,55 Z" fill="${cShoulders}" class="anatomy-muscle"></path>
-        <!-- Грудь -->
         <path d="M35,55 Q50,50 65,55 L65,70 Q50,75 35,70 Z" fill="${cChest}" class="anatomy-muscle"></path>
-        <!-- Бицепсы -->
         <path d="M22,62 L32,58 L30,85 L20,80 Z" fill="${cArms}" class="anatomy-muscle"></path>
         <path d="M78,62 L68,58 L70,85 L80,80 Z" fill="${cArms}" class="anatomy-muscle"></path>
-        <!-- Пресс -->
         <rect x="38" y="75" width="24" height="35" rx="4" fill="${cAbs}" class="anatomy-muscle"></rect>
-        <!-- Квадрицепсы -->
         <path d="M35,115 L48,115 L48,160 L32,160 Z" fill="${cLegs}" class="anatomy-muscle"></path>
         <path d="M52,115 L65,115 L68,160 L52,160 Z" fill="${cLegs}" class="anatomy-muscle"></path>
-        <!-- Голени -->
         <rect x="35" y="165" width="10" height="25" rx="3" fill="${defaultFill}"></rect>
         <rect x="55" y="165" width="10" height="25" rx="3" fill="${defaultFill}"></rect>
       </svg>
     </div>
     
-    <!-- ЗАДНЯЯ ЧАСТЬ -->
     <div style="text-align:center;">
       <svg viewBox="0 0 100 200" class="anatomy-svg">
         <text x="50" y="15" fill="var(--text)" font-size="12" text-anchor="middle" font-weight="bold">Back</text>
-        <!-- Голова -->
         <circle cx="50" cy="35" r="12" fill="${defaultFill}"></circle>
-        <!-- Трапеции -->
         <path d="M35,45 Q50,55 65,45 L60,60 Q50,65 40,60 Z" fill="${cShoulders}" class="anatomy-muscle"></path>
-        <!-- Спина -->
         <path d="M30,60 L70,60 L65,100 L35,100 Z" fill="${cBack}" class="anatomy-muscle"></path>
-        <!-- Трицепсы -->
         <path d="M22,62 L32,58 L30,85 L20,80 Z" fill="${cArms}" class="anatomy-muscle"></path>
         <path d="M78,62 L68,58 L70,85 L80,80 Z" fill="${cArms}" class="anatomy-muscle"></path>
-        <!-- Ягодицы -->
         <circle cx="42" cy="110" r="10" fill="${cLegs}" class="anatomy-muscle"></circle>
         <circle cx="58" cy="110" r="10" fill="${cLegs}" class="anatomy-muscle"></circle>
-        <!-- Бицепсы бедра -->
         <path d="M35,125 L48,125 L48,160 L32,160 Z" fill="${cLegs}" class="anatomy-muscle"></path>
         <path d="M52,125 L65,125 L68,160 L52,160 Z" fill="${cLegs}" class="anatomy-muscle"></path>
-        <!-- Икры -->
         <rect x="35" y="165" width="10" height="25" rx="3" fill="${defaultFill}"></rect>
         <rect x="55" y="165" width="10" height="25" rx="3" fill="${defaultFill}"></rect>
       </svg>
@@ -2166,13 +2146,18 @@ function drawWeightChart() {
   const sorted = [...state.bodyLog].sort((a, b) => a.date.localeCompare(b.date));
   let labels = sorted.length ? sorted.map(b => b.date.slice(5)) : ['Нет данных'];
   let data = sorted.length ? sorted.map(b => b.weight) : [state.profile.weight];
+  
   let gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 250);
   gradient.addColorStop(0, state.themeColor + '88');
   gradient.addColorStop(1, state.themeColor + '00');
+  
+  const gridColor = state.themeMode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)';
+  const textColor = state.themeMode === 'light' ? '#6e6e73' : '#8e8e93';
+
   state.chartInstance = new Chart(ctx, {
     type: 'line',
     data: { labels: labels, datasets: [{ data: data, borderColor: state.themeColor, backgroundColor: gradient, borderWidth: 4, tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#fff' }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { color: 'var(--muted)' } }, x: { grid: { display: false }, ticks: { color: 'var(--muted)' } } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } } }
   });
 }
 
@@ -2193,10 +2178,13 @@ function drawMeasurementsChart() {
   gradient.addColorStop(0, 'rgba(0, 212, 255, 0.5)');
   gradient.addColorStop(1, 'rgba(0, 212, 255, 0)');
   
+  const gridColor = state.themeMode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)';
+  const textColor = state.themeMode === 'light' ? '#6e6e73' : '#8e8e93';
+
   state.measureChartInstance = new Chart(ctx, {
     type: 'line',
     data: { labels: labels, datasets: [{ label: fieldNames[field], data: data, borderColor: '#00d4ff', backgroundColor: gradient, borderWidth: 3, tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#fff' }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { color: 'var(--muted)' } }, x: { grid: { display: false }, ticks: { color: 'var(--muted)' } } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } } }
   });
 }
 
@@ -2216,7 +2204,12 @@ function drawRadarChart() {
     });
   });
 
-  const maxVal = Math.max(...Object.values(load));
+  const maxVal = Math.max(...Object.values(load)) || 100;
+
+  // Chart.js не понимает CSS-переменные, используем реальные цвета
+  const accentColor = state.themeColor || '#a2ff00';
+  const textColor = state.themeMode === 'light' ? '#000000' : '#ffffff';
+  const gridColor = state.themeMode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
 
   state.radarChartInstance = new Chart(ctx, {
     type: 'radar',
@@ -2225,9 +2218,9 @@ function drawRadarChart() {
       datasets: [{
         label: 'Объем (кг)',
         data: Object.values(load),
-        backgroundColor: 'rgba(162, 255, 0, 0.2)',
-        borderColor: 'var(--accent)',
-        pointBackgroundColor: 'var(--accent)',
+        backgroundColor: accentColor + '44', // Добавляем прозрачность
+        borderColor: accentColor,
+        pointBackgroundColor: accentColor,
         borderWidth: 2,
         fill: true
       }]
@@ -2239,10 +2232,10 @@ function drawRadarChart() {
       scales: {
         r: {
           suggestedMin: 0,
-          suggestedMax: maxVal > 0 ? maxVal * 1.2 : 100, 
-          angleLines: { color: 'rgba(128,128,128,0.2)' },
-          grid: { color: 'rgba(128,128,128,0.2)' },
-          pointLabels: { color: state.themeMode === 'light' ? '#000' : '#fff', font: { size: 12, weight: 'bold' } },
+          suggestedMax: maxVal * 1.2, 
+          angleLines: { color: gridColor },
+          grid: { color: gridColor },
+          pointLabels: { color: textColor, font: { size: 12, weight: 'bold' } },
           ticks: { display: false }
         }
       }
