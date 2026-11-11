@@ -304,13 +304,25 @@
   </div>
 </div>
 
-<!-- ТЕХНИКА УПРАЖНЕНИЯ -->
+<!-- ТЕХНИКА УПРАЖНЕНИЯ (ВИДЕО) -->
 <div id="exercise-info-modal" class="modal-overlay" onclick="closeModal('exercise-info-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 id="ex-info-title" style="margin-top:0;">Техника</h2>
-    <div style="background:var(--card-light); border-radius:16px; padding:10px; margin-bottom:16px; display:flex; justify-content:center;">
-      <img id="ex-info-gif" src="" alt="Техника" style="width:100%; max-height:300px; border-radius:12px; object-fit:contain;">
+    
+    <div style="background:var(--card-light); border-radius:16px; padding:0; margin-bottom:16px; display:flex; justify-content:center; overflow:hidden; position:relative; min-height:200px; align-items:center;">
+      <!-- Видео (MP4) -->
+      <video id="ex-info-video" src="" autoplay loop muted playsinline style="width:100%; max-height:300px; border-radius:12px; object-fit:cover; display:none;"></video>
+      
+      <!-- GIF (Резервный вариант) -->
+      <img id="ex-info-gif" src="" alt="Техника" style="width:100%; max-height:300px; border-radius:12px; object-fit:contain; display:none;">
+      
+      <!-- Заглушка, если ничего не загрузилось -->
+      <div id="ex-info-fallback" style="display:none; text-align:center; padding:20px; color:var(--muted);">
+        <i class="ph ph-video-camera-slash" style="font-size:48px; margin-bottom:8px;"></i>
+        <div>Видео временно недоступно</div>
+      </div>
     </div>
+
     <p id="ex-info-desc" class="muted" style="font-size:14px; line-height:1.5; margin-bottom:20px;"></p>
     <button class="secondary" onclick="closeModal('exercise-info-modal')">Понятно</button>
   </div>
@@ -529,7 +541,7 @@ const STORAGE = {
   profile: 'fit_p10', workouts: 'fit_w10', bodyLog: 'fit_b10', daily: 'fit_d10', 
   runs: 'fit_r10', swims: 'fit_sw10', measurements: 'fit_m10', achievements: 'fit_a10', 
   premium: 'fit_prem10', themeColor: 'fit_color10', customEx: 'fit_custom10',
-  templates: 'fit_temp10', injuries: 'fit_injuries10', themeMode: 'fit_theme_mode'
+  templates: 'fit_temp10', injuries: 'fit_injuries10', themeMode: 'fit_theme_mode', shoppingList: 'fit_shopping_list'
 };
 
 const ACHIEVEMENTS_LIST = [
@@ -580,14 +592,50 @@ const PROGRAMS_DB = {
 
 const INJURIES_LIST = ['Плечо', 'Колено', 'Поясница', 'Локоть', 'Запястье', 'Шея', 'Голеностоп', 'Тазобедренный'];
 
-const EXERCISE_IMAGES = {
-  'Жим лёжа': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Bench_Press_-_Medium_Grip/0.jpg',
-  'Приседания со штангой': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Squat/0.jpg',
-  'Становая тяга': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Deadlift/0.jpg',
-  'Подтягивания': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Pullups/0.jpg',
-  'Жим стоя': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Shoulder_Press/0.jpg',
-  'Тяга штанги в наклоне': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Barbell_Row/0.jpg',
-  'default': 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Squat/0.jpg'
+// ============================================
+// БАЗА МЕДИА (ВИДЕО + РЕЗЕРВНЫЕ GIF)
+// ============================================
+const EXERCISE_MEDIA = {
+  'Жим лёжа': { 
+    mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/barbell-bench-press.mp4',
+    gif: 'https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0025-EIeI8Vf.gif'
+  },
+  'Приседания со штангой': { 
+    mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/barbell-squat.mp4',
+    gif: 'https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0043-qXTaZnJ.gif'
+  },
+  'Становая тяга': { 
+    mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/barbell-deadlift.mp4',
+    gif: 'https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0032-ila4NZS.gif'
+  },
+  'Подтягивания': { 
+    mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/pull-ups.mp4',
+    gif: 'https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0652-lBDjFxJ.gif'
+  },
+  'Махи гантелями в стороны': { 
+    mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/dumbbell-lateral-raise.mp4',
+    gif: 'https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0334-DsgkuIt.gif'
+  },
+  'Подъём гантелей на бицепс': { 
+    mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/dumbbell-biceps-curl.mp4',
+    gif: 'https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/0294-NbVPDMW.gif'
+  },
+  'Жим стоя': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/barbell-shoulder-press.mp4' },
+  'Тяга штанги в наклоне': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/bent-over-barbell-row.mp4' },
+  'Жим гантелей лёжа': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/dumbbell-bench-press.mp4' },
+  'Тяга верхнего блока': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/lat-pulldown.mp4' },
+  'Жим ногами': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/leg-press.mp4' },
+  'Выпады с гантелями': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/dumbbell-lunges.mp4' },
+  'Подъём штанги на бицепс': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/barbell-biceps-curl.mp4' },
+  'Французский жим': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/french-press.mp4' },
+  'Разводка гантелей': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/dumbbell-fly.mp4' },
+  'Тяга Т-грифа': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/t-bar-row.mp4' },
+  'Разгибание на трицепс на блоке': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/cable-triceps-pushdown.mp4' },
+  'Планка': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/plank.mp4' },
+  'Скручивания': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/crunches.mp4' },
+  'Подъём ног в висе': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/hanging-leg-raise.mp4' },
+  'Румынская тяга': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/romanian-deadlift.mp4' },
+  'Икры в тренажере': { mp4: 'https://pub-585d42eb1aa64a67aedf483ec328d3fe.r2.dev/exercise-videos/male/calf-raise.mp4' }
 };
 
 const EXERCISE_DESCS = {
@@ -646,7 +694,7 @@ let state = {
   completedPrograms: load('fit_completed_programs') || 0,
   themeColor: load(STORAGE.themeColor) || '#a2ff00',
   themeMode: load(STORAGE.themeMode) || 'dark',
-  shoppingList: load('fit_shopping_list') || [],
+  shoppingList: load(STORAGE.shoppingList) || [],
   daily: load(STORAGE.daily) || { date: today(), water: 0, calories: 0, p: 0, f: 0, cb: 0, sleep: null, mood: null, steps: 0, habits: { water: false, steps: false, sleep: false } },
   screen: 'home', currentWorkout: null, chartInstance: null, exerciseChartInstance: null, radarChartInstance: null, measureChartInstance: null, tempMood: null, lastSavedWorkoutId: null
 };
@@ -724,7 +772,7 @@ function toggleShoppingItem(item) {
   } else {
     state.shoppingList.push(item);
   }
-  save('fit_shopping_list', state.shoppingList);
+  save(STORAGE.shoppingList, state.shoppingList);
   haptic('light');
   
   const listEl = document.getElementById('shopping-list');
@@ -739,7 +787,7 @@ function toggleShoppingItem(item) {
 }
 
 // ============================================
-// КРАСИВАЯ ШТАНГА (SVG)
+// ВИЗУАЛИЗАТОР ШТАНГИ
 // ============================================
 function renderBarbell(weight) {
   if (!weight || weight <= 20) return '';
@@ -851,18 +899,45 @@ function loadProgram(key) {
 }
 
 // ============================================
-// ТЕХНИКА УПРАЖНЕНИЯ
+// ТЕХНИКА УПРАЖНЕНИЯ (ВИДЕО)
 // ============================================
 function openExerciseInfo(exName) {
   document.getElementById('ex-info-title').innerText = exName;
-  const img = EXERCISE_IMAGES[exName] || EXERCISE_IMAGES['default'];
-  const desc = EXERCISE_DESCS[exName] || EXERCISE_DESCS['default'];
+  document.getElementById('ex-info-desc').innerText = EXERCISE_DESCS[exName] || EXERCISE_DESCS['default'];
   
-  const imgEl = document.getElementById('ex-info-gif');
-  imgEl.src = img;
-  imgEl.onerror = () => { imgEl.src = EXERCISE_IMAGES['default']; };
+  const videoEl = document.getElementById('ex-info-video');
+  const gifEl = document.getElementById('ex-info-gif');
+  const fallbackEl = document.getElementById('ex-info-fallback');
   
-  document.getElementById('ex-info-desc').innerText = desc;
+  videoEl.style.display = 'none';
+  gifEl.style.display = 'none';
+  fallbackEl.style.display = 'none';
+  videoEl.src = '';
+  gifEl.src = '';
+
+  const media = EXERCISE_MEDIA[exName];
+
+  if (media && media.mp4) {
+    videoEl.src = media.mp4;
+    videoEl.style.display = 'block';
+    
+    // Если видео не загружается, пробуем GIF
+    videoEl.onerror = () => {
+      videoEl.style.display = 'none';
+      if (media.gif) {
+        gifEl.src = media.gif;
+        gifEl.style.display = 'block';
+      } else {
+        fallbackEl.style.display = 'block';
+      }
+    };
+  } else if (media && media.gif) {
+    gifEl.src = media.gif;
+    gifEl.style.display = 'block';
+  } else {
+    fallbackEl.style.display = 'block';
+  }
+
   document.getElementById('exercise-info-modal').classList.add('active');
 }
 
@@ -1956,36 +2031,6 @@ function renderCalendar() {
 // ============================================
 // АНАТОМИЧЕСКАЯ КАРТА (ИСПРАВЛЕННАЯ)
 // ============================================
-function getRecoveryColor(group) {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0); 
-  
-  let lastTrainedDate = null;
-  
-  state.workouts.forEach(w => {
-    w.exercises.forEach(ex => {
-      const g = getAllExercises()[ex.name] || 'Другое';
-      if (g === group) {
-        const wDate = new Date(w.date);
-        wDate.setHours(0, 0, 0, 0);
-        
-        if (!lastTrainedDate || wDate > lastTrainedDate) {
-          lastTrainedDate = wDate;
-        }
-      }
-    });
-  });
-
-  if (!lastTrainedDate) return '#2c2c2e';
-  
-  const diffTime = now.getTime() - lastTrainedDate.getTime();
-  const days = Math.round(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (days <= 1) return '#fa114f';
-  if (days <= 3) return '#ffd700';
-  return '#a2ff00';
-}
-
 function renderAnatomyMap() {
   const cChest = getRecoveryColor('Грудь');
   const cBack = getRecoveryColor('Спина');
@@ -2574,7 +2619,7 @@ function showPlan(type) {
   document.getElementById('plan-modal').classList.add('active');
 }
   // ============================================
-// ГЕНЕРАТОР РАЦИОНА (Восстановлен)
+// ГЕНЕРАТОР РАЦИОНА
 // ============================================
 function generateMealPlan() {
   const goal = state.profile.goal || 'maintain';
