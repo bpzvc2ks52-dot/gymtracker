@@ -157,27 +157,6 @@
 </head>
 <body>
 
-<script>
-(function(){
-  var errs = [];
-  window.addEventListener('error', function(e){ errs.push((e.message || e.error) + ' @ line ' + (e.lineno||'?')); });
-  window.addEventListener('unhandledrejection', function(e){ errs.push('promise: ' + (e.reason && e.reason.message ? e.reason.message : e.reason)); });
-  setTimeout(function(){
-    var status = 'SDK supabase: ' + (typeof window.supabase !== 'undefined' ? 'OK' : 'НЕТ') + ' | acceptCookies: ' + (typeof acceptCookies === 'function' ? 'OK' : 'НЕТ') + ' | ошибок: ' + errs.length;
-    var d = document.createElement('div');
-    d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#00d4ff;color:#000;padding:8px;font-size:11px;font-family:monospace;z-index:999999;text-align:center;';
-    d.textContent = status;
-    document.body.appendChild(d);
-    if (errs.length > 0) {
-      var e2 = document.createElement('div');
-      e2.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fa114f;color:#fff;padding:12px;font-size:12px;font-family:monospace;z-index:999999;white-space:pre-wrap;word-break:break-all;';
-      e2.textContent = '❌ ' + errs[0];
-      document.body.appendChild(e2);
-    }
-  }, 2000);
-})();
-</script>
-
 <div id="splash-screen" class="splash-screen">
   <div class="splash-content">
     <div class="splash-logo"><i class="ph-bold ph-barbell"></i></div>
@@ -1293,7 +1272,7 @@ function generateMealPlan() {
 }
 
 // ============================================
-// БЛИНЫ + КАЛЬКУЛЯТОР 1ПМ
+// БЛИНЫ + КАЛЬКУЛЯТОР 1ПМ + AI + ТАЙМЕР
 // ============================================
 function showPlates(totalWeight) {
   if (!totalWeight || totalWeight <= 20) document.getElementById('plates-result').innerHTML = "Пустой гриф (20 кг)";
@@ -1307,24 +1286,15 @@ function showPlates(totalWeight) {
 function open1RM() { document.getElementById('rm-weight').value=''; document.getElementById('rm-reps').value=''; document.getElementById('rm-result').innerText=''; document.getElementById('rm-modal').classList.add('active'); }
 function calc1RM() { const w = +document.getElementById('rm-weight').value, r = +document.getElementById('rm-reps').value; if (!w || !r || r < 1 || r > 30) { document.getElementById('rm-result').innerText = 'Введи корректные данные'; return; } const rm = Math.round(w*(1+r/30)); document.getElementById('rm-result').innerText = `~ ${rm} кг`; haptic('success'); }
 
-// ============================================
-// ЗАМЕТКА К ПОДХОДУ
-// ============================================
 function openSetNote(exIdx, setIdx) { currentSetNoteTarget = { exIdx, setIdx }; const s = state.currentWorkout.exercises[exIdx].sets[setIdx]; document.getElementById('set-note-input').value = s.note || ''; document.getElementById('set-note-modal').classList.add('active'); }
 function saveSetNote() { const note = document.getElementById('set-note-input').value.trim(); const { exIdx, setIdx } = currentSetNoteTarget; if (exIdx !== null && setIdx !== null) { state.currentWorkout.exercises[exIdx].sets[setIdx].note = note; closeModal('set-note-modal'); haptic('success'); render(); } }
 
-// ============================================
-// AI ПЛАН
-// ============================================
 function generateAIPlan() {
   const goal = state.profile.goal === 'mass' ? 'Набор массы' : state.profile.goal === 'cut' ? 'Похудение' : 'Удержание';
   document.getElementById('ai-content').innerHTML = `<p style="margin-bottom:16px;color:var(--muted);">На основе цели (<b>${goal}</b>) AI сгенерировал:</p><div style="background:var(--card-light);padding:16px;border-radius:16px;margin-bottom:12px;"><b>День 1: Push</b><br><span class="muted" style="font-size:14px;">Жим лёжа 4х8, Жим гантелей 3х10, Махи 3х15</span></div><div style="background:var(--card-light);padding:16px;border-radius:16px;margin-bottom:12px;"><b>День 2: Pull</b><br><span class="muted" style="font-size:14px;">Становая 3х6, Подтягивания 4хмакс, Тяга блока 3х10</span></div><div style="background:var(--card-light);padding:16px;border-radius:16px;margin-bottom:12px;"><b>День 3: Legs</b><br><span class="muted" style="font-size:14px;">Приседания 4х8, Жим ногами 3х10, Выпады 3х12</span></div><button onclick="closeModal('ai-modal'); startWorkout();" style="margin-top:10px;">Применить</button>`;
   document.getElementById('ai-modal').classList.add('active');
 }
 
-// ============================================
-// ТАЙМЕР ОТДЫХА
-// ============================================
 function startTimer() { document.getElementById('timer-modal').classList.add('active'); timerTotal=90; timerRemaining=90; updateTimerDisplay(); updatePresetButtons(); startTimerCountdown(); haptic('light'); }
 function setTimerPreset(sec) { timerTotal=sec; timerRemaining=sec; updateTimerDisplay(); updatePresetButtons(); startTimerCountdown(); haptic('light'); }
 function updatePresetButtons() { document.querySelectorAll('.timer-preset-btn').forEach(btn => { btn.classList.toggle('active', +btn.dataset.sec === timerTotal); }); }
@@ -1341,15 +1311,12 @@ function startTimerCountdown() {
 }
 
 // ============================================
-// НАВИГАЦИЯ И СБРОС
+// НАВИГАЦИЯ, СБРОС, ИНИЦИАЛИЗАЦИЯ
 // ============================================
 function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('active'); if (id === 'timer-modal') clearInterval(timerInt); }
 function resetApp() { if (confirm('Удалить все данные?')) { localStorage.clear(); location.reload(); } }
 function go(screen) { if (screen === 'newWorkout' && !state.currentWorkout) { startWorkout(); return; } state.screen = screen; haptic('light'); render(); window.scrollTo(0,0); }
 
-// ============================================
-// ИНИЦИАЛИЗАЦИЯ
-// ============================================
 function initApp() { render(); }
 initApp();
 
