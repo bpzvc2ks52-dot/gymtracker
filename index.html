@@ -529,7 +529,7 @@ if (state.daily.date !== today()) { state.daily = { date:today(), water:0, calor
 function toggleTheme() { const next = state.themeMode==='dark'?'light':'dark'; applyTheme(next); haptic('light'); render(); showToast(`Тема: ${next==='dark'?'тёмная':'светлая'}`); }
 
 // ============================================
-// SUPABASE AUTH
+// SUPABASE AUTH & SYNC
 // ============================================
 async function openAuthModal() {
   const el = document.getElementById('auth-modal');
@@ -537,12 +537,14 @@ async function openAuthModal() {
   try { const { data } = await supabase.auth.getSession(); currentUser = data?.session?.user || null; } catch(e) { currentUser=null; }
   updateAuthUI(); el.classList.add('active');
 }
+
 function updateAuthUI() {
   const lo = document.getElementById('auth-logged-out'), li = document.getElementById('auth-logged-in'), emailEl = document.getElementById('auth-user-email');
   if (!lo || !li) return;
   if (currentUser) { lo.style.display='none'; li.style.display='block'; if (emailEl) emailEl.innerText = currentUser.email || 'пользователь'; }
   else { lo.style.display='block'; li.style.display='none'; }
 }
+
 async function signUp() {
   const email = document.getElementById('auth-email').value.trim(), password = document.getElementById('auth-password').value, msg = document.getElementById('auth-msg');
   if (!email || password.length < 6) { msg.innerText='Нужен email и пароль от 6 символов'; return; }
@@ -551,6 +553,7 @@ async function signUp() {
   if (error) { msg.innerText='Ошибка: '+error.message; return; }
   msg.innerText='Готово! Проверь почту.'; haptic('success');
 }
+
 async function signIn() {
   const email = document.getElementById('auth-email').value.trim(), password = document.getElementById('auth-password').value, msg = document.getElementById('auth-msg');
   if (!email || !password) { msg.innerText='Введи email и пароль'; return; }
@@ -558,9 +561,83 @@ async function signIn() {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) { msg.innerText='Ошибка: '+error.message; return; }
   currentUser = data.user; msg.innerText=''; updateAuthUI(); haptic('success'); showToast('Вы вошли');
+  downloadCloudData();
 }
+
 async function signOut() { if (!supabase) return; await supabase.auth.signOut(); currentUser=null; updateAuthUI(); haptic('light'); showToast('Вы вышли'); }
-(async () => { if (!supabase) return; try { const { data } = await supabase.auth.getSession(); currentUser = data?.session?.user || null; } catch(e){} })();
+
+async function syncProfileToCloud() {
+  if (!supabase || !currentUser || !state.profile) return;
+  const { error } = await supabase.from('profiles').upsert({
+    id: currentUser.id,
+    weight: state.profile.weight,
+    height: state.profile.height,
+    age: state.profile.age,
+    sex: state.profile.sex,
+    goal: state.profile.goal,
+    targets: state.profile.targets
+  });
+  if (error) console.error('Ошибка синхронизации профиля:', error);
+  else console.log('✅ Профиль сохранен в облако');
+}
+
+async function syncWorkoutToCloud(workout) {
+  if (!supabase || !currentUser) return;
+  const { error } = await supabase.from('workouts').insert({
+    user_id: currentUser.id,
+    workout_date: workout.date,
+    tonnage: workout.tonnage,
+    mood: workout.mood,
+    note: workout.note,
+    exercises: workout.exercises
+  });
+  if (error) console.error('Ошибка синхронизации тренировки:', error);
+  else console.log('✅ Тренировка сохранена в облако');
+}
+
+async function downloadCloudData() {
+  if (!supabase || !currentUser) return;
+  showToast('Загрузка данных из облака...');
+  
+  try {
+    const { data: prof, error: pErr } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (prof && !pErr) {
+      state.profile = {
+        weight: prof.weight, height: prof.height, age: prof.age,
+        sex: prof.sex, goal: prof.goal, targets: prof.targets
+      };
+      save(STORAGE.profile, state.profile);
+    }
+  } catch(e) {}
+
+  try {
+    const { data: wks, error: wErr } = await supabase.from('workouts').select('*').order('created_at', { ascending: false });
+    if (wks && !wErr && wks.length > 0) {
+      state.workouts = wks.map(w => ({
+        id: new Date(w.created_at).getTime(),
+        date: w.workout_date,
+        tonnage: w.tonnage,
+        mood: w.mood,
+        note: w.note,
+        exercises: w.exercises
+      }));
+      save(STORAGE.workouts, state.workouts);
+    }
+  } catch(e) {}
+
+  render();
+  haptic('success');
+  showToast('Данные успешно загружены!');
+}
+
+(async () => { 
+  if (!supabase) return; 
+  try { 
+    const { data } = await supabase.auth.getSession(); 
+    currentUser = data?.session?.user || null; 
+    if (currentUser) downloadCloudData();
+  } catch(e){} 
+})();
 
 // ============================================
 // УТИЛИТЫ
@@ -666,7 +743,7 @@ function renderBarbell(weight) {
 }
 
 // ============================================
-// ТРАВМЫ, ПРОГРАММЫ, ТЕХНИКА
+// ТРАВМЫ, ПРОГРАММЫ, ТЕХНИКА, ШАБЛОНЫ
 // ============================================
 function openInjuryModal() { currentInjuriesTemp=[...state.injuries]; renderInjuryList(); document.getElementById('injury-modal').classList.add('active'); }
 function renderInjuryList() {
@@ -702,9 +779,6 @@ function openExerciseInfo(exName) {
   else { fallbackEl.style.display='block'; fallbackEl.innerHTML='<i class="ph ph-video-camera-slash" style="font-size:48px;"></i><div>Нет анимации</div>'; }
 }
 
-// ============================================
-// ШАБЛОНЫ
-// ============================================
 function openTemplatesModal() {
   const list=document.getElementById('templates-list');
   if (state.templates.length===0) list.innerHTML='<p class="muted">Нет шаблонов.</p>';
@@ -714,9 +788,6 @@ function openTemplatesModal() {
 function loadTemplate(i) { const t=state.templates[i]; state.currentWorkout={ date:today(), exercises:JSON.parse(JSON.stringify(t.exercises)), mood:null, note:'' }; state.screen='newWorkout'; prShownThisWorkout=new Set(); closeModal('templates-modal'); haptic('success'); render(); }
 function saveTemplate() { const name=document.getElementById('template-name-input').value.trim(); if(!name) return alert('Введи название'); state.templates.push({ name, exercises:JSON.parse(JSON.stringify(state.currentWorkout.exercises)) }); save(STORAGE.templates, state.templates); closeModal('save-template-modal'); haptic('success'); showToast('Шаблон сохранен!'); }
 
-// ============================================
-// СПИСОК ПОКУПОК
-// ============================================
 function generateShoppingItems() {
   const goal=state.profile.goal||'maintain';
   if (goal==='mass') return ['Куриная грудка (1.5 кг)','Рис (1 кг)','Овсянка (500 г)','Яйца (20 шт)','Творог (1 кг)','Банан (1 кг)','Орехи (200 г)','Рыба (1 кг)','Картофель (1 кг)','Овощи для салата','Оливковое масло'];
@@ -730,9 +801,6 @@ function renderShopping() {
 }
 function toggleShoppingItem(item) { if (state.shoppingList.includes(item)) state.shoppingList=state.shoppingList.filter(i=>i!==item); else state.shoppingList.push(item); save(STORAGE.shoppingList, state.shoppingList); haptic('light'); renderShopping(); }
 
-// ============================================
-// ОНБОРДИНГ
-// ============================================
 function acceptCookies() {
   const splash=document.getElementById('splash-screen');
   try {
@@ -767,6 +835,7 @@ function completeOnboarding() {
   const targets=calculateKBJU({ sex, weight, height, age, goal:obGoal });
   state.profile = { sex, weight, height, age, goal:obGoal, foodPrefs:state.profile?.foodPrefs||[], targets, swim:state.profile?.swim||{ time:30, dist:1000, style:'Кроль (вольный стиль)' } };
   save(STORAGE.profile, state.profile);
+  syncProfileToCloud();
   closeModal('onboarding-modal');
   const nav=document.getElementById('nav'); if (nav) nav.style.display='flex';
   haptic('success');
@@ -786,7 +855,6 @@ function openOnboardingEdit() {
   updatePreview();
   document.getElementById('onboarding-modal').classList.add('active');
 }
-
 function copyLastSets(i) { const ex=state.currentWorkout.exercises[i]; const last=getLastExerciseData(ex.name); if(!last) return; ex.sets=last.sets.map(s=>({ weight:s.weight, reps:s.reps, isWarmup:false, completed:false })); haptic('success'); showToast(`Скопировано: ${ex.name}`); render(); }
 
 function render() {
@@ -1000,6 +1068,7 @@ function promptFinishWorkout() {
   if (state.currentWorkout.exercises.length===0) return;
   const newW={ ...state.currentWorkout, id:Date.now(), tonnage:calcTonnage(state.currentWorkout), mood:'😐', note:'' };
   state.workouts.push(newW); save(STORAGE.workouts,state.workouts); checkAchievements(); haptic('success');
+  syncWorkoutToCloud(newW);
   state.lastSavedWorkoutId=newW.id; state.currentWorkout=null; state.screen='home'; render();
   setTimeout(() => exportWorkoutStory(newW.id), 300);
   state.tempMood=null; document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected')); document.getElementById('workout-note').value='';
@@ -1183,7 +1252,7 @@ function renderProfile() {
         <div><label style="text-align:center;">Тема</label><button class="secondary" onclick="toggleTheme()" style="padding:10px 16px;font-size:14px;border-radius:12px;width:auto;margin:0;"><i class="ph ${state.themeMode==='dark'?'ph-moon':'ph-sun'}"></i> ${state.themeMode==='dark'?'Тёмная':'Светлая'}</button></div>
         <div><label style="text-align:center;">Цвет</label><div style="display:flex;gap:8px;margin-top:10px;">${COLORS.map(c => `<div class="color-swatch ${state.themeColor===c.hex?'active':''}" style="background:${c.hex};width:28px;height:28px;" onclick="changeThemeColor('${c.hex}')"></div>`).join('')}</div></div>
       </div>
-      <button class="secondary" onclick="openAuthModal()" style="font-size:14px;padding:12px;margin-bottom:8px;color:var(--accent);"><i class="ph ph-user-circle"></i> Аккаунт (Supabase)</button>
+      <button class="secondary" onclick="openAuthModal()" style="font-size:14px;padding:12px;margin-bottom:8px;color:var(--accent);"><i class="ph ph-user-circle"></i> Аккаунт (Облако)</button>
       <button class="secondary" onclick="openOnboardingEdit()" style="font-size:14px;padding:12px;margin-bottom:8px;"><i class="ph ph-pencil-simple"></i> Изменить параметры</button>
       <button class="secondary" onclick="openInjuryModal()" style="font-size:14px;padding:12px;margin-bottom:8px;color:var(--move);"><i class="ph ph-first-aid"></i> Дневник травм</button>
       <button class="secondary" onclick="downloadBackup()" style="font-size:14px;padding:12px;margin-bottom:8px;"><i class="ph ph-download-simple"></i> Скачать бэкап</button>
