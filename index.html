@@ -132,7 +132,7 @@
   .anatomy-svg { width:120px; height:240px; }
   .anatomy-muscle { cursor:pointer; transition:fill 0.3s; }
   .anatomy-muscle:hover { fill:var(--accent); }
-  .program-card { background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px; cursor:pointer; text-align:left; border:2px solid transparent; transition:0.2s; }
+  .program-card { background:var(--card-light); padding:16px; border-radius:16px; margin-bottom:12px; cursor:pointer; text-align:left; border:2px solid transparent; transition:0.2s; position:relative; }
   .program-card:hover { border-color:var(--accent); }
   .barbell-svg-wrap { display:flex; justify-content:center; align-items:center; height:60px; margin:10px 0; background:var(--card-light); border-radius:16px; padding:10px; overflow:hidden; }
   .barbell-svg { height:100%; max-width:100%; }
@@ -222,9 +222,22 @@
 <div id="programs-modal" class="modal-overlay" onclick="closeModal('programs-modal')">
   <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
     <h2 style="margin-top:0; text-align:center;">Выбор программы</h2>
-    <p class="muted" style="font-size:13px; margin-bottom:16px; text-align:center;">Готовые сплиты для разных целей</p>
+    <p class="muted" style="font-size:13px; margin-bottom:16px; text-align:center;">Готовые сплиты и твои программы</p>
     <div id="programs-list"></div>
-    <button class="secondary" style="margin-top:16px;" onclick="closeModal('programs-modal')">Закрыть</button>
+    <button onclick="openCreateProgramModal()" style="margin-top:16px; background:var(--accent); color:#000;"><i class="ph ph-plus"></i> Создать свою программу</button>
+    <button class="secondary" style="margin-top:8px;" onclick="closeModal('programs-modal')">Закрыть</button>
+  </div>
+</div>
+
+<div id="custom-prog-modal" class="modal-overlay" onclick="closeModal('custom-prog-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
+    <h2 style="margin-top:0; text-align:center;">Новая программа</h2>
+    <label>Название программы</label>
+    <input type="text" id="custom-prog-name" placeholder="Например: Грудь / Трицепс">
+    <label style="margin-top:16px;">Выбери упражнения:</label>
+    <div id="custom-prog-ex-list" style="max-height:200px; overflow-y:auto; background:var(--card-light); border-radius:12px; padding:10px; margin-bottom:16px;"></div>
+    <button onclick="saveCustomProgram()"><i class="ph ph-check"></i> Сохранить</button>
+    <button class="secondary" onclick="closeModal('custom-prog-modal')">Отмена</button>
   </div>
 </div>
 
@@ -460,7 +473,7 @@ function renderSkeleton() {
   return `<div class="skeleton skeleton-title"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-card" style="margin-top:20px;"></div>`;
 }
 
-const STORAGE = { profile:'fit_p10', workouts:'fit_w10', bodyLog:'fit_b10', daily:'fit_d10', runs:'fit_r10', swims:'fit_sw10', measurements:'fit_m10', achievements:'fit_a10', premium:'fit_prem10', themeColor:'fit_color10', customEx:'fit_custom10', templates:'fit_temp10', injuries:'fit_injuries10', themeMode:'fit_theme_mode', shoppingList:'fit_shopping_list' };
+const STORAGE = { profile:'fit_p10', workouts:'fit_w10', bodyLog:'fit_b10', daily:'fit_d10', runs:'fit_r10', swims:'fit_sw10', measurements:'fit_m10', achievements:'fit_a10', premium:'fit_prem10', themeColor:'fit_color10', customEx:'fit_custom10', templates:'fit_temp10', injuries:'fit_injuries10', themeMode:'fit_theme_mode', shoppingList:'fit_shopping_list', customProg: 'fit_custom_prog' };
 
 const ACHIEVEMENTS_LIST = [
   { id:'first_workout', name:'Первый шаг', icon:'ph-sneaker', cond:(s)=>s.workouts.length>0 },
@@ -507,10 +520,11 @@ let state = {
   profile: load(STORAGE.profile), workouts: load(STORAGE.workouts)||[], bodyLog: load(STORAGE.bodyLog)||[],
   runs: load(STORAGE.runs)||[], swims: load(STORAGE.swims)||[], measurements: load(STORAGE.measurements)||[], achievements: load(STORAGE.achievements)||[],
   isPremium: load(STORAGE.premium)||false, customExercises: load(STORAGE.customEx)||{}, templates: load(STORAGE.templates)||[], injuries: load(STORAGE.injuries)||[],
+  customPrograms: load(STORAGE.customProg)||[], // НОВОЕ: свои программы
   completedPrograms: load('fit_completed_programs')||0, themeColor: load(STORAGE.themeColor)||'#a2ff00', themeMode: load(STORAGE.themeMode)||'dark',
   shoppingList: load(STORAGE.shoppingList)||[],
   daily: load(STORAGE.daily)||{ date:today(), water:0, calories:0, p:0, f:0, cb:0, sleep:null, mood:null, steps:0, habits:{ water:false, steps:false, sleep:false } },
-  screen:'home', currentWorkout:null, chartInstance:null, exerciseChartInstance:null, radarChartInstance:null, measureChartInstance:null, tempMood:null, lastSavedWorkoutId:null
+  screen:'home', currentWorkout:null, chartInstance:null, exerciseChartInstance:null, radarChartInstance:null, measureChartInstance:null, volumeChartInstance:null, tempMood:null, lastSavedWorkoutId:null
 };
 if (!state.daily.habits) state.daily.habits = { water:false, steps:false, sleep:false };
 
@@ -520,6 +534,7 @@ let obGoal='maintain', obEditMode=false;
 let prShownThisWorkout = new Set();
 let currentSetNoteTarget = { exIdx:null, setIdx:null };
 let currentInjuriesTemp = [];
+let tempProgramExercises = []; // Для создания своей программы
 
 function applyTheme(mode) { document.documentElement.setAttribute('data-theme', mode); state.themeMode=mode; save(STORAGE.themeMode, mode); }
 applyTheme(state.themeMode);
@@ -566,33 +581,29 @@ async function signIn() {
 
 async function signOut() { if (!supabase) return; await supabase.auth.signOut(); currentUser=null; updateAuthUI(); haptic('light'); showToast('Вы вышли'); }
 
-async function syncProfileToCloud() {
-  if (!supabase || !currentUser || !state.profile) return;
-  const { error } = await supabase.from('profiles').upsert({
-    id: currentUser.id,
-    weight: state.profile.weight,
-    height: state.profile.height,
-    age: state.profile.age,
-    sex: state.profile.sex,
-    goal: state.profile.goal,
-    targets: state.profile.targets
-  });
-  if (error) console.error('Ошибка синхронизации профиля:', error);
-  else console.log('✅ Профиль сохранен в облако');
-}
-
 async function syncWorkoutToCloud(workout) {
   if (!supabase || !currentUser) return;
   const { error } = await supabase.from('workouts').insert({
-    user_id: currentUser.id,
-    workout_date: workout.date,
-    tonnage: workout.tonnage,
-    mood: workout.mood,
-    note: workout.note,
-    exercises: workout.exercises
+    user_id: currentUser.id, workout_date: workout.date, tonnage: workout.tonnage, mood: workout.mood, note: workout.note, exercises: workout.exercises
   });
   if (error) console.error('Ошибка синхронизации тренировки:', error);
   else console.log('✅ Тренировка сохранена в облако');
+}
+
+async function syncCustomExerciseToCloud(name, group) {
+  if (!supabase || !currentUser) return;
+  const { error } = await supabase.from('custom_exercises').insert({
+    user_id: currentUser.id, name: name, muscle_group: group
+  });
+  if (error) console.error('Ошибка синхронизации упражнения:', error);
+}
+
+async function syncCustomProgramToCloud(program) {
+  if (!supabase || !currentUser) return;
+  const { error } = await supabase.from('custom_programs').insert({
+    user_id: currentUser.id, name: program.name, exercises: program.exercises
+  });
+  if (error) console.error('Ошибка синхронизации программы:', error);
 }
 
 async function downloadCloudData() {
@@ -602,10 +613,7 @@ async function downloadCloudData() {
   try {
     const { data: prof, error: pErr } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
     if (prof && !pErr) {
-      state.profile = {
-        weight: prof.weight, height: prof.height, age: prof.age,
-        sex: prof.sex, goal: prof.goal, targets: prof.targets
-      };
+      state.profile = { weight: prof.weight, height: prof.height, age: prof.age, sex: prof.sex, goal: prof.goal, targets: prof.targets };
       save(STORAGE.profile, state.profile);
     }
   } catch(e) {}
@@ -613,21 +621,32 @@ async function downloadCloudData() {
   try {
     const { data: wks, error: wErr } = await supabase.from('workouts').select('*').order('created_at', { ascending: false });
     if (wks && !wErr && wks.length > 0) {
-      state.workouts = wks.map(w => ({
-        id: new Date(w.created_at).getTime(),
-        date: w.workout_date,
-        tonnage: w.tonnage,
-        mood: w.mood,
-        note: w.note,
-        exercises: w.exercises
-      }));
+      state.workouts = wks.map(w => ({ id: new Date(w.created_at).getTime(), date: w.workout_date, tonnage: w.tonnage, mood: w.mood, note: w.note, exercises: w.exercises }));
       save(STORAGE.workouts, state.workouts);
+    }
+  } catch(e) {}
+
+  // Загрузка своих упражнений
+  try {
+    const { data: exs, error: eErr } = await supabase.from('custom_exercises').select('*');
+    if (exs && !eErr) {
+      exs.forEach(ex => { state.customExercises[ex.name] = ex.muscle_group; });
+      save(STORAGE.customEx, state.customExercises);
+    }
+  } catch(e) {}
+
+  // Загрузка своих программ
+  try {
+    const { data: progs, error: prErr } = await supabase.from('custom_programs').select('*');
+    if (progs && !prErr && progs.length > 0) {
+      state.customPrograms = progs.map(p => ({ name: p.name, exercises: p.exercises }));
+      save(STORAGE.customProg, state.customPrograms);
     }
   } catch(e) {}
 
   render();
   haptic('success');
-  showToast('Данные успешно загружены!');
+  showToast('Данные загружены!');
 }
 
 (async () => { 
@@ -743,7 +762,7 @@ function renderBarbell(weight) {
 }
 
 // ============================================
-// ТРАВМЫ, ПРОГРАММЫ, ТЕХНИКА, ШАБЛОНЫ
+// ТРАВМЫ, ПРОГРАММЫ, ТЕХНИКА
 // ============================================
 function openInjuryModal() { currentInjuriesTemp=[...state.injuries]; renderInjuryList(); document.getElementById('injury-modal').classList.add('active'); }
 function renderInjuryList() {
@@ -756,18 +775,79 @@ function toggleInjury(inj) { if (currentInjuriesTemp.includes(inj)) currentInjur
 function saveInjuries() { state.injuries=[...currentInjuriesTemp]; save(STORAGE.injuries, state.injuries); closeModal('injury-modal'); haptic('success'); showToast('Дневник травм обновлен'); render(); }
 
 function openProgramsModal() {
-  document.getElementById('programs-list').innerHTML = Object.keys(PROGRAMS_DB).map(key => {
+  let html = '';
+  // Готовые
+  Object.keys(PROGRAMS_DB).forEach(key => {
     const p=PROGRAMS_DB[key];
-    return `<div class="program-card" onclick="loadProgram('${key}')"><div style="font-size:16px;font-weight:800;color:var(--accent);margin-bottom:4px;">${p.name}</div><div class="muted" style="font-size:12px;line-height:1.4;">${p.desc}</div></div>`;
-  }).join('');
+    html += `<div class="program-card" onclick="loadProgram('${key}')"><div style="font-size:16px;font-weight:800;color:var(--accent);margin-bottom:4px;">${p.name}</div><div class="muted" style="font-size:12px;line-height:1.4;">${p.desc}</div></div>`;
+  });
+  // Свои
+  state.customPrograms.forEach((p, i) => {
+    html += `<div class="program-card" onclick="loadCustomProgram(${i})" style="border-left:3px solid var(--stand);">
+      <div style="font-size:16px;font-weight:800;color:var(--stand);margin-bottom:4px;">${p.name}</div>
+      <div class="muted" style="font-size:12px;line-height:1.4;">Моя программа • ${p.exercises.length} упражнений</div>
+    </div>`;
+  });
+  document.getElementById('programs-list').innerHTML = html;
   document.getElementById('programs-modal').classList.add('active');
 }
+
 function loadProgram(key) {
   const p=PROGRAMS_DB[key]; closeModal('programs-modal'); haptic('success');
   state.currentWorkout = { date:today(), exercises:[], mood:null, note:'' };
   p.workouts[0].exercises.forEach(exName => addExercise(exName, false));
   state.screen='newWorkout'; prShownThisWorkout=new Set(); showToast(`Программа: ${p.name}`); render();
 }
+
+function loadCustomProgram(index) {
+  const p = state.customPrograms[index]; closeModal('programs-modal'); haptic('success');
+  state.currentWorkout = { date:today(), exercises:[], mood:null, note:'' };
+  p.exercises.forEach(exName => addExercise(exName, false));
+  state.screen='newWorkout'; prShownThisWorkout=new Set(); showToast(`Загружена: ${p.name}`); render();
+}
+
+function openCreateProgramModal() {
+  closeModal('programs-modal');
+  tempProgramExercises = [];
+  document.getElementById('custom-prog-name').value = '';
+  renderCustomProgExList();
+  document.getElementById('custom-prog-modal').classList.add('active');
+}
+
+function renderCustomProgExList() {
+  const listEl = document.getElementById('custom-prog-ex-list');
+  listEl.innerHTML = Object.keys(getAllExercises()).map(ex => {
+    const isChecked = tempProgramExercises.includes(ex);
+    return `<div onclick="toggleCustomProgEx('${ex.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;">
+      <div style="width:20px;height:20px;border-radius:4px;border:2px solid var(--muted);display:flex;align-items:center;justify-content:center;${isChecked?'background:var(--accent);border-color:var(--accent);':''}">${isChecked?'<i class="ph-bold ph-check" style="color:#000;font-size:12px;"></i>':''}</div>
+      <span style="font-size:14px;font-weight:${isChecked?'800':'500'};color:${isChecked?'var(--accent)':'var(--text)'};">${ex}</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleCustomProgEx(exName) {
+  if (tempProgramExercises.includes(exName)) tempProgramExercises = tempProgramExercises.filter(e => e !== exName);
+  else tempProgramExercises.push(exName);
+  haptic('light');
+  renderCustomProgExList();
+}
+
+function saveCustomProgram() {
+  const name = document.getElementById('custom-prog-name').value.trim();
+  if (!name) return alert('Введи название программы');
+  if (tempProgramExercises.length === 0) return alert('Выбери хотя бы одно упражнение');
+  
+  const newProg = { name: name, exercises: tempProgramExercises };
+  state.customPrograms.push(newProg);
+  save(STORAGE.customProg, state.customPrograms);
+  syncCustomProgramToCloud(newProg);
+  
+  closeModal('custom-prog-modal');
+  haptic('success');
+  showToast('Программа сохранена!');
+  openProgramsModal();
+}
+
 function openExerciseInfo(exName) {
   const gifEl=document.getElementById('ex-info-gif'), fallbackEl=document.getElementById('ex-info-fallback');
   document.getElementById('ex-info-title').innerText=exName;
@@ -835,7 +915,6 @@ function completeOnboarding() {
   const targets=calculateKBJU({ sex, weight, height, age, goal:obGoal });
   state.profile = { sex, weight, height, age, goal:obGoal, foodPrefs:state.profile?.foodPrefs||[], targets, swim:state.profile?.swim||{ time:30, dist:1000, style:'Кроль (вольный стиль)' } };
   save(STORAGE.profile, state.profile);
-  syncProfileToCloud();
   closeModal('onboarding-modal');
   const nav=document.getElementById('nav'); if (nav) nav.style.display='flex';
   haptic('success');
@@ -1048,7 +1127,7 @@ function renderNewWorkout() {
 }
 function toggleSetComplete(i,j) { const ex=state.currentWorkout.exercises[i]; if(!ex) return; const s=ex.sets[j]; s.completed=!s.completed; haptic(s.completed?'success':'light'); render(); }
 function openCustomExModal() { document.getElementById('custom-ex-modal').classList.add('active'); }
-function saveCustomExercise() { const name=document.getElementById('custom-ex-name').value.trim(); const group=document.getElementById('custom-ex-group').value; if(!name) return; state.customExercises[name]=group; save(STORAGE.customEx,state.customExercises); closeModal('custom-ex-modal'); haptic('success'); render(); }
+function saveCustomExercise() { const name=document.getElementById('custom-ex-name').value.trim(); const group=document.getElementById('custom-ex-group').value; if(!name) return; state.customExercises[name]=group; save(STORAGE.customEx,state.customExercises); syncCustomExerciseToCloud(name, group); closeModal('custom-ex-modal'); haptic('success'); render(); }
 function addExercise(name, reRender=true) { state.currentWorkout.exercises.push({ name, sets:[{ weight:0,reps:8,isWarmup:false,completed:false }] }); haptic('light'); if (reRender) render(); }
 function removeExercise(i) { state.currentWorkout.exercises.splice(i,1); haptic('medium'); render(); }
 function addSet(i) { const ex=state.currentWorkout.exercises[i]; const l=ex.sets.filter(s=>!s.isWarmup).pop()||{ weight:0,reps:8 }; ex.sets.push({ weight:l.weight,reps:l.reps,isWarmup:false,completed:false }); haptic('light'); render(); }
@@ -1161,7 +1240,7 @@ function renderAnatomyMap() {
 // ТРЕНДЫ
 // ============================================
 function renderProgress() {
-  setTimeout(() => { drawWeightChart(); drawMeasurementsChart(); drawRadarChart(); }, 50);
+  setTimeout(() => { drawWeightChart(); drawMeasurementsChart(); drawRadarChart(); drawVolumeChart(); }, 50);
   let deltaText='', deltaColor='var(--muted)';
   if (state.bodyLog.length>1) {
     const sorted=[...state.bodyLog].sort((a,b)=>a.date.localeCompare(b.date));
@@ -1173,6 +1252,8 @@ function renderProgress() {
   const friends=[{ name:'Макс', ton:myTon+1500 },{ name:'Анна', ton:myTon+800 },{ name:'Ты', ton:myTon, me:true },{ name:'Алекс', ton:myTon-300 }].sort((a,b)=>b.ton-a.ton);
   return `<h1>Тренды</h1>
   <div class="bento-grid">
+    <div class="card glass-card span-2"><h2><i class="ph ph-chart-bar" style="color:var(--accent);"></i> Объем по неделям</h2><p class="muted" style="font-size:13px;margin-bottom:16px;">Суммарный тоннаж за последние 8 недель</p><div class="chart-container"><canvas id="volumeChart"></canvas></div></div>
+    
     <div class="card glass-card span-2"><h2><i class="ph ph-calendar-check" style="color:var(--accent);"></i> Календарь активности</h2><p class="muted" style="font-size:13px;margin-bottom:12px;">Тренировки и кардио за месяц</p>${renderCalendar()}</div>
     <div class="card glass-card span-2"><h2><i class="ph ph-person" style="color:var(--accent);"></i> Карта восстановления</h2><p class="muted" style="font-size:13px;margin-bottom:16px;">Цвет = готовность мышц</p>${renderAnatomyMap()}</div>
     <div class="card"><h2>Лидерборд</h2><p class="muted" style="font-size:13px;margin-bottom:16px;">Тоннаж за месяц</p>${friends.map((f,i) => `<div class="leaderboard-item"><div style="display:flex;align-items:center;gap:10px;"><span style="font-weight:800;color:${i===0?'#ffd700':'var(--muted)'}">${i+1}</span><div class="avatar" style="background:${f.me?'var(--accent)':'var(--card-light)'};color:${f.me?'#000':'var(--text)'}">${f.name[0]}</div><span style="font-weight:${f.me?'800':'500'};color:${f.me?'var(--accent)':'var(--text)'}">${f.name}</span></div><span style="font-weight:700;">${f.ton.toLocaleString('ru')} кг</span></div>`).join('')}</div>
@@ -1187,6 +1268,58 @@ function saveMeasurements() {
   const m = { date:today(), chest:+document.getElementById('m_chest').value||null, waist:+document.getElementById('m_waist').value||null, bicep:+document.getElementById('m_bicep').value||null, thigh:+document.getElementById('m_thigh').value||null };
   if (!m.chest && !m.waist && !m.bicep && !m.thigh) return alert('Введи хотя бы один замер');
   state.measurements.push(m); save(STORAGE.measurements, state.measurements); checkAchievements(); haptic('success'); alert('Замеры сохранены!'); render();
+}
+
+function drawVolumeChart() {
+  const ctx = document.getElementById('volumeChart'); if (!ctx) return;
+  if (state.volumeChartInstance) state.volumeChartInstance.destroy();
+
+  const weeks = {}; 
+  state.workouts.forEach(w => {
+    const d = new Date(w.date);
+    const day = d.getDay() || 7;
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - day + 1);
+    const key = monday.toISOString().slice(0, 10);
+    
+    if (!weeks[key]) {
+      weeks[key] = { label: `${monday.getDate()}.${(monday.getMonth()+1).toString().padStart(2,'0')}`, volume: 0 };
+    }
+    weeks[key].volume += w.tonnage || 0;
+  });
+
+  const sortedKeys = Object.keys(weeks).sort();
+  const last8 = sortedKeys.slice(-8);
+  
+  const labels = last8.map(k => weeks[k].label);
+  const data = last8.map(k => weeks[k].volume);
+
+  const accentColor = state.themeColor || '#a2ff00';
+  const gridColor = state.themeMode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)';
+  const textColor = state.themeMode === 'light' ? '#6e6e73' : '#8e8e93';
+
+  state.volumeChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels.length ? labels : ['Нет данных'],
+      datasets: [{
+        label: 'Тоннаж за неделю, кг',
+        data: data.length ? data : [0],
+        backgroundColor: accentColor + '88',
+        borderColor: accentColor,
+        borderWidth: 2,
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { grid: { color: gridColor }, ticks: { color: textColor }, beginAtZero: true },
+        x: { grid: { display: false }, ticks: { color: textColor } }
+      }
+    }
+  });
 }
 
 function drawWeightChart() {
@@ -1312,7 +1445,7 @@ function exportWorkoutStory(id) {
 }
 
 // ============================================
-// ПЛАН ПИТАНИЯ
+// ПЛАН ПИТАНИЯ, БЛИНЫ, 1ПМ, ТАЙМЕР
 // ============================================
 function showPlan(type) {
   const title = document.getElementById('plan-title'), content = document.getElementById('plan-content');
@@ -1340,9 +1473,6 @@ function generateMealPlan() {
   return plans[goal] || plans.maintain;
 }
 
-// ============================================
-// БЛИНЫ + КАЛЬКУЛЯТОР 1ПМ + AI + ТАЙМЕР
-// ============================================
 function showPlates(totalWeight) {
   if (!totalWeight || totalWeight <= 20) document.getElementById('plates-result').innerHTML = "Пустой гриф (20 кг)";
   else {
