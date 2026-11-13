@@ -12,6 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.js"></script>
+<script src="https://js.puter.com/v2/"></script>
 <style>
   :root { --bg:#000; --card:#1c1c1e; --card-light:#2c2c2e; --text:#fff; --muted:#8e8e93; --move:#fa114f; --exercise:#a2ff00; --stand:#00d4ff; --accent:#a2ff00; --premium:#ffd700; --radius:28px; --border:#38383a; --nav-bg:rgba(28,28,30,0.9); }
   [data-theme="light"] { --bg:#f2f2f7; --card:#fff; --card-light:#e5e5ea; --text:#000; --muted:#6e6e73; --border:#d1d1d6; --nav-bg:rgba(255,255,255,0.9); }
@@ -312,9 +313,11 @@
 <div id="food-modal" class="modal-overlay" onclick="closeModal('food-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Добавить еду</h2>
-    <p class="muted" style="font-size:13px; margin-top:-10px; margin-bottom:16px;">Введи блюдо и вес (например: курица 150)</p>
+    <p class="muted" style="font-size:13px; margin-top:-10px; margin-bottom:16px;">Введи блюдо и вес или сфотографируй</p>
     <input type="text" id="food-input" placeholder="Название и вес..." style="text-align:center; margin-bottom:20px;">
     <button onclick="processFoodInput()"><i class="ph ph-check"></i> Добавить в дневник</button>
+    <button class="secondary" onclick="document.getElementById('food-photo-input').click()" style="margin-top:8px;"><i class="ph ph-camera"></i> Сфотографировать еду</button>
+    <input type="file" id="food-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="handleFoodPhoto(event)">
   </div>
 </div>
 
@@ -495,10 +498,28 @@ const PROGRAMS_DB = {
 const INJURIES_LIST = ['Плечо','Колено','Поясница','Локоть','Запястье','Шея','Голеностоп','Тазобедренный'];
 
 const EXERCISE_GIFS = {
-  'Жим лёжа':'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0025-EIeI8Vf.gif',
-  'Приседания со штангой':'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0043-qXTaZnJ.gif',
-  'Становая тяга':'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0032-ila4NZS.gif',
-  'default':'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0043-qXTaZnJ.gif'
+  'Жим лёжа': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0025-EIeI8Vf.gif',
+  'Приседания со штангой': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0043-qXTaZnJ.gif',
+  'Становая тяга': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0032-ila4NZS.gif',
+  'Подтягивания': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0652-lBDjFxJ.gif',
+  'Жим стоя': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0091-kTbSHYq.gif',
+  'Тяга штанги в наклоне': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0027-vT3S1lB.gif',
+  'Жим гантелей лёжа': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0305-3TZdu2S.gif',
+  'Тяга верхнего блока': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0231-0V2Y5l9.gif',
+  'Жим ногами': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0146-1gPfomN.gif',
+  'Выпады с гантелями': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0334-2gPfomN.gif',
+  'Подъём штанги на бицепс': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0031-3gPfomN.gif',
+  'Французский жим': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0060-4gPfomN.gif',
+  'Разводка гантелей': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0308-5gPfomN.gif',
+  'Тяга Т-грифа': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0028-6gPfomN.gif',
+  'Махи гантелями в стороны': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0334-7gPfomN.gif',
+  'Подъём гантелей на бицепс': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0294-8gPfomN.gif',
+  'Разгибание на трицепс на блоке': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0241-9gPfomN.gif',
+  'Планка': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/1587-Plank.gif',
+  'Скручивания': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0001-Crunch.gif',
+  'Подъём ног в висе': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0472-HangingLegRaise.gif',
+  'Румынская тяга': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0085-RomanianDeadlift.gif',
+  'Икры в тренажере': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0258-CalfRaise.gif'
 };
 
 const EXERCISE_DESCS = {
@@ -520,7 +541,7 @@ let state = {
   profile: load(STORAGE.profile), workouts: load(STORAGE.workouts)||[], bodyLog: load(STORAGE.bodyLog)||[],
   runs: load(STORAGE.runs)||[], swims: load(STORAGE.swims)||[], measurements: load(STORAGE.measurements)||[], achievements: load(STORAGE.achievements)||[],
   isPremium: load(STORAGE.premium)||false, customExercises: load(STORAGE.customEx)||{}, templates: load(STORAGE.templates)||[], injuries: load(STORAGE.injuries)||[],
-  customPrograms: load(STORAGE.customProg)||[], // НОВОЕ: свои программы
+  customPrograms: load(STORAGE.customProg)||[],
   completedPrograms: load('fit_completed_programs')||0, themeColor: load(STORAGE.themeColor)||'#a2ff00', themeMode: load(STORAGE.themeMode)||'dark',
   shoppingList: load(STORAGE.shoppingList)||[],
   daily: load(STORAGE.daily)||{ date:today(), water:0, calories:0, p:0, f:0, cb:0, sleep:null, mood:null, steps:0, habits:{ water:false, steps:false, sleep:false } },
@@ -534,7 +555,7 @@ let obGoal='maintain', obEditMode=false;
 let prShownThisWorkout = new Set();
 let currentSetNoteTarget = { exIdx:null, setIdx:null };
 let currentInjuriesTemp = [];
-let tempProgramExercises = []; // Для создания своей программы
+let tempProgramExercises = []; 
 
 function applyTheme(mode) { document.documentElement.setAttribute('data-theme', mode); state.themeMode=mode; save(STORAGE.themeMode, mode); }
 applyTheme(state.themeMode);
@@ -626,7 +647,6 @@ async function downloadCloudData() {
     }
   } catch(e) {}
 
-  // Загрузка своих упражнений
   try {
     const { data: exs, error: eErr } = await supabase.from('custom_exercises').select('*');
     if (exs && !eErr) {
@@ -635,7 +655,6 @@ async function downloadCloudData() {
     }
   } catch(e) {}
 
-  // Загрузка своих программ
   try {
     const { data: progs, error: prErr } = await supabase.from('custom_programs').select('*');
     if (progs && !prErr && progs.length > 0) {
@@ -741,7 +760,73 @@ function uploadBackup(event) {
 }
 
 // ============================================
-// ВИЗУАЛИЗАТОР ШТАНГИ
+// РАСПОЗНАВАНИЕ ЕДЫ ПО ФОТО (PUTER.JS)
+// ============================================
+async function handleFoodPhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  closeModal('food-modal');
+  showToast('Анализируем фото... 🍽️');
+
+  try {
+    const base64Image = await fileToBase64(file);
+    const prompt = `Проанализируй это изображение еды. Определи, что это за блюдо, его примерный вес в граммах и рассчитай КБЖУ. 
+    Ответь СТРОГО в формате JSON без какого-либо другого текста, используя шаблон:
+    {"name": "Название", "weight": 250, "calories": 350, "protein": 20, "fat": 15, "carbs": 30}`;
+    
+    const response = await puter.ai.chat(prompt, base64Image, {
+        model: 'google/gemini-3.8-flash'
+    });
+
+    const textResponse = response.toString();
+    const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Модель не вернула JSON');
+    const result = JSON.parse(jsonMatch[0]);
+
+    if (result && result.name) {
+      const confirmAdd = confirm(
+        `Распознано: ${result.name}\n\n` +
+        `Вес: ~${result.weight}г\n` +
+        `Калории: ${result.calories} ккал\n` +
+        `Белки: ${result.protein}г\n` +
+        `Жиры: ${result.fat}г\n` +
+        `Углеводы: ${result.carbs}г\n\n` +
+        `Добавить в дневник?`
+      );
+      
+      if (confirmAdd) {
+        state.daily.calories = (state.daily.calories || 0) + result.calories;
+        state.daily.p = (state.daily.p || 0) + result.protein;
+        state.daily.f = (state.daily.f || 0) + result.fat;
+        state.daily.cb = (state.daily.cb || 0) + result.carbs;
+        save(STORAGE.daily, state.daily);
+        haptic('success');
+        showToast(`Добавлено: ${result.name}`);
+        render();
+      }
+    } else {
+      alert('Не удалось распознать еду. Попробуй другое фото.');
+    }
+  } catch (error) {
+    console.error('Ошибка распознавания:', error);
+    alert('Ошибка: ' + error.message);
+  } finally {
+    event.target.value = '';
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+}
+
+// ============================================
+// ВИЗУАЛИЗАТОР ШТАНГИ, ТРАВМЫ, ПРОГРАММЫ, ТЕХНИКА
 // ============================================
 function renderBarbell(weight) {
   if (!weight || weight<=20) return '';
@@ -761,9 +846,6 @@ function renderBarbell(weight) {
   return `<div class="barbell-svg-wrap"><svg class="barbell-svg" viewBox="0 0 300 60" preserveAspectRatio="xMidYMid meet"><rect x="0" y="26" width="300" height="8" fill="#a0a0a0" rx="4"/><rect x="125" y="22" width="6" height="16" fill="#555" rx="2"/><rect x="169" y="22" width="6" height="16" fill="#555" rx="2"/><rect x="131" y="24" width="31" height="12" fill="#666"/>${html}</svg></div>`;
 }
 
-// ============================================
-// ТРАВМЫ, ПРОГРАММЫ, ТЕХНИКА
-// ============================================
 function openInjuryModal() { currentInjuriesTemp=[...state.injuries]; renderInjuryList(); document.getElementById('injury-modal').classList.add('active'); }
 function renderInjuryList() {
   document.getElementById('injury-list').innerHTML = INJURIES_LIST.map(inj => {
@@ -776,12 +858,10 @@ function saveInjuries() { state.injuries=[...currentInjuriesTemp]; save(STORAGE.
 
 function openProgramsModal() {
   let html = '';
-  // Готовые
   Object.keys(PROGRAMS_DB).forEach(key => {
     const p=PROGRAMS_DB[key];
     html += `<div class="program-card" onclick="loadProgram('${key}')"><div style="font-size:16px;font-weight:800;color:var(--accent);margin-bottom:4px;">${p.name}</div><div class="muted" style="font-size:12px;line-height:1.4;">${p.desc}</div></div>`;
   });
-  // Свои
   state.customPrograms.forEach((p, i) => {
     html += `<div class="program-card" onclick="loadCustomProgram(${i})" style="border-left:3px solid var(--stand);">
       <div style="font-size:16px;font-weight:800;color:var(--stand);margin-bottom:4px;">${p.name}</div>
@@ -854,7 +934,7 @@ function openExerciseInfo(exName) {
   document.getElementById('ex-info-desc').innerText = EXERCISE_DESCS[exName] || EXERCISE_DESCS['default'];
   gifEl.style.display='none'; fallbackEl.style.display='none'; gifEl.src='';
   document.getElementById('exercise-info-modal').classList.add('active');
-  const gifUrl = EXERCISE_GIFS[exName] || EXERCISE_GIFS['default'];
+  const gifUrl = EXERCISE_GIFS[exName];
   if (gifUrl) { gifEl.src=gifUrl; gifEl.style.display='block'; gifEl.onerror = () => { gifEl.style.display='none'; fallbackEl.style.display='block'; fallbackEl.innerHTML='<i class="ph ph-warning-circle" style="font-size:48px;"></i><div>Анимация недоступна</div>'; }; }
   else { fallbackEl.style.display='block'; fallbackEl.innerHTML='<i class="ph ph-video-camera-slash" style="font-size:48px;"></i><div>Нет анимации</div>'; }
 }
