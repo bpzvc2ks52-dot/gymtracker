@@ -312,11 +312,9 @@
 <div id="food-modal" class="modal-overlay" onclick="closeModal('food-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Добавить еду</h2>
-    <p class="muted" style="font-size:13px; margin-top:-10px; margin-bottom:16px;">Введи блюдо и вес или сфотографируй</p>
+    <p class="muted" style="font-size:13px; margin-top:-10px; margin-bottom:16px;">Введи название продукта и вес (например: курица 150)</p>
     <input type="text" id="food-input" placeholder="Название и вес..." style="text-align:center; margin-bottom:20px;">
-    <button onclick="processFoodInput()"><i class="ph ph-check"></i> Добавить в дневник</button>
-    <button class="secondary" onclick="document.getElementById('food-photo-input').click()" style="margin-top:8px;"><i class="ph ph-camera"></i> Сфотографировать еду</button>
-    <input type="file" id="food-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="handleFoodPhoto(event)">
+    <button onclick="processFoodInput()"><i class="ph ph-check"></i> Найти и добавить</button>
   </div>
 </div>
 
@@ -527,8 +525,6 @@ const EXERCISE_DESCS = {
   'Становая тяга':'Тяните штангу с пола за счет разгибания ног и спины.',
   'default':'Следите за дыханием и правильной техникой.'
 };
-
-const FOOD_DB = { 'курица':{c:165,p:31,f:3.6,cb:0},'куриная грудка':{c:165,p:31,f:3.6,cb:0},'индейка':{c:150,p:29,f:3,cb:0},'говядина':{c:250,p:26,f:15,cb:0},'рыба':{c:120,p:20,f:4,cb:0},'лосось':{c:208,p:20,f:13,cb:0},'тунец':{c:130,p:29,f:1,cb:0},'творог':{c:180,p:18,f:2,cb:2},'яйцо':{c:155,p:13,f:11,cb:1.1},'сыр':{c:350,p:25,f:27,cb:0},'молоко':{c:52,p:3,f:2.5,cb:4.7},'рис':{c:344,p:6.7,f:0.7,cb:78},'гречка':{c:343,p:12.6,f:3.3,cb:62},'овсянка':{c:350,p:12,f:6,cb:60},'картофель':{c:77,p:2,f:0.1,cb:17},'банан':{c:89,p:1.1,f:0.3,cb:22.8},'яблоко':{c:52,p:0.3,f:0.2,cb:14},'орехи':{c:600,p:20,f:55,cb:15},'вода':{c:0,p:0,f:0,cb:0} };
 
 const COLORS = [{ id:'green',hex:'#a2ff00'},{id:'pink',hex:'#fa114f'},{id:'blue',hex:'#00d4ff'},{id:'orange',hex:'#ff9f0a'},{id:'purple',hex:'#bf5af2'}];
 
@@ -759,84 +755,75 @@ function uploadBackup(event) {
 }
 
 // ============================================
-// РАСПОЗНАВАНИЕ ЕДЫ ПО ФОТО (POLLINATIONS.AI)
+// ПОИСК ЕДЫ В БАЗЕ OPEN FOOD FACTS
 // ============================================
-async function handleFoodPhoto(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+async function processFoodInput() {
+  const input = document.getElementById('food-input').value.toLowerCase().trim(); 
+  if(!input) return;
+
+  const match = input.match(/(\d+)/); 
+  const weight = match ? parseInt(match[1]) : 100; 
+  const query = input.replace(/(\d+)/g, '').replace('г', '').replace('гр', '').trim();
+
+  if (!query) return;
 
   closeModal('food-modal');
-  showToast('Анализируем фото... 🍽️');
+  showToast('Ищем продукт в базе... 🔍');
 
   try {
-    const base64Image = await fileToBase64(file);
-    const promptText = 'Проанализируй это изображение еды. Определи, что это за блюдо, его примерный вес в граммах и рассчитай КБЖУ. Ответь СТРОГО в формате JSON без какого-либо другого текста, используя шаблон: {"name": "Название", "weight": 250, "calories": 350, "protein": 20, "fat": 15, "carbs": 30}';
-
-    const response = await fetch('https://text.pollinations.ai/openai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'openai',
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'text', text: promptText },
-            { type: 'image_url', image_url: { url: base64Image } }
-          ]
-        }],
-        max_tokens: 500
-      })
-    });
-
-    if (!response.ok) throw new Error('Ошибка сети: ' + response.status);
-
+    const response = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=10`);
     const data = await response.json();
-    const textResponse = data.choices[0].message.content;
-    
-    const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Модель не вернула JSON');
-    
-    const result = JSON.parse(jsonMatch[0]);
 
-    if (result && result.name) {
-      const confirmAdd = confirm(
-        `Распознано: ${result.name}\n\n` +
-        `Вес: ~${result.weight}г\n` +
-        `Калории: ${result.calories} ккал\n` +
-        `Белки: ${result.protein}г\n` +
-        `Жиры: ${result.fat}г\n` +
-        `Углеводы: ${result.carbs}г\n\n` +
-        `Добавить в дневник?`
-      );
-      
-      if (confirmAdd) {
-        state.daily.calories = (state.daily.calories || 0) + result.calories;
-        state.daily.p = (state.daily.p || 0) + result.protein;
-        state.daily.f = (state.daily.f || 0) + result.fat;
-        state.daily.cb = (state.daily.cb || 0) + result.carbs;
-        save(STORAGE.daily, state.daily);
-        haptic('success');
-        showToast(`Добавлено: ${result.name}`);
-        render();
+    if (data.products && data.products.length > 0) {
+      const product = data.products.find(p => p.nutriments && p.nutriments['energy-kcal_100g'] !== undefined);
+
+      if (product) {
+        const name = product.product_name_ru || product.product_name || query;
+        const brand = product.brands ? ` (${product.brands})` : '';
+        
+        const c100 = product.nutriments['energy-kcal_100g'] || 0;
+        const p100 = product.nutriments['proteins_100g'] || 0;
+        const f100 = product.nutriments['fat_100g'] || 0;
+        const cb100 = product.nutriments['carbohydrates_100g'] || 0;
+
+        const multiplier = weight / 100;
+        const c = Math.round(c100 * multiplier);
+        const p = Math.round(p100 * multiplier);
+        const f = Math.round(f100 * multiplier);
+        const cb = Math.round(cb100 * multiplier);
+
+        const confirmAdd = confirm(
+          `Найдено: ${name}${brand}\n` +
+          `Вес: ${weight}г\n\n` +
+          `Калории: ${c} ккал\n` +
+          `Белки: ${p}г\n` +
+          `Жиры: ${f}г\n` +
+          `Углеводы: ${cb}г\n\n` +
+          `Добавить в дневник?`
+        );
+
+        if (confirmAdd) {
+          state.daily.calories = (state.daily.calories || 0) + c;
+          state.daily.p = (state.daily.p || 0) + p;
+          state.daily.f = (state.daily.f || 0) + f;
+          state.daily.cb = (state.daily.cb || 0) + cb;
+          save(STORAGE.daily, state.daily);
+          haptic('success');
+          showToast(`Добавлено: ${name}`);
+          render();
+        }
+      } else {
+        alert(`Продукт "${query}" найден, но у него нет данных о калорийности. Попробуй уточнить название (например, добавь бренд).`);
       }
     } else {
-      alert('Не удалось распознать еду. Попробуй другое фото.');
+      alert(`Продукт "${query}" не найден в базе. Попробуй написать иначе.`);
     }
   } catch (error) {
-    console.error('Ошибка распознавания:', error);
-    alert('Ошибка при анализе фото: ' + error.message);
+    console.error('Ошибка поиска:', error);
+    alert('Ошибка при поиске продукта. Проверь интернет.');
   } finally {
-    event.target.value = '';
+    document.getElementById('food-input').value = '';
   }
-}
-
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-  });
 }
 
 // ============================================
@@ -1094,20 +1081,6 @@ function renderHome() {
 function toggleHabit(habit) { if (!state.daily.habits) state.daily.habits={ water:false,steps:false,sleep:false }; state.daily.habits[habit]=!state.daily.habits[habit]; save(STORAGE.daily,state.daily); haptic('light'); render(); }
 function addWater(amount=250) { state.daily.water=(state.daily.water||0)+amount; save(STORAGE.daily,state.daily); haptic('light'); showToast(`+${amount} мл`); render(); }
 function openFoodModal() { document.getElementById('food-input').value=''; document.getElementById('food-modal').classList.add('active'); }
-function processFoodInput() {
-  const input=document.getElementById('food-input').value.toLowerCase().trim(); if(!input) return;
-  let found=null; const sortedKeys=Object.keys(FOOD_DB).sort((a,b)=>b.length-a.length);
-  for (const key of sortedKeys) { if (input.includes(key)) { found=key; break; } }
-  if (found) {
-    const match=input.match(/(\d+)/); const weight=match?parseInt(match[1]):100;
-    const p=FOOD_DB[found]; const m=weight/100;
-    state.daily.calories=(state.daily.calories||0)+Math.round(p.c*m);
-    state.daily.p=(state.daily.p||0)+Math.round(p.p*m);
-    state.daily.f=(state.daily.f||0)+Math.round(p.f*m);
-    state.daily.cb=(state.daily.cb||0)+Math.round(p.cb*m);
-    save(STORAGE.daily, state.daily); closeModal('food-modal'); haptic('success'); showToast(`Добавлено: ${found} ${weight}г`); render();
-  } else { alert(`Продукт "${input}" не найден.`); }
-}
 
 // ============================================
 // БЕГ
