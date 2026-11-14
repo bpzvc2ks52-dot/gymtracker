@@ -312,7 +312,7 @@
 <div id="food-modal" class="modal-overlay" onclick="closeModal('food-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Добавить еду</h2>
-    <p class="muted" style="font-size:13px; margin-top:-10px; margin-bottom:16px;">Введи название продукта и вес (например: курица 150)</p>
+    <p class="muted" style="font-size:13px; margin-top:-10px; margin-bottom:16px;">Введи название и количество (например: курица 150)</p>
     <input type="text" id="food-input" placeholder="Название и вес..." style="text-align:center; margin-bottom:20px;">
     <button onclick="processFoodInput()"><i class="ph ph-check"></i> Найти и добавить</button>
   </div>
@@ -849,8 +849,15 @@ async function processFoodInput() {
           state.daily.f = (state.daily.f || 0) + f;
           state.daily.cb = (state.daily.cb || 0) + cb;
           save(STORAGE.daily, state.daily);
-          haptic('success');
-          showToast(`Добавлено: ${name}`);
+          
+          const targets = getTargets();
+          if (state.daily.calories > targets.calories) {
+            haptic('warn'); 
+            showToast(`⚠️ Перебор на ${state.daily.calories - targets.calories} ккал!`);
+          } else {
+            haptic('success'); 
+            showToast(`Добавлено: ${name}`);
+          }
           render();
         }
         return;
@@ -894,8 +901,15 @@ function addFoodFromDB(name, nutrients, weight) {
     state.daily.f = (state.daily.f || 0) + f;
     state.daily.cb = (state.daily.cb || 0) + cb;
     save(STORAGE.daily, state.daily);
-    haptic('success');
-    showToast(`Добавлено: ${name}`);
+    
+    const targets = getTargets();
+    if (state.daily.calories > targets.calories) {
+      haptic('warn'); 
+      showToast(`⚠️ Перебор на ${state.daily.calories - targets.calories} ккал!`);
+    } else {
+      haptic('success'); 
+      showToast(`Добавлено: ${name}`);
+    }
     render();
   }
   document.getElementById('food-input').value = '';
@@ -1108,46 +1122,146 @@ function render() {
 // СВОДКА
 // ============================================
 function renderHome() {
-  const targets=getTargets();
-  const done=state.workouts.some(w => w.date===today());
-  const streak=getStreak(); const advice=getSmartAdvice(); const forecast=getWeightForecast();
-  const waterMl=state.daily.water||0;
-  const waterPct=Math.min((waterMl/2000)*100,100);
-  const stepsPct=Math.min((state.daily.steps/10000)*100,100);
-  const calPct=Math.min(((state.daily.calories||0)/targets.calories)*100,100);
-  const wPct=done?100:0;
-  const size=76, stroke=7, r=(size-stroke)/2, circ=2*Math.PI*r;
+  const targets = getTargets();
+  const done = state.workouts.some(w => w.date === today());
+  const streak = getStreak();
+  const advice = getSmartAdvice();
+  const forecast = getWeightForecast();
+  
+  const waterMl = state.daily.water || 0;
+  const waterPct = Math.min((waterMl / 2000) * 100, 100);
+  const stepsPct = Math.min((state.daily.steps / 10000) * 100, 100);
+  
+  // ЛОГИКА ПЕРЕБОРА КАЛОРИЙ
+  const isOverCalories = (state.daily.calories || 0) > targets.calories;
+  const calPct = Math.min(((state.daily.calories || 0) / targets.calories) * 100, 100);
+  const calColor = isOverCalories ? 'var(--move)' : 'var(--premium)'; // Красный при переборе
+  const overAmount = isOverCalories ? ((state.daily.calories || 0) - targets.calories) : 0;
+
+  const wPct = done ? 100 : 0;
+  const size = 76, stroke = 7, r = (size - stroke) / 2, circ = 2 * Math.PI * r;
+
   return `
     <h1>Сводка</h1>
-    ${streak>0?`<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;background:linear-gradient(90deg,rgba(250,17,79,0.15),transparent);padding:14px 20px;border-radius:20px;border-left:4px solid var(--move);"><span style="font-size:32px;">🔥</span><div><div style="font-weight:800;font-size:18px;">${streak} ${streak===1?'день':(streak>1&&streak<5)?'дня':'дней'} подряд</div><div class="muted" style="font-size:12px;">Не разрывай серию!</div></div></div>`:''}
-    ${state.injuries && state.injuries.length>0?`<div class="card glass-card" style="padding:16px;border-left:4px solid var(--move);margin-bottom:16px;"><div style="display:flex;gap:10px;"><i class="ph-fill ph-warning-circle" style="color:var(--move);font-size:24px;"></i><div><div style="font-weight:700;font-size:14px;">Внимание, травмы!</div><div style="font-size:13px;">Ты отметил: <b>${state.injuries.join(', ')}</b></div></div></div></div>`:''}
-    ${advice?`<div class="card glass-card" style="padding:16px;border-left:4px solid var(--accent);margin-bottom:16px;"><div style="display:flex;gap:10px;"><i class="ph-fill ph-lightbulb" style="color:var(--accent);font-size:24px;"></i><div><div style="font-weight:700;font-size:14px;">Умный совет</div><div style="font-size:13px;">${advice}</div></div></div></div>`:''}
-    ${forecast?`<div class="card glass-card" style="padding:16px;border-left:4px solid var(--stand);margin-bottom:16px;"><div style="display:flex;gap:10px;"><i class="ph-fill ph-chart-line-up" style="color:var(--stand);font-size:24px;"></i><div><div style="font-weight:700;font-size:14px;">Прогноз веса</div><div style="font-size:13px;">${forecast}</div></div></div></div>`:''}
+    
+    ${streak > 0 ? `
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; background:linear-gradient(90deg, rgba(250,17,79,0.15), transparent); padding:14px 20px; border-radius:20px; border-left:4px solid var(--move);">
+      <span style="font-size:32px; line-height:1;">🔥</span>
+      <div>
+        <div style="font-weight:800; font-size:18px;">${streak} ${streak === 1 ? 'день' : (streak > 1 && streak < 5) ? 'дня' : 'дней'} подряд</div>
+        <div class="muted" style="font-size:12px;">Не разрывай серию! Тренируйся сегодня.</div>
+      </div>
+    </div>` : ''}
+
+    ${isOverCalories ? `
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; background:linear-gradient(90deg, rgba(250,17,79,0.2), transparent); padding:14px 20px; border-radius:20px; border-left:4px solid var(--move); animation: pulse 2s infinite;">
+      <span style="font-size:32px; line-height:1;">⚠️</span>
+      <div>
+        <div style="font-weight:800; font-size:18px; color:var(--move);">Перебор калорий!</div>
+        <div class="muted" style="font-size:12px;">Ты превысил норму на <b>${overAmount} ккал</b>.</div>
+      </div>
+    </div>` : ''}
+
+    ${state.injuries && state.injuries.length > 0 ? `
+    <div class="card glass-card" style="padding:16px; border-left:4px solid var(--move); margin-bottom:16px;">
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <i class="ph-fill ph-warning-circle" style="color:var(--move); font-size:24px;"></i>
+        <div><div style="font-weight:700; font-size:14px;">Внимание, травмы!</div><div style="font-size:13px;">Ты отметил: <b>${state.injuries.join(', ')}</b>.</div></div>
+      </div>
+    </div>` : ''}
+
+    ${advice ? `
+    <div class="card glass-card" style="padding:16px; border-left:4px solid var(--accent); margin-bottom:16px;">
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <i class="ph-fill ph-lightbulb" style="color:var(--accent); font-size:24px;"></i>
+        <div><div style="font-weight:700; font-size:14px;">Умный совет</div><div style="font-size:13px;">${advice}</div></div>
+      </div>
+    </div>` : ''}
+
+    ${forecast ? `
+    <div class="card glass-card" style="padding:16px; border-left:4px solid var(--stand); margin-bottom:16px;">
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <i class="ph-fill ph-chart-line-up" style="color:var(--stand); font-size:24px;"></i>
+        <div><div style="font-weight:700; font-size:14px;">Прогноз веса</div><div style="font-size:13px;">${forecast}</div></div>
+      </div>
+    </div>` : ''}
+
     <div class="bento-grid">
-      <div class="card glass-card span-2" style="padding:30px 10px;">
+      <div class="card glass-card span-2" style="padding: 30px 10px; ${isOverCalories ? 'border: 1px solid rgba(250,17,79,0.3);' : ''}">
         <div class="rings-container">
-          <div class="ring-wrap" style="width:${size}px;height:${size}px;"><svg class="ring-svg" viewBox="0 0 76 76"><circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle><circle class="ring-progress" cx="${size/2}" cy="${size/2}" r="${r}" style="stroke:var(--exercise);stroke-dasharray:${circ};stroke-dashoffset:${circ-(wPct/100)*circ};"></circle></svg><div class="ring-content"><i class="ph ph-barbell ring-icon" style="color:var(--exercise);font-size:14px;"></i><span class="ring-val" style="font-size:10px;">${done?'100%':'0%'}</span></div></div>
-          <div class="ring-wrap" style="width:${size}px;height:${size}px;"><svg class="ring-svg" viewBox="0 0 76 76"><circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle><circle class="ring-progress" cx="${size/2}" cy="${size/2}" r="${r}" style="stroke:var(--premium);stroke-dasharray:${circ};stroke-dashoffset:${circ-(calPct/100)*circ};"></circle></svg><div class="ring-content"><i class="ph ph-fire ring-icon" style="color:var(--premium);font-size:14px;"></i><span class="ring-val" style="font-size:10px;">${Math.round(calPct)}%</span></div></div>
-          <div class="ring-wrap" style="width:${size}px;height:${size}px;"><svg class="ring-svg" viewBox="0 0 76 76"><circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle><circle class="ring-progress" cx="${size/2}" cy="${size/2}" r="${r}" style="stroke:var(--stand);stroke-dasharray:${circ};stroke-dashoffset:${circ-(waterPct/100)*circ};"></circle></svg><div class="ring-content"><i class="ph ph-drop ring-icon" style="color:var(--stand);font-size:14px;"></i><span class="ring-val" style="font-size:10px;">${waterMl}</span></div></div>
-          <div class="ring-wrap" style="width:${size}px;height:${size}px;"><svg class="ring-svg" viewBox="0 0 76 76"><circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle><circle class="ring-progress" cx="${size/2}" cy="${size/2}" r="${r}" style="stroke:var(--move);stroke-dasharray:${circ};stroke-dashoffset:${circ-(stepsPct/100)*circ};"></circle></svg><div class="ring-content"><i class="ph ph-sneaker ring-icon" style="color:var(--move);font-size:14px;"></i><span class="ring-val" style="font-size:10px;">${state.daily.steps}</span></div></div>
+          <div class="ring-wrap" style="width:${size}px; height:${size}px;">
+            <svg class="ring-svg" viewBox="0 0 76 76">
+              <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle>
+              <circle class="ring-progress" cx="${size/2}" cy="${size/2}" r="${r}" style="stroke:var(--exercise); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (wPct/100)*circ};"></circle>
+            </svg>
+            <div class="ring-content">
+              <i class="ph ph-barbell ring-icon" style="color:var(--exercise); font-size:14px;"></i>
+              <span class="ring-val" style="font-size:10px;">${done ? '100%' : '0%'}</span>
+            </div>
+          </div>
+          
+          <div class="ring-wrap" style="width:${size}px; height:${size}px;">
+            <svg class="ring-svg" viewBox="0 0 76 76">
+              <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle>
+              <circle class="ring-progress" cx="${size/2}" cy="${size/2}" r="${r}" style="stroke:${calColor}; stroke-dasharray:${circ}; stroke-dashoffset:${circ - (calPct/100)*circ};"></circle>
+            </svg>
+            <div class="ring-content">
+              <i class="ph ph-fire ring-icon" style="color:${calColor}; font-size:14px;"></i>
+              <span class="ring-val" style="font-size:10px; color:${isOverCalories ? 'var(--move)' : 'inherit'};">${Math.round(calPct)}%</span>
+            </div>
+          </div>
+          
+          <div class="ring-wrap" style="width:${size}px; height:${size}px;">
+            <svg class="ring-svg" viewBox="0 0 76 76">
+              <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle>
+              <circle class="ring-progress" cx="${size/2}" cy="${size/2}" r="${r}" style="stroke:var(--stand); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (waterPct/100)*circ};"></circle>
+            </svg>
+            <div class="ring-content">
+              <i class="ph ph-drop ring-icon" style="color:var(--stand); font-size:14px;"></i>
+              <span class="ring-val" style="font-size:10px;">${waterMl}</span>
+            </div>
+          </div>
+          
+          <div class="ring-wrap" style="width:${size}px; height:${size}px;">
+            <svg class="ring-svg" viewBox="0 0 76 76">
+              <circle class="ring-bg" cx="${size/2}" cy="${size/2}" r="${r}"></circle>
+              <circle class="ring-progress" cx="${size/2}" cy="${size/2}" r="${r}" style="stroke:var(--move); stroke-dasharray:${circ}; stroke-dashoffset:${circ - (stepsPct/100)*circ};"></circle>
+            </svg>
+            <div class="ring-content">
+              <i class="ph ph-sneaker ring-icon" style="color:var(--move); font-size:14px;"></i>
+              <span class="ring-val" style="font-size:10px;">${state.daily.steps}</span>
+            </div>
+          </div>
         </div>
-        <div style="background:var(--card-light);padding:16px;border-radius:16px;margin-top:20px;display:flex;justify-content:space-between;text-align:center;">
-          <div><div style="font-size:16px;font-weight:800;color:var(--premium);">${state.daily.calories}<span style="font-size:11px;color:var(--muted);">/${targets.calories}</span></div><div class="muted" style="font-size:11px;">ККАЛ</div></div>
-          <div><div style="font-size:16px;font-weight:800;">${state.daily.p}<span style="font-size:11px;color:var(--muted);">/${targets.p}</span></div><div class="muted" style="font-size:11px;">БЕЛКИ</div></div>
-          <div><div style="font-size:16px;font-weight:800;">${state.daily.f}<span style="font-size:11px;color:var(--muted);">/${targets.f}</span></div><div class="muted" style="font-size:11px;">ЖИРЫ</div></div>
-          <div><div style="font-size:16px;font-weight:800;">${state.daily.cb}<span style="font-size:11px;color:var(--muted);">/${targets.cb}</span></div><div class="muted" style="font-size:11px;">УГЛЕВ.</div></div>
+
+        <div style="background:var(--card-light); padding:16px; border-radius:16px; margin-top:20px; display:flex; justify-content:space-between; text-align:center;">
+          <div>
+            <div style="font-size:16px; font-weight:800; color:${calColor};">
+              ${state.daily.calories}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.calories}</span>
+            </div>
+            <div class="muted" style="font-size:11px;">ККАЛ</div>
+          </div>
+          <div><div style="font-size:16px; font-weight:800;">${state.daily.p}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.p}</span></div><div class="muted" style="font-size:11px;">БЕЛКИ</div></div>
+          <div><div style="font-size:16px; font-weight:800;">${state.daily.f}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.f}</span></div><div class="muted" style="font-size:11px;">ЖИРЫ</div></div>
+          <div><div style="font-size:16px; font-weight:800;">${state.daily.cb}<span style="font-size:11px; color:var(--muted); font-weight:600;">/${targets.cb}</span></div><div class="muted" style="font-size:11px;">УГЛЕВ.</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;">
-          <button class="secondary" onclick="addWater(250)" style="margin:0;font-size:14px;padding:12px;"><i class="ph ph-plus"></i> 250мл</button>
-          <button class="secondary" onclick="addWater(500)" style="margin:0;font-size:14px;padding:12px;"><i class="ph ph-plus"></i> 500мл</button>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;">
+          <button class="secondary" onclick="addWater(250)" style="margin:0; font-size:14px; padding:12px;"><i class="ph ph-plus"></i> 250мл</button>
+          <button class="secondary" onclick="addWater(500)" style="margin:0; font-size:14px; padding:12px;"><i class="ph ph-plus"></i> 500мл</button>
         </div>
-        <div style="margin-top:10px;"><button class="secondary" onclick="openFoodModal()" style="margin:0;font-size:14px;padding:14px;"><i class="ph ph-fork-knife"></i> Добавить еду</button></div>
+        <div style="display:grid; grid-template-columns:1fr; gap:10px; margin-top:10px;">
+          <button class="secondary" onclick="openFoodModal()" style="margin:0; font-size:14px; padding:14px;"><i class="ph ph-fork-knife"></i> Добавить еду</button>
+        </div>
       </div>
-      <div class="card span-2"><h2 style="margin-bottom:16px;"><i class="ph ph-check-square-offset"></i> Привычки на сегодня</h2>
-        <div class="habit-item ${state.daily.habits.water?'done':''}" onclick="toggleHabit('water')"><span><i class="ph ph-drop" style="color:var(--stand)"></i> Выпить 2л воды</span><div class="habit-check">${state.daily.habits.water?'<i class="ph-bold ph-check"></i>':''}</div></div>
-        <div class="habit-item ${state.daily.habits.steps?'done':''}" onclick="toggleHabit('steps')"><span><i class="ph ph-sneaker" style="color:var(--move)"></i> Пройти 10 000 шагов</span><div class="habit-check">${state.daily.habits.steps?'<i class="ph-bold ph-check"></i>':''}</div></div>
-        <div class="habit-item ${state.daily.habits.sleep?'done':''}" onclick="toggleHabit('sleep')"><span><i class="ph ph-moon" style="color:var(--purple)"></i> Спать 8 часов</span><div class="habit-check">${state.daily.habits.sleep?'<i class="ph-bold ph-check"></i>':''}</div></div>
+      
+      <div class="card span-2">
+        <h2 style="margin-bottom:16px;"><i class="ph ph-check-square-offset"></i> Привычки на сегодня</h2>
+        <div class="habit-item ${state.daily.habits.water ? 'done' : ''}" onclick="toggleHabit('water')"><span><i class="ph ph-drop" style="color:var(--stand)"></i> Выпить 2л воды</span><div class="habit-check">${state.daily.habits.water ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
+        <div class="habit-item ${state.daily.habits.steps ? 'done' : ''}" onclick="toggleHabit('steps')"><span><i class="ph ph-sneaker" style="color:var(--move)"></i> Пройти 10 000 шагов</span><div class="habit-check">${state.daily.habits.steps ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
+        <div class="habit-item ${state.daily.habits.sleep ? 'done' : ''}" onclick="toggleHabit('sleep')"><span><i class="ph ph-moon" style="color:var(--purple)"></i> Спать 8 часов</span><div class="habit-check">${state.daily.habits.sleep ? '<i class="ph-bold ph-check"></i>' : ''}</div></div>
       </div>
+      
       <div class="card glass-card" style="min-height:180px;"><h2 style="margin-bottom:10px;">План тренировок</h2><p class="muted">Программа на неделю</p><button style="margin-top:20px;" onclick="openProgramsModal()">Выбрать программу</button></div>
       <div class="card" style="min-height:180px;"><h2 style="margin-bottom:10px;">План питания</h2><p class="muted">Меню и список покупок</p><button style="margin-top:20px;" onclick="showPlan('food')">Смотреть меню</button></div>
       <div class="card span-2"><button onclick="startWorkout()" style="margin:0;"><i class="ph ph-play"></i> Начать тренировку</button></div>
@@ -1213,59 +1327,6 @@ function renderSwimming() {
 function updateSwimStyle(val) { if (!state.profile.swim) state.profile.swim={ time:30,dist:1000,style:val }; state.profile.swim.style=val; save(STORAGE.profile,state.profile); render(); }
 function saveSwim() { const time=+document.getElementById('swim-time').value; const dist=+document.getElementById('swim-dist').value; const style=document.getElementById('swim-style').value; state.profile.swim={ time,dist,style }; save(STORAGE.profile,state.profile); state.swims=state.swims||[]; state.swims.unshift({ date:today(),time,dist,style }); save(STORAGE.swims,state.swims); checkAchievements(); haptic('success'); alert('Заплыв сохранен!'); render(); }
   // ============================================
-// ПРОДОЛЖЕНИЕ УТИЛИТ
-// ============================================
-function getStreak() {
-  if (state.workouts.length===0) return 0;
-  const dates=[...new Set(state.workouts.map(w=>w.date))].sort().reverse();
-  let streak=0; let checkDate=new Date(); const todayStr=today();
-  if (dates[0]!==todayStr) checkDate.setDate(checkDate.getDate()-1);
-  for (let i=0;i<365;i++) { 
-    const dStr=checkDate.toISOString().slice(0,10); 
-    if (dates.includes(dStr)) { 
-      streak++; checkDate.setDate(checkDate.getDate()-1); 
-    } else { 
-      if (i===0 && dates[0]!==todayStr) { checkDate.setDate(checkDate.getDate()-1); continue; } 
-      break; 
-    } 
-  }
-  return streak;
-}
-
-function getRecoveryColor(group) {
-  const now=new Date(); now.setHours(0,0,0,0); let lastTrainedDate=null;
-  state.workouts.forEach(w => { w.exercises.forEach(ex => { const g=getAllExercises()[ex.name]||'Другое'; if (g===group) { const wDate=new Date(w.date); wDate.setHours(0,0,0,0); if (!lastTrainedDate || wDate>lastTrainedDate) lastTrainedDate=wDate; } }); });
-  if (!lastTrainedDate) return '#2c2c2e';
-  const days=Math.round((now.getTime()-lastTrainedDate.getTime())/(1000*60*60*24));
-  if (days<=1) return '#fa114f'; if (days<=3) return '#ffd700'; return '#a2ff00';
-}
-
-function getSmartAdvice() {
-  if (state.workouts.length===0) return null;
-  const sorted=[...state.workouts].sort((a,b)=>b.id-a.id); const last=sorted[0];
-  const daysSince=Math.floor((new Date()-new Date(last.date))/(1000*60*60*24));
-  if (daysSince>=3) return 'Ты давно не тренировался! Самое время вернуться в зал.';
-  const lastEx = last.exercises.map(e => getAllExercises()[e.name]||'Другое');
-  if (lastEx.includes('Грудь')||lastEx.includes('Спина')||lastEx.includes('Плечи')) return 'Верх тела еще восстанавливается. Сегодня лучше сделать ноги!';
-  if (lastEx.includes('Ноги')) return 'Ноги отдыхают. Идеальный день для жима или тяги!';
-  return 'Ты отлично восстанавливаешься. Продолжай в том же духе!';
-}
-
-function getWeightForecast() {
-  if (state.bodyLog.length<3) return null;
-  const sorted=[...state.bodyLog].sort((a,b)=>a.date.localeCompare(b.date));
-  const first=sorted[0], last=sorted[sorted.length-1];
-  const days=(new Date(last.date)-new Date(first.date))/(1000*60*60*24); if (days<7) return null;
-  const perDay=(last.weight-first.weight)/days; if (Math.abs(perDay)<0.005) return 'Вес стабилен.';
-  const target = state.profile.goal==='cut'?state.profile.weight-5:state.profile.goal==='mass'?state.profile.weight+5:null;
-  if (!target) return null;
-  const daysToTarget = Math.abs((target-last.weight)/perDay); if (daysToTarget>365) return null;
-  const targetDate=new Date(); targetDate.setDate(targetDate.getDate()+daysToTarget);
-  const months=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
-  return `При текущем темпе ты достигнешь цели ~${Math.round(target)} кг к ${targetDate.getDate()} ${months[targetDate.getMonth()]}.`;
-}
-
-// ============================================
 // ТРЕНИРОВКА В ЗАЛЕ
 // ============================================
 function startWorkout() { state.currentWorkout={ date:today(), exercises:[], mood:null, note:'' }; state.screen='newWorkout'; prShownThisWorkout=new Set(); haptic('medium'); render(); }
