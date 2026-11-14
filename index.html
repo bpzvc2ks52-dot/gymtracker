@@ -761,70 +761,12 @@ function calculateKBJU(p) {
 }
 function getLastExerciseData(exName) { const sorted=[...state.workouts].sort((a,b)=>b.id-a.id); for (const w of sorted) { const ex = w.exercises.find(e => e.name===exName); if (ex) { const ws = ex.sets.filter(s=>!s.isWarmup); if (ws.length) return { date:w.date, sets:ws }; } } return null; }
 function getPR(exName) { let max=0; state.workouts.forEach(w => { const ex = w.exercises.find(e=>e.name===exName); if (ex) ex.sets.filter(s=>!s.isWarmup).forEach(s => { if (s.weight>max) max=s.weight; }); }); return max; }
-function getStreak() {
-  if (state.workouts.length===0) return 0;
-  const dates=[...new Set(state.workouts.map(w=>w.date))].sort().reverse();
-  let streak=0; let checkDate=new Date(); const todayStr=today();
-  if (dates[0
-      // ============================================
-// ПРОДОЛЖЕНИЕ УТИЛИТ (Часть 3)
-// ============================================
-function getStreak() {
-  if (state.workouts.length===0) return 0;
-  const dates=[...new Set(state.workouts.map(w=>w.date))].sort().reverse();
-  let streak=0; let checkDate=new Date(); const todayStr=today();
-  if (dates[0]!==todayStr) checkDate.setDate(checkDate.getDate()-1);
-  for (let i=0;i<365;i++) { 
-    const dStr=checkDate.toISOString().slice(0,10); 
-    if (dates.includes(dStr)) { 
-      streak++; checkDate.setDate(checkDate.getDate()-1); 
-    } else { 
-      if (i===0 && dates[0]!==todayStr) { checkDate.setDate(checkDate.getDate()-1); continue; } 
-      break; 
-    } 
-  }
-  return streak;
-}
-
-function getRecoveryColor(group) {
-  const now=new Date(); now.setHours(0,0,0,0); let lastTrainedDate=null;
-  state.workouts.forEach(w => { w.exercises.forEach(ex => { const g=getAllExercises()[ex.name]||'Другое'; if (g===group) { const wDate=new Date(w.date); wDate.setHours(0,0,0,0); if (!lastTrainedDate || wDate>lastTrainedDate) lastTrainedDate=wDate; } }); });
-  if (!lastTrainedDate) return '#2c2c2e';
-  const days=Math.round((now.getTime()-lastTrainedDate.getTime())/(1000*60*60*24));
-  if (days<=1) return '#fa114f'; if (days<=3) return '#ffd700'; return '#a2ff00';
-}
-
-function getSmartAdvice() {
-  if (state.workouts.length===0) return null;
-  const sorted=[...state.workouts].sort((a,b)=>b.id-a.id); const last=sorted[0];
-  const daysSince=Math.floor((new Date()-new Date(last.date))/(1000*60*60*24));
-  if (daysSince>=3) return 'Ты давно не тренировался! Самое время вернуться в зал.';
-  const lastEx = last.exercises.map(e => getAllExercises()[e.name]||'Другое');
-  if (lastEx.includes('Грудь')||lastEx.includes('Спина')||lastEx.includes('Плечи')) return 'Верх тела еще восстанавливается. Сегодня лучше сделать ноги!';
-  if (lastEx.includes('Ноги')) return 'Ноги отдыхают. Идеальный день для жима или тяги!';
-  return 'Ты отлично восстанавливаешься. Продолжай в том же духе!';
-}
-
-function getWeightForecast() {
-  if (state.bodyLog.length<3) return null;
-  const sorted=[...state.bodyLog].sort((a,b)=>a.date.localeCompare(b.date));
-  const first=sorted[0], last=sorted[sorted.length-1];
-  const days=(new Date(last.date)-new Date(first.date))/(1000*60*60*24); if (days<7) return null;
-  const perDay=(last.weight-first.weight)/days; if (Math.abs(perDay)<0.005) return 'Вес стабилен.';
-  const target = state.profile.goal==='cut'?state.profile.weight-5:state.profile.goal==='mass'?state.profile.weight+5:null;
-  if (!target) return null;
-  const daysToTarget = Math.abs((target-last.weight)/perDay); if (daysToTarget>365) return null;
-  const targetDate=new Date(); targetDate.setDate(targetDate.getDate()+daysToTarget);
-  const months=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
-  return `При текущем темпе ты достигнешь цели ~${Math.round(target)} кг к ${targetDate.getDate()} ${months[targetDate.getMonth()]}.`;
-}
 
 function downloadBackup() {
   const data={}; Object.values(STORAGE).forEach(key => { const val=localStorage.getItem(key); if(val) data[key]=JSON.parse(val); });
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`fitness_backup_${today()}.json`; a.click(); URL.revokeObjectURL(url);
 }
-
 function uploadBackup(event) {
   const file=event.target.files[0]; if(!file) return;
   const reader=new FileReader();
@@ -1270,6 +1212,58 @@ function renderSwimming() {
 }
 function updateSwimStyle(val) { if (!state.profile.swim) state.profile.swim={ time:30,dist:1000,style:val }; state.profile.swim.style=val; save(STORAGE.profile,state.profile); render(); }
 function saveSwim() { const time=+document.getElementById('swim-time').value; const dist=+document.getElementById('swim-dist').value; const style=document.getElementById('swim-style').value; state.profile.swim={ time,dist,style }; save(STORAGE.profile,state.profile); state.swims=state.swims||[]; state.swims.unshift({ date:today(),time,dist,style }); save(STORAGE.swims,state.swims); checkAchievements(); haptic('success'); alert('Заплыв сохранен!'); render(); }
+  // ============================================
+// ПРОДОЛЖЕНИЕ УТИЛИТ
+// ============================================
+function getStreak() {
+  if (state.workouts.length===0) return 0;
+  const dates=[...new Set(state.workouts.map(w=>w.date))].sort().reverse();
+  let streak=0; let checkDate=new Date(); const todayStr=today();
+  if (dates[0]!==todayStr) checkDate.setDate(checkDate.getDate()-1);
+  for (let i=0;i<365;i++) { 
+    const dStr=checkDate.toISOString().slice(0,10); 
+    if (dates.includes(dStr)) { 
+      streak++; checkDate.setDate(checkDate.getDate()-1); 
+    } else { 
+      if (i===0 && dates[0]!==todayStr) { checkDate.setDate(checkDate.getDate()-1); continue; } 
+      break; 
+    } 
+  }
+  return streak;
+}
+
+function getRecoveryColor(group) {
+  const now=new Date(); now.setHours(0,0,0,0); let lastTrainedDate=null;
+  state.workouts.forEach(w => { w.exercises.forEach(ex => { const g=getAllExercises()[ex.name]||'Другое'; if (g===group) { const wDate=new Date(w.date); wDate.setHours(0,0,0,0); if (!lastTrainedDate || wDate>lastTrainedDate) lastTrainedDate=wDate; } }); });
+  if (!lastTrainedDate) return '#2c2c2e';
+  const days=Math.round((now.getTime()-lastTrainedDate.getTime())/(1000*60*60*24));
+  if (days<=1) return '#fa114f'; if (days<=3) return '#ffd700'; return '#a2ff00';
+}
+
+function getSmartAdvice() {
+  if (state.workouts.length===0) return null;
+  const sorted=[...state.workouts].sort((a,b)=>b.id-a.id); const last=sorted[0];
+  const daysSince=Math.floor((new Date()-new Date(last.date))/(1000*60*60*24));
+  if (daysSince>=3) return 'Ты давно не тренировался! Самое время вернуться в зал.';
+  const lastEx = last.exercises.map(e => getAllExercises()[e.name]||'Другое');
+  if (lastEx.includes('Грудь')||lastEx.includes('Спина')||lastEx.includes('Плечи')) return 'Верх тела еще восстанавливается. Сегодня лучше сделать ноги!';
+  if (lastEx.includes('Ноги')) return 'Ноги отдыхают. Идеальный день для жима или тяги!';
+  return 'Ты отлично восстанавливаешься. Продолжай в том же духе!';
+}
+
+function getWeightForecast() {
+  if (state.bodyLog.length<3) return null;
+  const sorted=[...state.bodyLog].sort((a,b)=>a.date.localeCompare(b.date));
+  const first=sorted[0], last=sorted[sorted.length-1];
+  const days=(new Date(last.date)-new Date(first.date))/(1000*60*60*24); if (days<7) return null;
+  const perDay=(last.weight-first.weight)/days; if (Math.abs(perDay)<0.005) return 'Вес стабилен.';
+  const target = state.profile.goal==='cut'?state.profile.weight-5:state.profile.goal==='mass'?state.profile.weight+5:null;
+  if (!target) return null;
+  const daysToTarget = Math.abs((target-last.weight)/perDay); if (daysToTarget>365) return null;
+  const targetDate=new Date(); targetDate.setDate(targetDate.getDate()+daysToTarget);
+  const months=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  return `При текущем темпе ты достигнешь цели ~${Math.round(target)} кг к ${targetDate.getDate()} ${months[targetDate.getMonth()]}.`;
+}
 
 // ============================================
 // ТРЕНИРОВКА В ЗАЛЕ
