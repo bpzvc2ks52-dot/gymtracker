@@ -203,6 +203,7 @@
 <div id="shopping-modal" class="modal-overlay" onclick="closeModal('shopping-modal')">
   <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
     <h2 style="margin-top:0; text-align:center;"><i class="ph ph-shopping-cart" style="color:var(--accent);"></i> Список покупок</h2>
+    <p class="muted" style="font-size:13px; margin-bottom:16px; text-align:center;">На основе твоего плана питания</p>
     <div id="shopping-list"></div>
     <button class="secondary" style="margin-top:16px;" onclick="closeModal('shopping-modal')">Закрыть</button>
   </div>
@@ -211,6 +212,7 @@
 <div id="injury-modal" class="modal-overlay" onclick="closeModal('injury-modal')">
   <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
     <h2 style="margin-top:0; text-align:center; color:var(--move);">⚠️ Дневник травм</h2>
+    <p class="muted" style="font-size:13px; margin-bottom:16px; text-align:center;">Отметь, что у тебя болит. Мы предупредим тебя в зале.</p>
     <div id="injury-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;"></div>
     <button onclick="saveInjuries()">Сохранить</button>
     <button class="secondary" onclick="closeModal('injury-modal')">Отмена</button>
@@ -220,8 +222,22 @@
 <div id="programs-modal" class="modal-overlay" onclick="closeModal('programs-modal')">
   <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
     <h2 style="margin-top:0; text-align:center;">Выбор программы</h2>
+    <p class="muted" style="font-size:13px; margin-bottom:16px; text-align:center;">Готовые сплиты и твои программы</p>
     <div id="programs-list"></div>
+    <button onclick="openCreateProgramModal()" style="margin-top:16px; background:var(--accent); color:#000;"><i class="ph ph-plus"></i> Создать свою программу</button>
     <button class="secondary" style="margin-top:8px;" onclick="closeModal('programs-modal')">Закрыть</button>
+  </div>
+</div>
+
+<div id="custom-prog-modal" class="modal-overlay" onclick="closeModal('custom-prog-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
+    <h2 style="margin-top:0; text-align:center;">Новая программа</h2>
+    <label>Название программы</label>
+    <input type="text" id="custom-prog-name" placeholder="Например: Грудь / Трицепс">
+    <label style="margin-top:16px;">Выбери упражнения:</label>
+    <div id="custom-prog-ex-list" style="max-height:200px; overflow-y:auto; background:var(--card-light); border-radius:12px; padding:10px; margin-bottom:16px;"></div>
+    <button onclick="saveCustomProgram()"><i class="ph ph-check"></i> Сохранить</button>
+    <button class="secondary" onclick="closeModal('custom-prog-modal')">Отмена</button>
   </div>
 </div>
 
@@ -229,6 +245,7 @@
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 id="ex-info-title" style="margin-top:0;">Техника</h2>
     <div style="background:var(--card-light); border-radius:16px; padding:0; margin-bottom:16px; display:flex; justify-content:center; overflow:hidden; position:relative; min-height:250px; align-items:center;">
+      <video id="ex-info-video" src="" autoplay loop muted playsinline style="width:100%; max-height:300px; border-radius:12px; object-fit:cover; display:none;"></video>
       <img id="ex-info-gif" src="" alt="Техника" style="width:100%; max-height:300px; border-radius:12px; object-fit:contain; display:none;">
       <div id="ex-info-fallback" style="display:none; text-align:center; padding:20px; color:var(--muted);"><i class="ph ph-video-camera-slash" style="font-size:48px; margin-bottom:8px;"></i><div>Видео временно недоступно</div></div>
     </div>
@@ -237,9 +254,27 @@
   </div>
 </div>
 
+<div id="templates-modal" class="modal-overlay" onclick="closeModal('templates-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0;">Выбрать шаблон</h2>
+    <div id="templates-list" style="margin-bottom:20px;"></div>
+    <button class="secondary" onclick="closeModal('templates-modal')">Отмена</button>
+  </div>
+</div>
+
+<div id="save-template-modal" class="modal-overlay" onclick="closeModal('save-template-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0;">Сохранить как шаблон</h2>
+    <input type="text" id="template-name-input" placeholder="Название (например: Push Day)">
+    <button onclick="saveTemplate()" style="margin-top:10px;">Сохранить</button>
+    <button class="secondary" onclick="closeModal('save-template-modal')">Отмена</button>
+  </div>
+</div>
+
 <div id="rm-modal" class="modal-overlay" onclick="closeModal('rm-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0;">Калькулятор 1ПМ</h2>
+    <p class="muted" style="font-size:13px; margin-bottom:16px;">Одноповторный максимум (теоретический)</p>
     <label>Вес (кг)</label>
     <input type="number" id="rm-weight" placeholder="80">
     <label>Повторения</label>
@@ -250,10 +285,25 @@
   </div>
 </div>
 
+<div id="set-note-modal" class="modal-overlay" onclick="closeModal('set-note-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0;">Заметка к подходу</h2>
+    <input type="text" id="set-note-input" placeholder="Например: болит плечо...">
+    <button onclick="saveSetNote()" style="margin-top:10px;">Сохранить</button>
+    <button class="secondary" onclick="closeModal('set-note-modal')">Отмена</button>
+  </div>
+</div>
+
 <div id="premium-modal" class="modal-overlay" onclick="closeModal('premium-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <i class="ph-fill ph-crown" style="font-size:64px; color:var(--premium); margin-bottom:16px;"></i>
     <h2 style="margin-bottom:8px;">Fitness Pro Premium</h2>
+    <p class="muted" style="margin-bottom:24px;">Разблокируй полный потенциал</p>
+    <ul style="text-align:left; margin:0 0 24px 0; padding:0 20px; list-style:none; line-height:2;">
+      <li><i class="ph ph-check-circle" style="color:var(--accent)"></i> AI-тренер и планы</li>
+      <li><i class="ph ph-check-circle" style="color:var(--accent)"></i> Анализ состава тела</li>
+      <li><i class="ph ph-check-circle" style="color:var(--accent)"></i> Безлимитные экспорты</li>
+    </ul>
     <button class="premium-btn" onclick="buyPremium()">Оформить за 299 ₽ / мес</button>
     <button class="secondary" onclick="closeModal('premium-modal')">Позже</button>
   </div>
@@ -262,7 +312,8 @@
 <div id="food-modal" class="modal-overlay" onclick="closeModal('food-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Добавить еду</h2>
-    <input type="text" id="food-input" placeholder="Название и вес (курица 150)" style="text-align:center; margin-bottom:20px;">
+    <p class="muted" style="font-size:13px; margin-top:-10px; margin-bottom:16px;">Введи название продукта и вес (например: курица 150)</p>
+    <input type="text" id="food-input" placeholder="Название и вес..." style="text-align:center; margin-bottom:20px;">
     <button onclick="processFoodInput()"><i class="ph ph-check"></i> Найти и добавить</button>
   </div>
 </div>
@@ -272,6 +323,7 @@
     <div style="text-align:center; margin-bottom:16px;">
       <i class="ph-fill ph-check-circle" style="font-size:56px; color:var(--accent);"></i>
       <h2 style="margin-top:8px; margin-bottom:4px;">Тренировка сохранена!</h2>
+      <p class="muted" style="font-size:14px; margin:0;">Как она прошла? (Необязательно)</p>
     </div>
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;" id="mood-container">
       <div class="mood-btn" onclick="selectMood('🔥', event)">🔥</div>
@@ -285,6 +337,52 @@
   </div>
 </div>
 
+<div id="ai-modal" class="modal-overlay" onclick="closeModal('ai-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
+    <h2 style="text-align:center; color:var(--accent);"><i class="ph ph-magic-wand"></i> AI Тренер</h2>
+    <div id="ai-content" style="margin-top:20px; line-height:1.6; font-size:16px;"></div>
+    <button class="secondary" style="margin-top:24px;" onclick="closeModal('ai-modal')">Закрыть</button>
+  </div>
+</div>
+
+<div id="plan-modal" class="modal-overlay" onclick="closeModal('plan-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
+    <h2 id="plan-title" style="text-align:center; color:var(--accent);">План</h2>
+    <div id="plan-content" style="margin-top:20px; line-height:1.6; font-size:16px;"></div>
+    <button onclick="openShoppingList()" style="margin-top:16px; background:var(--stand); color:#000;"><i class="ph ph-shopping-cart"></i> Сгенерировать список покупок</button>
+    <button class="secondary" style="margin-top:8px;" onclick="closeModal('plan-modal')">Закрыть</button>
+  </div>
+</div>
+
+<div id="history-modal" class="modal-overlay" onclick="closeModal('history-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
+    <h2 id="history-title" style="text-align:center;">Детали</h2>
+    <div id="history-content" style="margin-top:20px;"></div>
+    <button class="secondary" style="margin-top:24px;" onclick="closeModal('history-modal')">Закрыть</button>
+  </div>
+</div>
+
+<div id="exercise-progress-modal" class="modal-overlay" onclick="closeModal('exercise-progress-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
+    <h2 id="exp-title" style="text-align:center; color:var(--accent); margin-bottom:6px;">Прогресс</h2>
+    <p id="exp-subtitle" class="muted" style="text-align:center; font-size:13px; margin-top:0; margin-bottom:16px;"></p>
+    <div id="exp-stats" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px;"></div>
+    <div class="chart-container" style="height:240px;"><canvas id="exerciseChart"></canvas></div>
+    <div style="font-size:12px; color:var(--muted); text-align:center; margin-top:16px; line-height:1.4;">Рекорд — это лучший результат за 1 подход.</div>
+    <button class="secondary" style="margin-top:24px;" onclick="closeModal('exercise-progress-modal')">Закрыть</button>
+  </div>
+</div>
+
+<div id="custom-ex-modal" class="modal-overlay" onclick="closeModal('custom-ex-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0">Свое упражнение</h2>
+    <input type="text" id="custom-ex-name" placeholder="Название">
+    <select id="custom-ex-group"><option value="Ноги">Ноги</option><option value="Грудь">Грудь</option><option value="Спина">Спина</option><option value="Плечи">Плечи</option><option value="Руки">Руки</option></select>
+    <button onclick="saveCustomExercise()" style="margin-top:10px;">Добавить</button>
+    <button class="secondary" onclick="closeModal('custom-ex-modal')">Отмена</button>
+  </div>
+</div>
+
 <div id="timer-modal" class="modal-overlay" onclick="closeModal('timer-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0;">Таймер отдыха</h2>
@@ -293,12 +391,21 @@
       <button class="timer-preset-btn" data-sec="60" onclick="setTimerPreset(60)">1м</button>
       <button class="timer-preset-btn active" data-sec="90" onclick="setTimerPreset(90)">1:30</button>
       <button class="timer-preset-btn" data-sec="120" onclick="setTimerPreset(120)">2м</button>
+      <button class="timer-preset-btn" data-sec="180" onclick="setTimerPreset(180)">3м</button>
     </div>
     <div class="timer-ring-wrap">
-      <svg class="timer-ring-svg" viewBox="0 0 220 220"><circle class="timer-ring-bg" cx="110" cy="110" r="100"></circle></svg>
+      <svg class="timer-ring-svg" viewBox="0 0 220 220"><circle class="timer-ring-bg" cx="110" cy="110" r="100"></circle><circle class="timer-ring-progress" id="timer-ring-progress" cx="110" cy="110" r="100" style="stroke-dasharray: 628; stroke-dashoffset: 0;"></circle></svg>
       <div id="timer-display">01:30</div>
     </div>
     <button onclick="closeModal('timer-modal')" class="secondary">Закрыть</button>
+  </div>
+</div>
+
+<div id="plates-modal" class="modal-overlay" onclick="closeModal('plates-modal')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h2 style="margin-top:0">Блины 🥞</h2>
+    <div id="plates-result" style="margin:24px 0; font-size:20px; line-height:1.8; font-weight:600;"></div>
+    <button onclick="closeModal('plates-modal')" class="secondary">Понятно</button>
   </div>
 </div>
 
@@ -306,15 +413,18 @@
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0;">Аккаунт</h2>
     <div id="auth-logged-out">
-      <input type="email" id="auth-email" placeholder="Email">
-      <input type="password" id="auth-password" placeholder="Пароль">
-      <button onclick="signIn()" style="margin-top:10px;">Войти</button>
-      <button class="secondary" onclick="signUp()">Зарегистрироваться</button>
-      <p id="auth-msg" class="muted" style="font-size:13px; margin-top:10px;"></p>
+      <label>Email</label>
+      <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email">
+      <label>Пароль</label>
+      <input type="password" id="auth-password" placeholder="Минимум 6 символов" autocomplete="current-password">
+      <button onclick="signIn()" style="margin-top:10px;"><i class="ph ph-sign-in"></i> Войти</button>
+      <button class="secondary" onclick="signUp()"><i class="ph ph-user-plus"></i> Зарегистрироваться</button>
+      <p id="auth-msg" class="muted" style="font-size:13px; text-align:center; margin-top:10px;"></p>
     </div>
     <div id="auth-logged-in" style="display:none;">
-      <p style="font-weight:800;" id="auth-user-email"></p>
-      <button class="danger" onclick="signOut()" style="margin-top:16px;">Выйти</button>
+      <p class="muted" style="text-align:center; margin-bottom:4px;">Вы вошли как</p>
+      <p style="text-align:center; font-weight:800; font-size:16px; margin-top:0;" id="auth-user-email"></p>
+      <button class="danger" onclick="signOut()" style="margin-top:16px;"><i class="ph ph-sign-out"></i> Выйти</button>
     </div>
     <button class="secondary" onclick="closeModal('auth-modal')" style="margin-top:8px;">Закрыть</button>
   </div>
@@ -330,7 +440,7 @@
 </nav>
 
 <div id="app"></div>
-<div id="export-area" style="position:absolute; left:-9999px; top:-9999px;"></div>
+<div id="export-area" style="position:absolute; left:-9999px; top:-9999px; width:400px; background:#000; padding:30px; border-radius:30px; color:#fff; font-family:-apple-system,sans-serif;"></div>
 <div id="report-area" style="position:absolute; left:-9999px; top:-9999px;"></div>
 <script>
 // ============================================
@@ -346,11 +456,12 @@ let currentUser = null;
   try {
     if (typeof window.supabase === 'undefined') { console.warn('SDK не загрузился'); return; }
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    console.log('✅ Supabase client ready');
   } catch (e) { console.error('Ошибка Supabase:', e); supabase = null; }
 })();
 
 // ============================================
-// БАЗОВЫЕ УТИЛИТЫ И ХРАНИЛИЩЕ
+// HAPTIC / SKELETON / STORAGE
 // ============================================
 function haptic(type = 'light') {
   if (!('vibrate' in navigator)) return;
@@ -360,18 +471,6 @@ function haptic(type = 'light') {
 
 function renderSkeleton() {
   return `<div class="skeleton skeleton-title"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-card" style="margin-top:20px;"></div>`;
-}
-
-function showToast(message) {
-  if (!document.getElementById('toast-styles')) {
-    const st = document.createElement('style'); st.id='toast-styles';
-    st.textContent='@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}@keyframes toastOut{from{opacity:1;transform:translateX(-50%) translateY(0);}to{opacity:0;transform:translateX(-50%) translateY(20px);}}';
-    document.head.appendChild(st);
-  }
-  const toast = document.createElement('div'); toast.textContent = message;
-  toast.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--premium);color:#000;padding:14px 22px;border-radius:16px;font-weight:800;font-size:15px;z-index:99999;box-shadow:0 8px 24px rgba(255,215,0,0.4);max-width:90%;text-align:center;animation:toastIn 0.3s ease;';
-  document.body.appendChild(toast);
-  setTimeout(() => { toast.style.animation='toastOut 0.3s ease'; setTimeout(() => toast.remove(), 300); }, 2500);
 }
 
 const STORAGE = { profile:'fit_p10', workouts:'fit_w10', bodyLog:'fit_b10', daily:'fit_d10', runs:'fit_r10', swims:'fit_sw10', measurements:'fit_m10', achievements:'fit_a10', premium:'fit_prem10', themeColor:'fit_color10', customEx:'fit_custom10', templates:'fit_temp10', injuries:'fit_injuries10', themeMode:'fit_theme_mode', shoppingList:'fit_shopping_list', customProg: 'fit_custom_prog' };
@@ -405,7 +504,19 @@ const EXERCISE_GIFS = {
   'Жим гантелей лёжа': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0305-3TZdu2S.gif',
   'Тяга верхнего блока': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0231-0V2Y5l9.gif',
   'Жим ногами': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0146-1gPfomN.gif',
-  'Планка': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/1587-Plank.gif'
+  'Выпады с гантелями': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0334-2gPfomN.gif',
+  'Подъём штанги на бицепс': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0031-3gPfomN.gif',
+  'Французский жим': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0060-4gPfomN.gif',
+  'Разводка гантелей': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0308-5gPfomN.gif',
+  'Тяга Т-грифа': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0028-6gPfomN.gif',
+  'Махи гантелями в стороны': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0334-7gPfomN.gif',
+  'Подъём гантелей на бицепс': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0294-8gPfomN.gif',
+  'Разгибание на трицепс на блоке': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0241-9gPfomN.gif',
+  'Планка': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/1587-Plank.gif',
+  'Скручивания': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0001-Crunch.gif',
+  'Подъём ног в висе': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0472-HangingLegRaise.gif',
+  'Румынская тяга': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0085-RomanianDeadlift.gif',
+  'Икры в тренажере': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0258-CalfRaise.gif'
 };
 
 const EXERCISE_DESCS = {
@@ -416,23 +527,69 @@ const EXERCISE_DESCS = {
 };
 
 const FOOD_DB = { 
-  'курица':{c:165,p:31,f:3.6,cb:0}, 'куриная грудка':{c:165,p:31,f:3.6,cb:0}, 'куриное бедро':{c:210,p:26,f:11,cb:0}, 'индейка':{c:150,p:29,f:3,cb:0}, 
-  'говядина':{c:250,p:26,f:15,cb:0}, 'свинина':{c:260,p:27,f:16,cb:0}, 'фарш':{c:250,p:20,f:18,cb:0}, 'сосиски':{c:257,p:13,f:22,cb:2},
+  // Мясо и птица
+  'курица':{c:165,p:31,f:3.6,cb:0}, 'куриная грудка':{c:165,p:31,f:3.6,cb:0}, 'куриное бедро':{c:210,p:26,f:11,cb:0}, 'куриное филе':{c:113,p:23.6,f:1.9,cb:0},
+  'индейка':{c:150,p:29,f:3,cb:0}, 'говядина':{c:250,p:26,f:15,cb:0}, 'свинина':{c:260,p:27,f:16,cb:0}, 'баранина':{c:294,p:25,f:21,cb:0},
+  'фарш':{c:250,p:20,f:18,cb:0}, 'стейк':{c:271,p:25,f:19,cb:0}, 'шашлык':{c:280,p:22,f:20,cb:2}, 'сосиски':{c:257,p:13,f:22,cb:2},
+  'колбаса':{c:300,p:15,f:25,cb:2}, 'бекон':{c:541,p:37,f:45,cb:1}, 'ветчина':{c:145,p:21,f:6,cb:1}, 'печень':{c:135,p:20,f:3,cb:4}, 'сало':{c:797,p:2,f:89,cb:0},
+  
+  // Рыба и морепродукты
   'рыба':{c:120,p:20,f:4,cb:0}, 'лосось':{c:208,p:20,f:13,cb:0}, 'тунец':{c:130,p:29,f:1,cb:0}, 'треска':{c:82,p:18,f:0.7,cb:0},
-  'творог':{c:180,p:18,f:2,cb:2}, 'яйцо':{c:155,p:13,f:11,cb:1.1}, 'сыр':{c:350,p:25,f:27,cb:0}, 'молоко':{c:52,p:3,f:2.5,cb:4.7}, 
-  'кефир':{c:40,p:3,f:1,cb:4}, 'йогурт':{c:60,p:5,f:3,cb:3}, 'рис':{c:344,p:6.7,f:0.7,cb:78}, 'гречка':{c:343,p:12.6,f:3.3,cb:62}, 
-  'овсянка':{c:350,p:12,f:6,cb:60}, 'макароны':{c:350,p:12,f:1.5,cb:70}, 'картофель':{c:77,p:2,f:0.1,cb:17}, 'хлеб':{c:265,p:9,f:3,cb:49},
-  'банан':{c:89,p:1.1,f:0.3,cb:22.8}, 'яблоко':{c:52,p:0.3,f:0.2,cb:14}, 'апельсин':{c:47,p:0.9,f:0.1,cb:12}, 'орехи':{c:600,p:20,f:55,cb:15},
-  'протеин':{c:380,p:75,f:5,cb:10}, 'кофе':{c:2,p:0.1,f:0,cb:0}, 'чай':{c:1,p:0,f:0,cb:0}, 'кола':{c:42,p:0,f:0,cb:10.6}, 'вода':{c:0,p:0,f:0,cb:0}
+  'минтай':{c:72,p:16,f:1,cb:0}, 'скумбрия':{c:191,p:18,f:13,cb:0}, 'сельдь':{c:161,p:18,f:10,cb:0}, 'форель':{c:148,p:21,f:6,cb:0},
+  'креветки':{c:99,p:24,f:0.3,cb:0.2}, 'кальмары':{c:92,p:15,f:2,cb:3}, 'икра':{c:250,p:25,f:15,cb:4}, 'крабовые палочки':{c:90,p:6,f:1,cb:14},
+  
+  // Молочные продукты и яйца
+  'творог':{c:180,p:18,f:2,cb:2}, 'творог 5%':{c:121,p:17,f:5,cb:3}, 'творог обезжиренный':{c:79,p:18,f:0.5,cb:1.5},
+  'яйцо':{c:155,p:13,f:11,cb:1.1}, 'сыр':{c:350,p:25,f:27,cb:0}, 'сыр российский':{c:364,p:24,f:29,cb:0}, 'моцарелла':{c:280,p:22,f:20,cb:2},
+  'молоко':{c:52,p:3,f:2.5,cb:4.7}, 'кефир':{c:40,p:3,f:1,cb:4}, 'йогурт':{c:60,p:5,f:3,cb:3}, 'ряженка':{c:67,p:3,f:4,cb:4},
+  'сметана':{c:206,p:2.8,f:20,cb:3.2}, 'масло сливочное':{c:717,p:0.8,f:81,cb:0.8},
+  
+  // Крупы, гарниры и хлеб
+  'рис':{c:344,p:6.7,f:0.7,cb:78}, 'рис бурый':{c:337,p:7.4,f:1.8,cb:72}, 'гречка':{c:343,p:12.6,f:3.3,cb:62}, 'овсянка':{c:350,p:12,f:6,cb:60},
+  'макароны':{c:350,p:12,f:1.5,cb:70}, 'паста':{c:350,p:12,f:1.5,cb:70}, 'спагетти':{c:350,p:12,f:1.5,cb:70}, 'пшено':{c:348,p:11,f:3.3,cb:69},
+  'перловка':{c:315,p:9.3,f:1.1,cb:73}, 'булгур':{c:342,p:12,f:1.3,cb:75}, 'картофель':{c:77,p:2,f:0.1,cb:17}, 'батат':{c:86,p:1.6,f:0.1,cb:20},
+  'хлеб белый':{c:265,p:9,f:3,cb:49}, 'хлеб черный':{c:210,p:6.6,f:1.2,cb:40}, 'батон':{c:262,p:7.5,f:2.9,cb:51}, 'лаваш':{c:275,p:9,f:1,cb:56},
+  
+  // Овощи и зелень
+  'салат':{c:80,p:2,f:5,cb:6}, 'огурец':{c:15,p:0.6,f:0.1,cb:3.6}, 'помидор':{c:18,p:0.9,f:0.2,cb:3.9}, 'капуста':{c:25,p:1.3,f:0.1,cb:5.8},
+  'брокколи':{c:34,p:2.8,f:0.4,cb:6.6}, 'морковь':{c:41,p:0.9,f:0.2,cb:9.6}, 'лук':{c:40,p:1.1,f:0.1,cb:9.3}, 'перец':{c:26,p:1,f:0.2,cb:6},
+  'кабачок':{c:17,p:1.2,f:0.3,cb:3.1}, 'баклажан':{c:25,p:1.2,f:0.1,cb:5.8}, 'свекла':{c:43,p:1.6,f:0.2,cb:9.5}, 'тыква':{c:26,p:1,f:0.1,cb:6.5},
+  'грибы':{c:27,p:4.3,f:1,cb:0.1}, 'шампиньоны':{c:27,p:4.3,f:1,cb:0.1},
+  
+  // Фрукты и ягоды
+  'банан':{c:89,p:1.1,f:0.3,cb:22.8}, 'яблоко':{c:52,p:0.3,f:0.2,cb:14}, 'апельсин':{c:47,p:0.9,f:0.1,cb:12}, 'мандарин':{c:53,p:0.8,f:0.3,cb:13},
+  'манго':{c:60,p:0.8,f:0.4,cb:15}, 'авокадо':{c:160,p:2,f:15,cb:9}, 'виноград':{c:69,p:0.7,f:0.2,cb:18}, 'груша':{c:57,p:0.4,f:0.1,cb:15},
+  'персик':{c:39,p:0.9,f:0.3,cb:9.5}, 'абрикос':{c:48,p:1.4,f:0.4,cb:11}, 'киви':{c:61,p:1.1,f:0.5,cb:14.6}, 'лимон':{c:29,p:1.1,f:0.3,cb:9},
+  'арбуз':{c:30,p:0.6,f:0.2,cb:7.6}, 'дыня':{c:34,p:0.8,f:0.2,cb:8}, 'клубника':{c:33,p:0.7,f:0.3,cb:7.7}, 'малина':{c:52,p:1.2,f:0.7,cb:11.9},
+  'черника':{c:57,p:0.7,f:0.3,cb:14.5}, 'смородина':{c:56,p:1.4,f:0.2,cb:13.8},
+  
+  // Орехи, сухофрукты, сладости
+  'орехи':{c:600,p:20,f:55,cb:15}, 'миндаль':{c:579,p:21,f:49,cb:22}, 'грецкий орех':{c:654,p:15,f:65,cb:14}, 'фундук':{c:628,p:15,f:61,cb:17},
+  'кешью':{c:553,p:18,f:44,cb:30}, 'арахис':{c:567,p:26,f:49,cb:16}, 'семечки':{c:584,p:21,f:51,cb:20}, 'финики':{c:282,p:2.5,f:0.4,cb:75},
+  'изюм':{c:299,p:3.1,f:0.5,cb:79}, 'курага':{c:241,p:3.4,f:0.5,cb:63}, 'чернослив':{c:240,p:2.2,f:0.4,cb:64},
+  'шоколад':{c:546,p:5,f:31,cb:61}, 'шоколад темный':{c:598,p:7.8,f:42,cb:45}, 'печенье':{c:450,p:5,f:20,cb:65}, 'конфеты':{c:400,p:3,f:15,cb:70},
+  'торт':{c:350,p:5,f:15,cb:50}, 'мороженое':{c:207,p:3.5,f:11,cb:24}, 'мед':{c:304,p:0.3,f:0,cb:82}, 'сахар':{c:387,p:0,f:0,cb:100},
+  'майонез':{c:680,p:1,f:75,cb:3}, 'кетчуп':{c:100,p:1,f:0,cb:25}, 'протеин':{c:380,p:75,f:5,cb:10},
+  
+  // Напитки
+  'ред булл':{c:45,p:0,f:0,cb:11}, 'red bull':{c:45,p:0,f:0,cb:11}, 'энергетик':{c:45,p:0,f:0,cb:11}, 'адреналин':{c:45,p:0,f:0,cb:11},
+  'кофе':{c:2,p:0.1,f:0,cb:0}, 'чай':{c:1,p:0,f:0,cb:0}, 'кофе с молоком':{c:35,p:1.5,f:1.5,cb:4}, 'сок':{c:45,p:0.5,f:0,cb:10},
+  'кола':{c:42,p:0,f:0,cb:10.6}, 'пепси':{c:42,p:0,f:0,cb:10.6}, 'спрайт':{c:40,p:0,f:0,cb:10}, 'пиво':{c:43,p:0.5,f:0,cb:3.6},
+  'вино':{c:83,p:0.1,f:0,cb:2.6}, 'вода':{c:0,p:0,f:0,cb:0},
+  
+  // Готовые блюда и фастфуд
+  'шаурма':{c:250,p:12,f:15,cb:20}, 'бургер':{c:295,p:15,f:14,cb:27}, 'пицца':{c:266,p:11,f:10,cb:33}, 'суши':{c:150,p:6,f:2,cb:26},
+  'борщ':{c:50,p:2,f:2,cb:6}, 'пельмени':{c:275,p:11,f:12,cb:30}, 'вареники':{c:200,p:8,f:5,cb:32}, 'омлет':{c:150,p:10,f:11,cb:2},
+  'блины':{c:230,p:6,f:10,cb:30}, 'оладьи':{c:220,p:6,f:8,cb:32}, 'плов':{c:180,p:8,f:6,cb:25}, 'чипсы':{c:536,p:7,f:35,cb:53},
+  'сухарики':{c:400,p:10,f:15,cb:60}
 };
+
+const COLORS = [{ id:'green',hex:'#a2ff00'},{id:'pink',hex:'#fa114f'},{id:'blue',hex:'#00d4ff'},{id:'orange',hex:'#ff9f0a'},{id:'purple',hex:'#bf5af2'}];
 
 function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 function today() { return new Date().toISOString().slice(0,10); }
 
-// ============================================
-// СОСТОЯНИЕ ПРИЛОЖЕНИЯ
-// ============================================
 let state = {
   profile: load(STORAGE.profile), workouts: load(STORAGE.workouts)||[], bodyLog: load(STORAGE.bodyLog)||[],
   runs: load(STORAGE.runs)||[], swims: load(STORAGE.swims)||[], measurements: load(STORAGE.measurements)||[], achievements: load(STORAGE.achievements)||[],
@@ -458,11 +615,138 @@ applyTheme(state.themeMode);
 document.documentElement.style.setProperty('--accent', state.themeColor);
 if (state.daily.date !== today()) { state.daily = { date:today(), water:0, calories:0, p:0, f:0, cb:0, sleep:null, mood:null, steps:0, habits:{ water:false, steps:false, sleep:false } }; save(STORAGE.daily, state.daily); }
 
+function toggleTheme() { const next = state.themeMode==='dark'?'light':'dark'; applyTheme(next); haptic('light'); render(); showToast(`Тема: ${next==='dark'?'тёмная':'светлая'}`); }
+
 // ============================================
-// РАСЧЕТЫ И ЛОГИКА
+// SUPABASE AUTH & SYNC
 // ============================================
+async function openAuthModal() {
+  const el = document.getElementById('auth-modal');
+  if (!supabase) { alert('Supabase не настроен.'); return; }
+  try { const { data } = await supabase.auth.getSession(); currentUser = data?.session?.user || null; } catch(e) { currentUser=null; }
+  updateAuthUI(); el.classList.add('active');
+}
+
+function updateAuthUI() {
+  const lo = document.getElementById('auth-logged-out'), li = document.getElementById('auth-logged-in'), emailEl = document.getElementById('auth-user-email');
+  if (!lo || !li) return;
+  if (currentUser) { lo.style.display='none'; li.style.display='block'; if (emailEl) emailEl.innerText = currentUser.email || 'пользователь'; }
+  else { lo.style.display='block'; li.style.display='none'; }
+}
+
+async function signUp() {
+  const email = document.getElementById('auth-email').value.trim(), password = document.getElementById('auth-password').value, msg = document.getElementById('auth-msg');
+  if (!email || password.length < 6) { msg.innerText='Нужен email и пароль от 6 символов'; return; }
+  msg.innerText='Отправляем...';
+  const { error } = await supabase.auth.signUp({ email, password });
+  if (error) { msg.innerText='Ошибка: '+error.message; return; }
+  msg.innerText='Готово! Проверь почту.'; haptic('success');
+}
+
+async function signIn() {
+  const email = document.getElementById('auth-email').value.trim(), password = document.getElementById('auth-password').value, msg = document.getElementById('auth-msg');
+  if (!email || !password) { msg.innerText='Введи email и пароль'; return; }
+  msg.innerText='Входим...';
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) { msg.innerText='Ошибка: '+error.message; return; }
+  currentUser = data.user; msg.innerText=''; updateAuthUI(); haptic('success'); showToast('Вы вошли');
+  downloadCloudData();
+}
+
+async function signOut() { if (!supabase) return; await supabase.auth.signOut(); currentUser=null; updateAuthUI(); haptic('light'); showToast('Вы вышли'); }
+
+async function syncWorkoutToCloud(workout) {
+  if (!supabase || !currentUser) return;
+  const { error } = await supabase.from('workouts').insert({
+    user_id: currentUser.id, workout_date: workout.date, tonnage: workout.tonnage, mood: workout.mood, note: workout.note, exercises: workout.exercises
+  });
+  if (error) console.error('Ошибка синхронизации тренировки:', error);
+  else console.log('✅ Тренировка сохранена в облако');
+}
+
+async function syncCustomExerciseToCloud(name, group) {
+  if (!supabase || !currentUser) return;
+  const { error } = await supabase.from('custom_exercises').insert({
+    user_id: currentUser.id, name: name, muscle_group: group
+  });
+  if (error) console.error('Ошибка синхронизации упражнения:', error);
+}
+
+async function syncCustomProgramToCloud(program) {
+  if (!supabase || !currentUser) return;
+  const { error } = await supabase.from('custom_programs').insert({
+    user_id: currentUser.id, name: program.name, exercises: program.exercises
+  });
+  if (error) console.error('Ошибка синхронизации программы:', error);
+}
+
+async function downloadCloudData() {
+  if (!supabase || !currentUser) return;
+  showToast('Загрузка данных из облака...');
+  
+  try {
+    const { data: prof, error: pErr } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (prof && !pErr) {
+      state.profile = { weight: prof.weight, height: prof.height, age: prof.age, sex: prof.sex, goal: prof.goal, targets: prof.targets };
+      save(STORAGE.profile, state.profile);
+    }
+  } catch(e) {}
+
+  try {
+    const { data: wks, error: wErr } = await supabase.from('workouts').select('*').order('created_at', { ascending: false });
+    if (wks && !wErr && wks.length > 0) {
+      state.workouts = wks.map(w => ({ id: new Date(w.created_at).getTime(), date: w.workout_date, tonnage: w.tonnage, mood: w.mood, note: w.note, exercises: w.exercises }));
+      save(STORAGE.workouts, state.workouts);
+    }
+  } catch(e) {}
+
+  try {
+    const { data: exs, error: eErr } = await supabase.from('custom_exercises').select('*');
+    if (exs && !eErr) {
+      exs.forEach(ex => { state.customExercises[ex.name] = ex.muscle_group; });
+      save(STORAGE.customEx, state.customExercises);
+    }
+  } catch(e) {}
+
+  try {
+    const { data: progs, error: prErr } = await supabase.from('custom_programs').select('*');
+    if (progs && !prErr && progs.length > 0) {
+      state.customPrograms = progs.map(p => ({ name: p.name, exercises: p.exercises }));
+      save(STORAGE.customProg, state.customPrograms);
+    }
+  } catch(e) {}
+
+  render();
+  haptic('success');
+  showToast('Данные загружены!');
+}
+
+(async () => { 
+  if (!supabase) return; 
+  try { 
+    const { data } = await supabase.auth.getSession(); 
+    currentUser = data?.session?.user || null; 
+    if (currentUser) downloadCloudData();
+  } catch(e){} 
+})();
+
+// ============================================
+// УТИЛИТЫ
+// ============================================
+function showToast(message) {
+  if (!document.getElementById('toast-styles')) {
+    const st = document.createElement('style'); st.id='toast-styles';
+    st.textContent='@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}@keyframes toastOut{from{opacity:1;transform:translateX(-50%) translateY(0);}to{opacity:0;transform:translateX(-50%) translateY(20px);}}';
+    document.head.appendChild(st);
+  }
+  const toast = document.createElement('div'); toast.textContent = message;
+  toast.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--premium);color:#000;padding:14px 22px;border-radius:16px;font-weight:800;font-size:15px;z-index:99999;box-shadow:0 8px 24px rgba(255,215,0,0.4);max-width:90%;text-align:center;animation:toastIn 0.3s ease;';
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.animation='toastOut 0.3s ease'; setTimeout(() => toast.remove(), 300); }, 2500);
+}
 function getAllExercises() { return { ...BASE_EXERCISES_DB, ...state.customExercises }; }
 function calcTonnage(workout) { return (!workout || !workout.exercises) ? 0 : workout.exercises.reduce((sum,ex) => sum + ex.sets.filter(s=>!s.isWarmup).reduce((sSum,s)=>sSum+(s.weight*s.reps),0),0); }
+function calcBodyFat(p) { if (!p || !p.weight) return 0; const bmi=p.weight/Math.pow(p.height/100,2); let fat=(1.20*bmi)+(0.23*p.age)-(10.8*(p.sex==='male'?1:0))-5.4; return Math.max(3,Math.min(50,Math.round(fat))); }
 function checkAchievements() { ACHIEVEMENTS_LIST.forEach(ach => { if (!state.achievements.includes(ach.id) && ach.cond(state)) state.achievements.push(ach.id); }); save(STORAGE.achievements, state.achievements); }
 function getTargets() { if (state.profile && state.profile.targets) return state.profile.targets; if (state.profile && state.profile.weight) return calculateKBJU(state.profile); return { calories:2000, p:120, f:60, cb:200 }; }
 function calculateKBJU(p) {
@@ -475,73 +759,23 @@ function calculateKBJU(p) {
   const carbCal = calories-(protein*4)-(fat*9); const carbs = Math.max(0,Math.round(carbCal/4));
   return { calories, p:protein, f:fat, cb:carbs };
 }
-function getLastExerciseData(exName) { 
-  const sorted=[...state.workouts].sort((a,b)=>b.id-a.id); 
-  for (const w of sorted) { 
-    const ex = w.exercises.find(e => e.name===exName); 
-    if (ex) { 
-      const ws = ex.sets.filter(s=>!s.isWarmup); 
-      if (ws.length) return { date:w.date, sets:ws }; 
-    } 
-  } 
-  return null; 
-}
+function getLastExerciseData(exName) { const sorted=[...state.workouts].sort((a,b)=>b.id-a.id); for (const w of sorted) { const ex = w.exercises.find(e => e.name===exName); if (ex) { const ws = ex.sets.filter(s=>!s.isWarmup); if (ws.length) return { date:w.date, sets:ws }; } } return null; }
 function getPR(exName) { let max=0; state.workouts.forEach(w => { const ex = w.exercises.find(e=>e.name===exName); if (ex) ex.sets.filter(s=>!s.isWarmup).forEach(s => { if (s.weight>max) max=s.weight; }); }); return max; }
 
-function getStreak() {
-  if (state.workouts.length===0) return 0;
-  const dates=[...new Set(state.workouts.map(w=>w.date))].sort().reverse();
-  let streak=0; let checkDate=new Date(); const todayStr=today();
-  if (dates[0]!==todayStr) checkDate.setDate(checkDate.getDate()-1);
-  for (let i=0;i<365;i++) { 
-    const dStr=checkDate.toISOString().slice(0,10); 
-    if (dates.includes(dStr)) { 
-      streak++; checkDate.setDate(checkDate.getDate()-1); 
-    } else { 
-      if (i===0 && dates[0]!==todayStr) { checkDate.setDate(checkDate.getDate()-1); continue; } 
-      break; 
-    } 
-  }
-  return streak;
+function downloadBackup() {
+  const data={}; Object.values(STORAGE).forEach(key => { const val=localStorage.getItem(key); if(val) data[key]=JSON.parse(val); });
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`fitness_backup_${today()}.json`; a.click(); URL.revokeObjectURL(url);
 }
-
-function getRecoveryColor(group) {
-  const now=new Date(); now.setHours(0,0,0,0); let lastTrainedDate=null;
-  state.workouts.forEach(w => { w.exercises.forEach(ex => { const g=getAllExercises()[ex.name]||'Другое'; if (g===group) { const wDate=new Date(w.date); wDate.setHours(0,0,0,0); if (!lastTrainedDate || wDate>lastTrainedDate) lastTrainedDate=wDate; } }); });
-  if (!lastTrainedDate) return '#2c2c2e';
-  const days=Math.round((now.getTime()-lastTrainedDate.getTime())/(1000*60*60*24));
-  if (days<=1) return '#fa114f'; 
-  if (days<=3) return '#ffd700'; 
-  return '#a2ff00'; 
-}
-
-function getSmartAdvice() {
-  if (state.workouts.length===0) return null;
-  const sorted=[...state.workouts].sort((a,b)=>b.id-a.id); const last=sorted[0];
-  const daysSince=Math.floor((new Date()-new Date(last.date))/(1000*60*60*24));
-  if (daysSince>=3) return 'Ты давно не тренировался! Самое время вернуться в зал.';
-  const lastEx = last.exercises.map(e => getAllExercises()[e.name]||'Другое');
-  if (lastEx.includes('Грудь')||lastEx.includes('Спина')||lastEx.includes('Плечи')) return 'Верх тела еще восстанавливается. Сегодня лучше сделать ноги!';
-  if (lastEx.includes('Ноги')) return 'Ноги отдыхают. Идеальный день для жима или тяги!';
-  return 'Ты отлично восстанавливаешься. Продолжай в том же духе!';
-}
-
-function getWeightForecast() {
-  if (state.bodyLog.length<3) return null;
-  const sorted=[...state.bodyLog].sort((a,b)=>a.date.localeCompare(b.date));
-  const first=sorted[0], last=sorted[sorted.length-1];
-  const days=(new Date(last.date)-new Date(first.date))/(1000*60*60*24); if (days<7) return null;
-  const perDay=(last.weight-first.weight)/days; if (Math.abs(perDay)<0.005) return 'Вес стабилен.';
-  const target = state.profile.goal==='cut'?state.profile.weight-5:state.profile.goal==='mass'?state.profile.weight+5:null;
-  if (!target) return null;
-  const daysToTarget = Math.abs((target-last.weight)/perDay); if (daysToTarget>365) return null;
-  const targetDate=new Date(); targetDate.setDate(targetDate.getDate()+daysToTarget);
-  const months=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
-  return `При текущем темпе ты достигнешь цели ~${Math.round(target)} кг к ${targetDate.getDate()} ${months[targetDate.getMonth()]}.`;
+function uploadBackup(event) {
+  const file=event.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=(e)=>{ try { const data=JSON.parse(e.target.result); Object.keys(data).forEach(key => localStorage.setItem(key, JSON.stringify(data[key]))); alert('Данные восстановлены! Страница перезагрузится.'); location.reload(); } catch(err) { alert('Ошибка бэкапа.'); } };
+  reader.readAsText(file);
 }
 
 // ============================================
-// ЕДА (Поиск)
+// ПОИСК ЕДЫ (ЛОКАЛЬНАЯ БАЗА + OPEN FOOD FACTS)
 // ============================================
 async function processFoodInput() {
   const input = document.getElementById('food-input').value.toLowerCase().trim(); 
@@ -553,6 +787,7 @@ async function processFoodInput() {
 
   if (!query) return;
 
+  // 1. Сначала ищем в локальной (быстрой) базе приложения
   let foundLocal = null;
   const sortedKeys = Object.keys(FOOD_DB).sort((a,b)=>b.length-a.length);
   for (const key of sortedKeys) { 
@@ -567,14 +802,17 @@ async function processFoodInput() {
     return;
   }
 
+  // 2. Если в локальной нет, идем в мировую базу Open Food Facts с таймаутом
   closeModal('food-modal');
   showToast('Ищем в глобальной базе... 🔍');
 
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     const response = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=5&lc=ru`, { signal: controller.signal });
     clearTimeout(timeoutId);
+    
     const data = await response.json();
 
     if (data.products && data.products.length > 0) {
@@ -583,6 +821,7 @@ async function processFoodInput() {
       if (product) {
         const name = product.product_name_ru || product.product_name || query;
         const brand = product.brands ? ` (${product.brands})` : '';
+        
         const c100 = product.nutriments['energy-kcal_100g'] || 0;
         const p100 = product.nutriments['proteins_100g'] || 0;
         const f100 = product.nutriments['fat_100g'] || 0;
@@ -594,7 +833,17 @@ async function processFoodInput() {
         const f = Math.round(f100 * multiplier);
         const cb = Math.round(cb100 * multiplier);
 
-        if (confirm(`Найдено: ${name}${brand}\nВес: ${weight}г\n\nКалории: ${c} ккал\nБелки: ${p}г\nЖиры: ${f}г\nУглеводы: ${cb}г\n\nДобавить в дневник?`)) {
+        const confirmAdd = confirm(
+          `Найдено: ${name}${brand}\n` +
+          `Вес: ${weight}г\n\n` +
+          `Калории: ${c} ккал\n` +
+          `Белки: ${p}г\n` +
+          `Жиры: ${f}г\n` +
+          `Углеводы: ${cb}г\n\n` +
+          `Добавить в дневник?`
+        );
+
+        if (confirmAdd) {
           state.daily.calories = (state.daily.calories || 0) + c;
           state.daily.p = (state.daily.p || 0) + p;
           state.daily.f = (state.daily.f || 0) + f;
@@ -607,9 +856,16 @@ async function processFoodInput() {
         return;
       }
     }
-    alert(`Продукт "${query}" не найден в базе. Попробуй ввести проще.`);
+    
+    alert(`Продукт "${query}" не найден в базе. Попробуй ввести проще (например, "курица", "рис", "яблоко").`);
+    
   } catch (error) {
-    alert(`Не удалось найти продукт "${query}". Проверь интернет.`);
+    console.error('Ошибка поиска:', error);
+    if (error.name === 'AbortError') {
+      alert(`Сервер базы данных не отвечает (превышено время ожидания).\n\nПопробуй ввести базовый продукт: "курица", "яйцо", "рис", "гречка".`);
+    } else {
+      alert(`Не удалось найти продукт "${query}". Проверь интернет.`);
+    }
   } finally {
     document.getElementById('food-input').value = '';
   }
@@ -622,7 +878,17 @@ function addFoodFromDB(name, nutrients, weight) {
   const f = Math.round(nutrients.f * multiplier);
   const cb = Math.round(nutrients.cb * multiplier);
 
-  if (confirm(`Найдено (быстрая база): ${name}\nВес: ${weight}г\n\nКалории: ${c} ккал\nБелки: ${p}г\nЖиры: ${f}г\nУглеводы: ${cb}г\n\nДобавить в дневник?`)) {
+  const confirmAdd = confirm(
+    `Найдено (быстрая база): ${name}\n` +
+    `Вес: ${weight}г\n\n` +
+    `Калории: ${c} ккал\n` +
+    `Белки: ${p}г\n` +
+    `Жиры: ${f}г\n` +
+    `Углеводы: ${cb}г\n\n` +
+    `Добавить в дневник?`
+  );
+
+  if (confirmAdd) {
     state.daily.calories = (state.daily.calories || 0) + c;
     state.daily.p = (state.daily.p || 0) + p;
     state.daily.f = (state.daily.f || 0) + f;
@@ -634,14 +900,143 @@ function addFoodFromDB(name, nutrients, weight) {
   }
   document.getElementById('food-input').value = '';
 }
-  // ============================================
-// ЧАСТЬ 3: ИНТЕРФЕЙС, ЭКРАНЫ И НАВИГАЦИЯ
+
 // ============================================
+// ВИЗУАЛИЗАТОР ШТАНГИ, ТРАВМЫ, ПРОГРАММЫ, ТЕХНИКА
+// ============================================
+function renderBarbell(weight) {
+  if (!weight || weight<=20) return '';
+  let target=(weight-20)/2; if (target>300) target=300;
+  const plates=[{w:25,color:'#fa114f'},{w:20,color:'#00d4ff'},{w:15,color:'#ffd700'},{w:10,color:'#a2ff00'},{w:5,color:'#ffffff'},{w:2.5,color:'#8e8e93'},{w:1.25,color:'#38383a'}];
+  let html=''; let offsetX=0;
+  plates.forEach(p => {
+    let count=Math.floor(target/p.w);
+    for (let i=0;i<count;i++) {
+      const xL=130-offsetX-8, xR=162+offsetX, h=20+(p.w*1.5), y=30-(h/2);
+      html+=`<rect x="${xL}" y="${y}" width="8" height="${h}" rx="2" fill="${p.color}" stroke="#000" stroke-width="1"/>`;
+      html+=`<rect x="${xR}" y="${y}" width="8" height="${h}" rx="2" fill="${p.color}" stroke="#000" stroke-width="1"/>`;
+      offsetX+=10;
+    }
+    target-=count*p.w;
+  });
+  return `<div class="barbell-svg-wrap"><svg class="barbell-svg" viewBox="0 0 300 60" preserveAspectRatio="xMidYMid meet"><rect x="0" y="26" width="300" height="8" fill="#a0a0a0" rx="4"/><rect x="125" y="22" width="6" height="16" fill="#555" rx="2"/><rect x="169" y="22" width="6" height="16" fill="#555" rx="2"/><rect x="131" y="24" width="31" height="12" fill="#666"/>${html}</svg></div>`;
+}
 
-function go(screen) { state.screen = screen; render(); window.scrollTo(0,0); }
-function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+function openInjuryModal() { currentInjuriesTemp=[...state.injuries]; renderInjuryList(); document.getElementById('injury-modal').classList.add('active'); }
+function renderInjuryList() {
+  document.getElementById('injury-list').innerHTML = INJURIES_LIST.map(inj => {
+    const active=currentInjuriesTemp.includes(inj);
+    return `<div onclick="toggleInjury('${inj}')" style="padding:12px;border-radius:12px;text-align:center;font-weight:700;cursor:pointer;border:2px solid ${active?'var(--move)':'var(--card-light)'};background:${active?'rgba(250,17,79,0.1)':'var(--card-light)'};color:${active?'var(--move)':'var(--text)'};">${inj}</div>`;
+  }).join('');
+}
+function toggleInjury(inj) { if (currentInjuriesTemp.includes(inj)) currentInjuriesTemp=currentInjuriesTemp.filter(i=>i!==inj); else currentInjuriesTemp.push(inj); haptic('light'); renderInjuryList(); }
+function saveInjuries() { state.injuries=[...currentInjuriesTemp]; save(STORAGE.injuries, state.injuries); closeModal('injury-modal'); haptic('success'); showToast('Дневник травм обновлен'); render(); }
 
-// --- КНОПКА ПРОДОЛЖИТЬ И ОНБОРДИНГ ---
+function openProgramsModal() {
+  let html = '';
+  Object.keys(PROGRAMS_DB).forEach(key => {
+    const p=PROGRAMS_DB[key];
+    html += `<div class="program-card" onclick="loadProgram('${key}')"><div style="font-size:16px;font-weight:800;color:var(--accent);margin-bottom:4px;">${p.name}</div><div class="muted" style="font-size:12px;line-height:1.4;">${p.desc}</div></div>`;
+  });
+  state.customPrograms.forEach((p, i) => {
+    html += `<div class="program-card" onclick="loadCustomProgram(${i})" style="border-left:3px solid var(--stand);">
+      <div style="font-size:16px;font-weight:800;color:var(--stand);margin-bottom:4px;">${p.name}</div>
+      <div class="muted" style="font-size:12px;line-height:1.4;">Моя программа • ${p.exercises.length} упражнений</div>
+    </div>`;
+  });
+  document.getElementById('programs-list').innerHTML = html;
+  document.getElementById('programs-modal').classList.add('active');
+}
+
+function loadProgram(key) {
+  const p=PROGRAMS_DB[key]; closeModal('programs-modal'); haptic('success');
+  state.currentWorkout = { date:today(), exercises:[], mood:null, note:'' };
+  p.workouts[0].exercises.forEach(exName => addExercise(exName, false));
+  state.screen='newWorkout'; prShownThisWorkout=new Set(); showToast(`Программа: ${p.name}`); render();
+}
+
+function loadCustomProgram(index) {
+  const p = state.customPrograms[index]; closeModal('programs-modal'); haptic('success');
+  state.currentWorkout = { date:today(), exercises:[], mood:null, note:'' };
+  p.exercises.forEach(exName => addExercise(exName, false));
+  state.screen='newWorkout'; prShownThisWorkout=new Set(); showToast(`Загружена: ${p.name}`); render();
+}
+
+function openCreateProgramModal() {
+  closeModal('programs-modal');
+  tempProgramExercises = [];
+  document.getElementById('custom-prog-name').value = '';
+  renderCustomProgExList();
+  document.getElementById('custom-prog-modal').classList.add('active');
+}
+
+function renderCustomProgExList() {
+  const listEl = document.getElementById('custom-prog-ex-list');
+  listEl.innerHTML = Object.keys(getAllExercises()).map(ex => {
+    const isChecked = tempProgramExercises.includes(ex);
+    return `<div onclick="toggleCustomProgEx('${ex.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;">
+      <div style="width:20px;height:20px;border-radius:4px;border:2px solid var(--muted);display:flex;align-items:center;justify-content:center;${isChecked?'background:var(--accent);border-color:var(--accent);':''}">${isChecked?'<i class="ph-bold ph-check" style="color:#000;font-size:12px;"></i>':''}</div>
+      <span style="font-size:14px;font-weight:${isChecked?'800':'500'};color:${isChecked?'var(--accent)':'var(--text)'};">${ex}</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleCustomProgEx(exName) {
+  if (tempProgramExercises.includes(exName)) tempProgramExercises = tempProgramExercises.filter(e => e !== exName);
+  else tempProgramExercises.push(exName);
+  haptic('light');
+  renderCustomProgExList();
+}
+
+function saveCustomProgram() {
+  const name = document.getElementById('custom-prog-name').value.trim();
+  if (!name) return alert('Введи название программы');
+  if (tempProgramExercises.length === 0) return alert('Выбери хотя бы одно упражнение');
+  
+  const newProg = { name: name, exercises: tempProgramExercises };
+  state.customPrograms.push(newProg);
+  save(STORAGE.customProg, state.customPrograms);
+  syncCustomProgramToCloud(newProg);
+  
+  closeModal('custom-prog-modal');
+  haptic('success');
+  showToast('Программа сохранена!');
+  openProgramsModal();
+}
+
+function openExerciseInfo(exName) {
+  const gifEl=document.getElementById('ex-info-gif'), fallbackEl=document.getElementById('ex-info-fallback');
+  document.getElementById('ex-info-title').innerText=exName;
+  document.getElementById('ex-info-desc').innerText = EXERCISE_DESCS[exName] || EXERCISE_DESCS['default'];
+  gifEl.style.display='none'; fallbackEl.style.display='none'; gifEl.src='';
+  document.getElementById('exercise-info-modal').classList.add('active');
+  const gifUrl = EXERCISE_GIFS[exName];
+  if (gifUrl) { gifEl.src=gifUrl; gifEl.style.display='block'; gifEl.onerror = () => { gifEl.style.display='none'; fallbackEl.style.display='block'; fallbackEl.innerHTML='<i class="ph ph-warning-circle" style="font-size:48px;"></i><div>Анимация недоступна</div>'; }; }
+  else { fallbackEl.style.display='block'; fallbackEl.innerHTML='<i class="ph ph-video-camera-slash" style="font-size:48px;"></i><div>Нет анимации</div>'; }
+}
+
+function openTemplatesModal() {
+  const list=document.getElementById('templates-list');
+  if (state.templates.length===0) list.innerHTML='<p class="muted">Нет шаблонов.</p>';
+  else list.innerHTML = state.templates.map((t,i) => `<div class="card" style="margin-bottom:8px;padding:16px;text-align:left;cursor:pointer;" onclick="loadTemplate(${i})"><div style="font-weight:800;font-size:16px;color:var(--accent);">${t.name}</div><div class="muted" style="font-size:12px;">${t.exercises.length} упражнений</div></div>`).join('');
+  document.getElementById('templates-modal').classList.add('active');
+}
+function loadTemplate(i) { const t=state.templates[i]; state.currentWorkout={ date:today(), exercises:JSON.parse(JSON.stringify(t.exercises)), mood:null, note:'' }; state.screen='newWorkout'; prShownThisWorkout=new Set(); closeModal('templates-modal'); haptic('success'); render(); }
+function saveTemplate() { const name=document.getElementById('template-name-input').value.trim(); if(!name) return alert('Введи название'); state.templates.push({ name, exercises:JSON.parse(JSON.stringify(state.currentWorkout.exercises)) }); save(STORAGE.templates, state.templates); closeModal('save-template-modal'); haptic('success'); showToast('Шаблон сохранен!'); }
+
+function generateShoppingItems() {
+  const goal=state.profile.goal||'maintain';
+  if (goal==='mass') return ['Куриная грудка (1.5 кг)','Рис (1 кг)','Овсянка (500 г)','Яйца (20 шт)','Творог (1 кг)','Банан (1 кг)','Орехи (200 г)','Рыба (1 кг)','Картофель (1 кг)','Овощи для салата','Оливковое масло'];
+  if (goal==='cut') return ['Куриная грудка (1 кг)','Гречка (500 г)','Овсянка (500 г)','Яйца (10 шт)','Творог 5% (500 г)','Треска (1 кг)','Брокколи (500 г)','Огурцы/Помидоры','Яблоки (1 кг)','Зеленый чай'];
+  return ['Куриная грудка (1 кг)','Гречка (500 г)','Рис (500 г)','Овсянка (500 г)','Яйца (10 шт)','Йогурт (500 г)','Рыба (500 г)','Овощи','Фрукты (1 кг)','Орехи (100 г)'];
+}
+function openShoppingList() { renderShopping(); document.getElementById('shopping-modal').classList.add('active'); }
+function renderShopping() {
+  const items=generateShoppingItems();
+  document.getElementById('shopping-list').innerHTML = items.map(it => { const chk=state.shoppingList.includes(it); return `<div class="shop-item ${chk?'checked':''}" onclick="toggleShoppingItem('${it.replace(/'/g,"\\'")}')"><div class="shop-checkbox"><i class="ph-bold ${chk?'ph-check':''}"></i></div><div style="font-weight:600;font-size:15px;">${it}</div></div>`; }).join('');
+}
+function toggleShoppingItem(item) { if (state.shoppingList.includes(item)) state.shoppingList=state.shoppingList.filter(i=>i!==item); else state.shoppingList.push(item); save(STORAGE.shoppingList, state.shoppingList); haptic('light'); renderShopping(); }
+
 function acceptCookies() {
   const splash=document.getElementById('splash-screen');
   try {
@@ -651,23 +1046,13 @@ function acceptCookies() {
     setTimeout(() => {
       try {
         splash.style.display='none';
-        if (state.profile) { 
-          const nav=document.getElementById('nav'); 
-          if (nav) nav.style.display='flex'; 
-          render(); 
-        } else { 
-          const appEl2=document.getElementById('app'); 
-          if (appEl2) appEl2.innerHTML=''; 
-          const obModal=document.getElementById('onboarding-modal'); 
-          if (obModal) obModal.classList.add('active'); 
-          obGoal='maintain'; obEditMode=false; 
-        }
+        if (state.profile) { const nav=document.getElementById('nav'); if (nav) nav.style.display='flex'; render(); }
+        else { const appEl2=document.getElementById('app'); if (appEl2) appEl2.innerHTML=''; const obModal=document.getElementById('onboarding-modal'); if (obModal) obModal.classList.add('active'); obGoal='maintain'; obEditMode=false; }
         haptic('light');
       } catch(e) { console.error(e); }
     }, 400);
   } catch(e) { if (splash) splash.style.display='none'; try { render(); } catch(e2) {} }
 }
-
 function selectGoal(goal) { obGoal=goal; document.querySelectorAll('.goal-card').forEach(c => c.classList.toggle('selected', c.dataset.goal===goal)); haptic('light'); updatePreview(); }
 function updatePreview() {
   const sex=document.getElementById('ob_sex').value, weight=+document.getElementById('ob_weight').value, height=+document.getElementById('ob_height').value, age=+document.getElementById('ob_age').value;
@@ -677,104 +1062,36 @@ function updatePreview() {
   previewEl.style.display='block';
   document.getElementById('ob_preview_content').innerHTML = `<div style="font-size:28px;font-weight:800;color:var(--accent);margin-bottom:10px;">${kbju.calories} <span style="font-size:14px;color:var(--muted);">ккал</span></div><div style="display:flex;justify-content:space-between;font-size:14px;"><div>Б: <b>${kbju.p} г</b></div><div>Ж: <b>${kbju.f} г</b></div><div>У: <b>${kbju.cb} г</b></div></div>`;
 }
-
 function completeOnboarding() {
   const sex=document.getElementById('ob_sex').value, weight=+document.getElementById('ob_weight').value, height=+document.getElementById('ob_height').value, age=+document.getElementById('ob_age').value;
   if (!weight||!height||!age) { alert('Заполни все поля'); return; }
+  if (weight<30||weight>300) { alert('Вес 30-300 кг'); return; }
+  if (height<100||height>250) { alert('Рост 100-250 см'); return; }
+  if (age<10||age>100) { alert('Возраст 10-100'); return; }
   const targets=calculateKBJU({ sex, weight, height, age, goal:obGoal });
-  state.profile = { sex, weight, height, age, goal:obGoal, targets, swim:state.profile?.swim||{ time:30, dist:1000, style:'Кроль (вольный стиль)' } };
+  state.profile = { sex, weight, height, age, goal:obGoal, foodPrefs:state.profile?.foodPrefs||[], targets, swim:state.profile?.swim||{ time:30, dist:1000, style:'Кроль (вольный стиль)' } };
   save(STORAGE.profile, state.profile);
   closeModal('onboarding-modal');
   const nav=document.getElementById('nav'); if (nav) nav.style.display='flex';
   haptic('success');
+  if (obEditMode) { obEditMode=false; document.getElementById('ob-cancel-btn').style.display='none'; document.getElementById('ob-title').innerText='Давай познакомимся'; document.getElementById('ob-submit-btn').innerHTML='<i class="ph ph-check-circle"></i> Рассчитать и начать'; }
   render();
 }
-
-// --- СИНХРОНИЗАЦИЯ И АВТОРИЗАЦИЯ ---
-async function openAuthModal() { const el = document.getElementById('auth-modal'); if (!supabase) { alert('Supabase не настроен.'); return; } try { const { data } = await supabase.auth.getSession(); currentUser = data?.session?.user || null; } catch(e) { currentUser=null; } updateAuthUI(); el.classList.add('active'); }
-function updateAuthUI() { const lo = document.getElementById('auth-logged-out'), li = document.getElementById('auth-logged-in'), emailEl = document.getElementById('auth-user-email'); if (!lo || !li) return; if (currentUser) { lo.style.display='none'; li.style.display='block'; if (emailEl) emailEl.innerText = currentUser.email || 'пользователь'; } else { lo.style.display='block'; li.style.display='none'; } }
-async function signUp() { const email = document.getElementById('auth-email').value.trim(), password = document.getElementById('auth-password').value, msg = document.getElementById('auth-msg'); if (!email || password.length < 6) { msg.innerText='Нужен email и пароль от 6 символов'; return; } msg.innerText='Отправляем...'; const { error } = await supabase.auth.signUp({ email, password }); if (error) { msg.innerText='Ошибка: '+error.message; return; } msg.innerText='Готово! Проверь почту.'; haptic('success'); }
-async function signIn() { const email = document.getElementById('auth-email').value.trim(), password = document.getElementById('auth-password').value, msg = document.getElementById('auth-msg'); if (!email || !password) { msg.innerText='Введи email и пароль'; return; } msg.innerText='Входим...'; const { data, error } = await supabase.auth.signInWithPassword({ email, password }); if (error) { msg.innerText='Ошибка: '+error.message; return; } currentUser = data.user; msg.innerText=''; updateAuthUI(); haptic('success'); showToast('Вы вошли'); downloadCloudData(); }
-async function signOut() { if (!supabase) return; await supabase.auth.signOut(); currentUser=null; updateAuthUI(); haptic('light'); showToast('Вы вышли'); }
-
-async function syncWorkoutToCloud(workout) {
-  if (!supabase || !currentUser) return;
-  const { error } = await supabase.from('workouts').insert({ user_id: currentUser.id, workout_date: workout.date, tonnage: workout.tonnage, mood: workout.mood, note: workout.note, exercises: workout.exercises });
-  if (error) console.error('Ошибка синхронизации:', error);
+function openOnboardingEdit() {
+  if (!state.profile) return; obEditMode=true; obGoal=state.profile.goal||'maintain';
+  document.getElementById('ob-title').innerText='Изменить параметры';
+  document.getElementById('ob-submit-btn').innerHTML='<i class="ph ph-check-circle"></i> Пересчитать';
+  document.getElementById('ob-cancel-btn').style.display='flex';
+  document.getElementById('ob_sex').value=state.profile.sex||'male';
+  document.getElementById('ob_weight').value=state.profile.weight||'';
+  document.getElementById('ob_height').value=state.profile.height||'';
+  document.getElementById('ob_age').value=state.profile.age||'';
+  document.querySelectorAll('.goal-card').forEach(c => c.classList.toggle('selected', c.dataset.goal===obGoal));
+  updatePreview();
+  document.getElementById('onboarding-modal').classList.add('active');
 }
-async function downloadCloudData() {
-  if (!supabase || !currentUser) return;
-  showToast('Загрузка данных...');
-  try {
-    const { data: wks, error: wErr } = await supabase.from('workouts').select('*').order('created_at', { ascending: false });
-    if (wks && !wErr && wks.length > 0) { state.workouts = wks.map(w => ({ id: new Date(w.created_at).getTime(), date: w.workout_date, tonnage: w.tonnage, mood: w.mood, note: w.note, exercises: w.exercises })); save(STORAGE.workouts, state.workouts); }
-  } catch(e) {}
-  render(); haptic('success'); showToast('Данные загружены!');
-}
+function copyLastSets(i) { const ex=state.currentWorkout.exercises[i]; const last=getLastExerciseData(ex.name); if(!last) return; ex.sets=last.sets.map(s=>({ weight:s.weight, reps:s.reps, isWarmup:false, completed:false })); haptic('success'); showToast(`Скопировано: ${ex.name}`); render(); }
 
-// --- ТАЙМЕР И КАЛЬКУЛЯТОРЫ ---
-function calc1RM() { const w=+document.getElementById('rm-weight').value; const r=+document.getElementById('rm-reps').value; if(!w||!r) return; document.getElementById('rm-result').innerText = Math.round(w * (1 + r/30)) + ' кг'; }
-function setTimerPreset(sec) { timerTotal=sec; timerRemaining=sec; document.querySelectorAll('.timer-preset-btn').forEach(b=>b.classList.toggle('active', +b.dataset.sec===sec)); updateTimerDisplay(); }
-function updateTimerDisplay() { const el=document.getElementById('timer-display'); if(el) el.innerText = `${Math.floor(timerRemaining/60).toString().padStart(2,'0')}:${(timerRemaining%60).toString().padStart(2,'0')}`; }
-function buyPremium() { state.isPremium = true; save(STORAGE.premium, true); closeModal('premium-modal'); showToast('Premium активирован! 👑'); render(); }
-function saveSetNote() { const note = document.getElementById('set-note-input').value; if (currentSetNoteTarget.exIdx !== null) { state.currentWorkout.exercises[currentSetNoteTarget.exIdx].sets[currentSetNoteTarget.setIdx].note = note; render(); } closeModal('set-note-modal'); }
-
-// --- ТРАВМЫ И ПРОГРАММЫ ---
-function openInjuryModal() { currentInjuriesTemp=[...state.injuries]; renderInjuryList(); document.getElementById('injury-modal').classList.add('active'); }
-function renderInjuryList() { document.getElementById('injury-list').innerHTML = INJURIES_LIST.map(inj => { const active=currentInjuriesTemp.includes(inj); return `<div onclick="toggleInjury('${inj}')" style="padding:12px;border-radius:12px;text-align:center;font-weight:700;cursor:pointer;border:2px solid ${active?'var(--move)':'var(--card-light)'};background:${active?'rgba(250,17,79,0.1)':'var(--card-light)'};color:${active?'var(--move)':'var(--text)'};">${inj}</div>`; }).join(''); }
-function toggleInjury(inj) { if (currentInjuriesTemp.includes(inj)) currentInjuriesTemp=currentInjuriesTemp.filter(i=>i!==inj); else currentInjuriesTemp.push(inj); haptic('light'); renderInjuryList(); }
-function saveInjuries() { state.injuries=[...currentInjuriesTemp]; save(STORAGE.injuries, state.injuries); closeModal('injury-modal'); haptic('success'); showToast('Сохранено'); render(); }
-function openShoppingList() { renderShopping(); document.getElementById('shopping-modal').classList.add('active'); }
-function renderShopping() { const items = ['Куриная грудка', 'Гречка', 'Яйца', 'Творог', 'Овощи']; document.getElementById('shopping-list').innerHTML = items.map(it => `<div class="shop-item" onclick="this.classList.toggle('checked')"><div class="shop-checkbox"><i class="ph-bold ph-check"></i></div><div style="font-weight:600;font-size:15px;">${it}</div></div>`).join(''); }
-
-function openProgramsModal() {
-  let html = '';
-  Object.keys(PROGRAMS_DB).forEach(key => { const p=PROGRAMS_DB[key]; html += `<div class="program-card" onclick="loadProgram('${key}')"><div style="font-size:16px;font-weight:800;color:var(--accent);margin-bottom:4px;">${p.name}</div><div class="muted" style="font-size:12px;line-height:1.4;">${p.desc}</div></div>`; });
-  document.getElementById('programs-list').innerHTML = html;
-  document.getElementById('programs-modal').classList.add('active');
-}
-function loadProgram(key) { const p=PROGRAMS_DB[key]; closeModal('programs-modal'); haptic('success'); state.currentWorkout = { date:today(), exercises:[], mood:null, note:'' }; p.workouts[0].exercises.forEach(exName => addExercise(exName, false)); state.screen='newWorkout'; render(); }
-
-// --- БЕГ И ПЛАВАНИЕ ---
-function renderRunning() {
-  const cal=Math.round(9.8*state.profile.weight*(runTime/3600));
-  return `<div class="run-screen">
-    <div class="run-time-big" id="run-time">${formatTime(runTime)}</div>
-    <div class="run-metrics">
-      <div class="run-metric-box" style="grid-column:span 2;background:var(--card-light);"><div class="muted" style="font-size:12px;margin-bottom:8px;">Дистанция (км)</div><input type="number" id="run-dist-input" value="${state.tempRunDist||''}" placeholder="0.0" style="margin:0;font-size:24px;font-weight:800;padding:12px;" onchange="state.tempRunDist = +this.value"></div>
-      <div class="run-metric-box" style="grid-column:span 2;"><div class="run-metric-val" style="color:var(--accent);">${cal}</div><div class="stat-label">ККАЛ</div></div>
-    </div>
-    <button onclick="toggleRun()" id="run-btn" style="border-radius:99px;padding:24px;font-size:22px;background:${runActive?'var(--move)':'var(--accent)'};color:${runActive?'#fff':'#000'};"><i class="ph ${runActive?'ph-pause':'ph-play'}"></i> ${runActive?'ПАУЗА':'СТАРТ'}</button>
-    <button class="secondary" id="run-save-btn" style="display:${runActive||runTime===0?'none':'flex'};" onclick="saveRun(${cal})">Сохранить</button>
-  </div>`;
-}
-function formatTime(sec) { return `${Math.floor(sec/3600).toString().padStart(2,'0')}:${Math.floor((sec%3600)/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
-function toggleRun() { runActive=!runActive; haptic('medium'); if (runActive) { runInt=setInterval(() => { runTime++; const el=document.getElementById('run-time'); if(el) el.innerText=formatTime(runTime); }, 1000); } else clearInterval(runInt); document.getElementById('app').innerHTML=renderRunning(); }
-function saveRun(cal) { const distInput=document.getElementById('run-dist-input'); const dist=distInput?+distInput.value:0; if(!dist||dist<=0) return alert('Введи дистанцию'); state.runs.unshift({ id:Date.now(), date:today(), distance:dist, time:formatTime(runTime), calories:cal }); save(STORAGE.runs,state.runs); checkAchievements(); haptic('success'); runTime=0; runActive=false; state.tempRunDist=null; render(); }
-
-function renderSwimming() {
-  const sw=state.profile.swim||{ time:30,dist:1000,style:'Кроль (вольный стиль)' };
-  return `<h1>Плавание</h1>
-    <div class="bento-grid">
-      <div class="card glass-card span-2"><h2>Параметры заплыва</h2>
-        <label>Стиль</label>
-        <select id="swim-style" onchange="updateSwimStyle(this.value)">
-          <option value="Кроль (вольный стиль)" ${sw.style.includes('Кроль')?'selected':''}>Кроль</option>
-          <option value="Брасс" ${sw.style.includes('Брасс')?'selected':''}>Брасс</option>
-          <option value="Баттерфляй (Дельфин)" ${sw.style.includes('Баттерфляй')?'selected':''}>Баттерфляй</option>
-          <option value="На спине" ${sw.style.includes('На спине')?'selected':''}>На спине</option>
-        </select>
-        <div style="display:flex;gap:10px;"><div style="flex:1;"><label>Время (мин)</label><input type="number" id="swim-time" value="${sw.time}"></div><div style="flex:1;"><label>Дистанция (м)</label><input type="number" id="swim-dist" value="${sw.dist}"></div></div>
-        <button style="margin-top:10px;" onclick="saveSwim()"><i class="ph ph-check"></i> Сохранить заплыв</button>
-      </div>
-    </div>`;
-}
-function updateSwimStyle(val) { if (!state.profile.swim) state.profile.swim={ time:30,dist:1000,style:val }; state.profile.swim.style=val; save(STORAGE.profile,state.profile); render(); }
-function saveSwim() { const time=+document.getElementById('swim-time').value; const dist=+document.getElementById('swim-dist').value; const style=document.getElementById('swim-style').value; state.profile.swim={ time,dist,style }; save(STORAGE.profile,state.profile); state.swims=state.swims||[]; state.swims.unshift({ date:today(),time,dist,style }); save(STORAGE.swims,state.swims); checkAchievements(); haptic('success'); alert('Заплыв сохранен!'); render(); }
-
-// ============================================
-// РЕНДЕРИНГ И ЭКРАНЫ
-// ============================================
 function render() {
   const app=document.getElementById('app');
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.screen===state.screen));
@@ -787,14 +1104,9 @@ function render() {
   else if (state.screen==='profile') app.innerHTML=renderProfile();
 }
 
-// --- НОВАЯ ФУНКЦИЯ: РЕЖИМ ПРИЗРАКА ---
-function renderGhostData(exName) {
-  const last = getLastExerciseData(exName);
-  if (!last) return '';
-  const bestSet = last.sets.reduce((prev, current) => (prev.weight > current.weight) ? prev : current);
-  return `<div class="overload-hint"><i class="ph ph-ghost"></i> Прошлый раз: ${bestSet.weight} кг × ${bestSet.reps} (${last.date})</div>`;
-}
-
+// ============================================
+// СВОДКА
+// ============================================
 function renderHome() {
   const targets=getTargets();
   const done=state.workouts.some(w => w.date===today());
@@ -808,6 +1120,7 @@ function renderHome() {
   return `
     <h1>Сводка</h1>
     ${streak>0?`<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;background:linear-gradient(90deg,rgba(250,17,79,0.15),transparent);padding:14px 20px;border-radius:20px;border-left:4px solid var(--move);"><span style="font-size:32px;">🔥</span><div><div style="font-weight:800;font-size:18px;">${streak} ${streak===1?'день':(streak>1&&streak<5)?'дня':'дней'} подряд</div><div class="muted" style="font-size:12px;">Не разрывай серию!</div></div></div>`:''}
+    ${state.injuries && state.injuries.length>0?`<div class="card glass-card" style="padding:16px;border-left:4px solid var(--move);margin-bottom:16px;"><div style="display:flex;gap:10px;"><i class="ph-fill ph-warning-circle" style="color:var(--move);font-size:24px;"></i><div><div style="font-weight:700;font-size:14px;">Внимание, травмы!</div><div style="font-size:13px;">Ты отметил: <b>${state.injuries.join(', ')}</b></div></div></div></div>`:''}
     ${advice?`<div class="card glass-card" style="padding:16px;border-left:4px solid var(--accent);margin-bottom:16px;"><div style="display:flex;gap:10px;"><i class="ph-fill ph-lightbulb" style="color:var(--accent);font-size:24px;"></i><div><div style="font-weight:700;font-size:14px;">Умный совет</div><div style="font-size:13px;">${advice}</div></div></div></div>`:''}
     ${forecast?`<div class="card glass-card" style="padding:16px;border-left:4px solid var(--stand);margin-bottom:16px;"><div style="display:flex;gap:10px;"><i class="ph-fill ph-chart-line-up" style="color:var(--stand);font-size:24px;"></i><div><div style="font-weight:700;font-size:14px;">Прогноз веса</div><div style="font-size:13px;">${forecast}</div></div></div></div>`:''}
     <div class="bento-grid">
@@ -828,29 +1141,90 @@ function renderHome() {
           <button class="secondary" onclick="addWater(250)" style="margin:0;font-size:14px;padding:12px;"><i class="ph ph-plus"></i> 250мл</button>
           <button class="secondary" onclick="addWater(500)" style="margin:0;font-size:14px;padding:12px;"><i class="ph ph-plus"></i> 500мл</button>
         </div>
-        <div style="margin-top:10px;"><button class="secondary" onclick="document.getElementById('food-modal').classList.add('active')" style="margin:0;font-size:14px;padding:14px;"><i class="ph ph-fork-knife"></i> Добавить еду</button></div>
+        <div style="margin-top:10px;"><button class="secondary" onclick="openFoodModal()" style="margin:0;font-size:14px;padding:14px;"><i class="ph ph-fork-knife"></i> Добавить еду</button></div>
       </div>
       <div class="card span-2"><h2 style="margin-bottom:16px;"><i class="ph ph-check-square-offset"></i> Привычки на сегодня</h2>
         <div class="habit-item ${state.daily.habits.water?'done':''}" onclick="toggleHabit('water')"><span><i class="ph ph-drop" style="color:var(--stand)"></i> Выпить 2л воды</span><div class="habit-check">${state.daily.habits.water?'<i class="ph-bold ph-check"></i>':''}</div></div>
         <div class="habit-item ${state.daily.habits.steps?'done':''}" onclick="toggleHabit('steps')"><span><i class="ph ph-sneaker" style="color:var(--move)"></i> Пройти 10 000 шагов</span><div class="habit-check">${state.daily.habits.steps?'<i class="ph-bold ph-check"></i>':''}</div></div>
         <div class="habit-item ${state.daily.habits.sleep?'done':''}" onclick="toggleHabit('sleep')"><span><i class="ph ph-moon" style="color:var(--purple)"></i> Спать 8 часов</span><div class="habit-check">${state.daily.habits.sleep?'<i class="ph-bold ph-check"></i>':''}</div></div>
       </div>
+      <div class="card glass-card" style="min-height:180px;"><h2 style="margin-bottom:10px;">План тренировок</h2><p class="muted">Программа на неделю</p><button style="margin-top:20px;" onclick="openProgramsModal()">Выбрать программу</button></div>
+      <div class="card" style="min-height:180px;"><h2 style="margin-bottom:10px;">План питания</h2><p class="muted">Меню и список покупок</p><button style="margin-top:20px;" onclick="showPlan('food')">Смотреть меню</button></div>
       <div class="card span-2"><button onclick="startWorkout()" style="margin:0;"><i class="ph ph-play"></i> Начать тренировку</button></div>
     </div>`;
 }
 function toggleHabit(habit) { if (!state.daily.habits) state.daily.habits={ water:false,steps:false,sleep:false }; state.daily.habits[habit]=!state.daily.habits[habit]; save(STORAGE.daily,state.daily); haptic('light'); render(); }
 function addWater(amount=250) { state.daily.water=(state.daily.water||0)+amount; save(STORAGE.daily,state.daily); haptic('light'); showToast(`+${amount} мл`); render(); }
+function openFoodModal() { document.getElementById('food-input').value=''; document.getElementById('food-modal').classList.add('active'); }
 
-// --- ЗАЛ (С РЕЖИМОМ ПРИЗРАКА) ---
+// ============================================
+// БЕГ
+// ============================================
+function renderRunning() {
+  const cal=Math.round(9.8*state.profile.weight*(runTime/3600));
+  return `<div class="run-screen">
+    <div class="run-time-big" id="run-time">${formatTime(runTime)}</div>
+    <div class="run-metrics">
+      <div class="run-metric-box" style="grid-column:span 2;background:var(--card-light);"><div class="muted" style="font-size:12px;margin-bottom:8px;">Дистанция (км)</div><input type="number" id="run-dist-input" value="${state.tempRunDist||''}" placeholder="0.0" style="margin:0;font-size:24px;font-weight:800;padding:12px;" onchange="state.tempRunDist = +this.value"></div>
+      <div class="run-metric-box" style="grid-column:span 2;"><div class="run-metric-val" style="color:var(--accent);">${cal}</div><div class="stat-label">ККАЛ (примерно)</div></div>
+    </div>
+    <button onclick="toggleRun()" id="run-btn" style="border-radius:99px;padding:24px;font-size:22px;background:${runActive?'var(--move)':'var(--accent)'};color:${runActive?'#fff':'#000'};"><i class="ph ${runActive?'ph-pause':'ph-play'}"></i> ${runActive?'ПАУЗА':'СТАРТ'}</button>
+    <button class="secondary" id="run-save-btn" style="display:${runActive||runTime===0?'none':'flex'};" onclick="saveRun(${cal})">Сохранить</button>
+    ${state.runs.length>0?`<div style="margin-top:20px;"><h2>История</h2>${state.runs.map(r => `<div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;"><div><div style="font-weight:700;">${r.date}</div><div class="muted" style="font-size:12px;">${r.calories} ккал</div></div><b>${r.distance} км</b></div>`).join('')}</div>`:''}
+  </div>`;
+}
+function formatTime(sec) { return `${Math.floor(sec/3600).toString().padStart(2,'0')}:${Math.floor((sec%3600)/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
+function toggleRun() { runActive=!runActive; haptic('medium'); if (runActive) { runInt=setInterval(() => { runTime++; const el=document.getElementById('run-time'); if(el) el.innerText=formatTime(runTime); }, 1000); } else clearInterval(runInt); document.getElementById('app').innerHTML=renderRunning(); }
+function saveRun(cal) { const distInput=document.getElementById('run-dist-input'); const dist=distInput?+distInput.value:0; if(!dist||dist<=0) return alert('Введи дистанцию'); state.runs.unshift({ id:Date.now(), date:today(), distance:dist, time:formatTime(runTime), calories:cal }); save(STORAGE.runs,state.runs); checkAchievements(); haptic('success'); runTime=0; runActive=false; state.tempRunDist=null; render(); }
+
+// ============================================
+// ПЛАВАНИЕ
+// ============================================
+function renderSwimming() {
+  const sw=state.profile.swim||{ time:30,dist:1000,style:'Кроль (вольный стиль)' };
+  let muscles='';
+  if (sw.style.includes('Кроль')) muscles='Широчайшие, дельтовидные, трицепсы, пресс, ягодицы.';
+  else if (sw.style.includes('Брасс')) muscles='Грудная, широчайшие, квадрицепсы, бицепсы бедер, ягодицы.';
+  else if (sw.style.includes('Баттерфляй')) muscles='Грудные, широчайшие, дельтовидные, пресс, ноги.';
+  else if (sw.style.includes('На спине')) muscles='Широчайшие, задние дельты, пресс, квадрицепсы, ягодицы.';
+  else if (sw.style.includes('Комплексное')) muscles='Все группы мышц.';
+  else if (sw.style.includes('С ластами')) muscles='Ноги, ягодицы, пресс, спина.';
+  else if (sw.style.includes('Колобашка')) muscles='Ноги: квадрицепсы, бицепсы бедер, икры, ягодицы.';
+  return `<h1>Плавание</h1>
+    <div class="bento-grid">
+      <div class="card glass-card span-2"><h2>Параметры заплыва</h2>
+        <label>Стиль</label>
+        <select id="swim-style" onchange="updateSwimStyle(this.value)">
+          <option value="Кроль (вольный стиль)" ${sw.style.includes('Кроль')?'selected':''}>Кроль</option>
+          <option value="Брасс" ${sw.style.includes('Брасс')?'selected':''}>Брасс</option>
+          <option value="Баттерфляй (Дельфин)" ${sw.style.includes('Баттерфляй')?'selected':''}>Баттерфляй</option>
+          <option value="На спине" ${sw.style.includes('На спине')?'selected':''}>На спине</option>
+          <option value="Комплексное плавание" ${sw.style.includes('Комплексное')?'selected':''}>Комплексное</option>
+          <option value="Плавание с ластами" ${sw.style.includes('С ластами')?'selected':''}>С ластами</option>
+          <option value="Колобашка (только ноги)" ${sw.style.includes('Колобашка')?'selected':''}>Колобашка</option>
+        </select>
+        <div style="display:flex;gap:10px;"><div style="flex:1;"><label>Время (мин)</label><input type="number" id="swim-time" value="${sw.time}"></div><div style="flex:1;"><label>Дистанция (м)</label><input type="number" id="swim-dist" value="${sw.dist}"></div></div>
+        <button style="margin-top:10px;" onclick="saveSwim()"><i class="ph ph-check"></i> Сохранить заплыв</button>
+      </div>
+      <div class="card span-2" style="border-left:4px solid var(--stand);"><h2 style="color:var(--stand);"><i class="ph ph-activity"></i> Восстановление</h2><p class="muted" style="margin-bottom:10px;">При стиле <b>${sw.style}</b> нагружаются:</p><div style="background:var(--card-light);padding:16px;border-radius:12px;font-weight:600;">${muscles}</div></div>
+      <div class="card span-2"><h2>История</h2>${(state.swims||[]).map(s => `<div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;"><span>${s.date} - ${s.style}</span><b>${s.dist} м / ${s.time} мин</b></div>`).join('')||'<p class="muted">Пока пусто</p>'}</div>
+    </div>`;
+}
+function updateSwimStyle(val) { if (!state.profile.swim) state.profile.swim={ time:30,dist:1000,style:val }; state.profile.swim.style=val; save(STORAGE.profile,state.profile); render(); }
+function saveSwim() { const time=+document.getElementById('swim-time').value; const dist=+document.getElementById('swim-dist').value; const style=document.getElementById('swim-style').value; state.profile.swim={ time,dist,style }; save(STORAGE.profile,state.profile); state.swims=state.swims||[]; state.swims.unshift({ date:today(),time,dist,style }); save(STORAGE.swims,state.swims); checkAchievements(); haptic('success'); alert('Заплыв сохранен!'); render(); }
+  // ============================================
+// ТРЕНИРОВКА В ЗАЛЕ (ПРОДОЛЖЕНИЕ ОРИГИНАЛЬНОГО КОДА)
+// ============================================
 function startWorkout() { state.currentWorkout={ date:today(), exercises:[], mood:null, note:'' }; state.screen='newWorkout'; prShownThisWorkout=new Set(); haptic('medium'); render(); }
 
-function addExercise(exName, renderNow=true) {
-  if (!state.currentWorkout) return;
+// --- НОВОЕ: РЕЖИМ ПРИЗРАКА ---
+function renderGhostData(exName) {
   const last = getLastExerciseData(exName);
-  const defaultSets = last ? last.sets.map(s => ({ weight:s.weight, reps:s.reps, isWarmup:false, completed:false })) : [{ weight:0, reps:10, isWarmup:false, completed:false }];
-  state.currentWorkout.exercises.push({ name:exName, sets:defaultSets });
-  if(renderNow) render();
+  if (!last) return '';
+  const bestSet = last.sets.reduce((prev, current) => (prev.weight > current.weight) ? prev : current);
+  return `<div class="overload-hint" style="margin-bottom:8px;"><i class="ph ph-ghost"></i> Прошлый раз: ${bestSet.weight} кг × ${bestSet.reps} (${last.date})</div>`;
 }
+// -----------------------------
 
 function renderNewWorkout() {
   if (!state.currentWorkout) startWorkout();
@@ -865,69 +1239,105 @@ function renderNewWorkout() {
   <div class="workout-layout">
     <div>
       ${w.exercises.length>0?w.exercises.map((ex,i) => {
-        return `
-        <div class="card" style="margin-bottom:16px; padding:16px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div class="ex-name" onclick="openExerciseInfo('${ex.name}')" style="flex:1;">${ex.name}</div>
-            <button class="danger" style="width:32px; height:32px; padding:0; margin:0; border-radius:8px;" onclick="removeExercise(${i})"><i class="ph ph-trash"></i></button>
+        const lastTime=getLastExerciseData(ex.name); const pr=getPR(ex.name);
+        const exGroup=getAllExercises()[ex.name]||'Другое';
+        let injuryWarning='';
+        if (state.injuries && state.injuries.length>0) {
+          const isRisk=state.injuries.some(inj => (inj==='Плечо'&&exGroup==='Плечи')||(inj==='Колено'&&exGroup==='Ноги')||(inj==='Поясница'&&exGroup==='Спина')||(inj==='Локоть'&&exGroup==='Руки'));
+          if (isRisk) injuryWarning=`<div class="injury-warning" style="background:rgba(250,17,79,0.1); color:var(--move); padding:6px 10px; border-radius:8px; font-size:11px; font-weight:700; margin-bottom:8px; display:inline-block;"><i class="ph-fill ph-warning-circle"></i> Внимание: береги ${state.injuries.filter(inj => (inj==='Плечо'&&exGroup==='Плечи')||(inj==='Колено'&&exGroup==='Ноги')||(inj==='Поясница'&&exGroup==='Спина')||(inj==='Локоть'&&exGroup==='Руки')).join(', ')}!</div>`;
+        }
+        return `<div class="card" style="margin-bottom:16px; padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+            <div style="flex:1;">
+              <div style="font-weight:800;font-size:17px;cursor:pointer;display:flex;align-items:center;gap:8px;" onclick="openExerciseInfo('${ex.name}')">
+                ${ex.name}
+                ${pr>0?`<span style="font-size:10px;background:var(--card-light);padding:2px 6px;border-radius:6px;color:var(--muted);">🏆 ${pr} кг</span>`:''}
+              </div>
+              ${injuryWarning}
+              ${renderGhostData(ex.name)} <!-- ВСТАВЛЕН РЕЖИМ ПРИЗРАКА -->
+            </div>
+            <button class="danger" style="width:auto;padding:6px 10px;margin:0;border-radius:8px;font-size:12px;" onclick="removeExercise(${i})"><i class="ph ph-trash"></i></button>
           </div>
           
-          ${renderGhostData(ex.name)} <!-- ВСТАВЛЕН РЕЖИМ ПРИЗРАКА -->
-          
-          <div class="set-rows">
+          <div class="set-rows" style="margin-bottom:12px;">
             ${ex.sets.map((s, j) => `
-              <div class="set-row-wrapper">
+              <div class="set-row-wrapper" style="margin-bottom:6px;">
                 <div class="set-row" style="${s.completed ? 'opacity:0.6' : ''}">
                   <div class="set-num">${j+1}</div>
                   <div class="set-inputs">
-                    <input type="number" value="${s.weight}" placeholder="КГ" onchange="updateSet(${i}, ${j}, 'weight', this.value)">
-                    <input type="number" value="${s.reps}" placeholder="ПОВТ" onchange="updateSet(${i}, ${j}, 'reps', this.value)">
+                    <input type="number" value="${s.weight||''}" placeholder="КГ" onchange="updateSet(${i}, ${j}, 'weight', this.value)" style="font-size:16px;padding:10px;">
+                    <input type="number" value="${s.reps||''}" placeholder="ПОВТ" onchange="updateSet(${i}, ${j}, 'reps', this.value)" style="font-size:16px;padding:10px;">
                   </div>
-                  <button class="set-check ${s.completed?'completed':''}" onclick="toggleSetComplete(${i}, ${j})">
+                  <button class="set-check ${s.completed?'completed':''}" onclick="toggleSetComplete(${i}, ${j})" style="width:40px;height:40px;font-size:18px;">
                     <i class="ph ph-check"></i>
                   </button>
                 </div>
               </div>
             `).join('')}
           </div>
-          <button class="secondary" style="margin-top:10px; font-size:14px; padding:10px;" onclick="addSet(${i})"><i class="ph ph-plus"></i> Добавить подход</button>
-        </div>
-        `;
+          
+          <div style="display:flex;gap:8px;">
+            <button class="secondary" style="margin:0;padding:10px;font-size:13px;flex:1;" onclick="addSet(${i})"><i class="ph ph-plus"></i> Подход</button>
+            <button class="secondary" style="margin:0;padding:10px;font-size:13px;flex:1;" onclick="copyLastSets(${i})"><i class="ph ph-copy"></i> Прошлые</button>
+          </div>
+        </div>`;
       }).join('') : `<p class="muted" style="text-align:center; padding:20px;">Добавь первое упражнение ниже 👇</p>`}
       
-      <div class="card" style="padding:16px; margin-top:16px;">
+      <div class="card" style="padding:16px; margin-top:16px; background:var(--card-light);">
         <label>Добавить упражнение:</label>
-        <select id="ex-select" style="margin-bottom:10px;">
+        <select id="ex-select" style="margin-bottom:10px; background:var(--card);">
           ${Object.keys(getAllExercises()).map(ex => `<option value="${ex}">${ex}</option>`).join('')}
         </select>
-        <button onclick="addExercise(document.getElementById('ex-select').value)">Добавить в тренировку</button>
+        <div style="display:flex;gap:8px;">
+          <button style="margin:0;flex:2;" onclick="addExercise(document.getElementById('ex-select').value)">Добавить</button>
+          <button class="secondary" style="margin:0;flex:1;" onclick="document.getElementById('custom-ex-modal').classList.add('active')"><i class="ph ph-plus"></i></button>
+        </div>
       </div>
     </div>
+    
     <div>
-      <button onclick="saveWorkout()" style="background:var(--accent); color:#000; font-size:20px; padding:24px; margin-bottom:16px;"><i class="ph-bold ph-check"></i> ЗАВЕРШИТЬ ТРЕНИРОВКУ</button>
+      <div class="card" style="margin-bottom:16px; background:var(--card);">
+        <h2 style="margin-bottom:12px;">Действия</h2>
+        <button onclick="saveWorkout()" style="background:var(--accent); color:#000; font-size:18px; padding:20px; margin-bottom:12px;"><i class="ph-bold ph-check"></i> ЗАВЕРШИТЬ</button>
+        <button class="secondary" onclick="openTemplatesModal()"><i class="ph ph-files"></i> Шаблоны</button>
+        <button class="secondary" onclick="document.getElementById('save-template-modal').classList.add('active')"><i class="ph ph-floppy-disk"></i> Сохранить как шаблон</button>
+        <button class="secondary" onclick="document.getElementById('rm-modal').classList.add('active')"><i class="ph ph-calculator"></i> Калькулятор 1ПМ</button>
+        <button class="secondary" onclick="document.getElementById('timer-modal').classList.add('active')"><i class="ph ph-timer"></i> Таймер отдыха</button>
+        <button class="secondary" onclick="openInjuryModal()"><i class="ph ph-first-aid"></i> Дневник травм</button>
+      </div>
     </div>
   </div>`;
 }
 
 function removeExercise(i) { state.currentWorkout.exercises.splice(i,1); render(); }
-function updateSet(exIdx, setIdx, field, val) { state.currentWorkout.exercises[exIdx].sets[setIdx][field] = +val; render(); }
+function updateSet(exIdx, setIdx, field, val) { state.currentWorkout.exercises[exIdx].sets[setIdx][field] = +val; if (field==='weight') render(); } // Обновляем только если меняется вес для пересчета тоннажа
 function addSet(exIdx) { state.currentWorkout.exercises[exIdx].sets.push({ weight:0, reps:10, isWarmup:false, completed:false }); render(); }
 function toggleSetComplete(exIdx, setIdx) { const s = state.currentWorkout.exercises[exIdx].sets[setIdx]; s.completed = !s.completed; haptic('light'); render(); }
-function cancelWorkout() { if (confirm('Точно отменить тренировку? Данные не сохранятся.')) { state.currentWorkout = null; go('home'); } }
+
+function cancelWorkout() {
+  if (confirm('Точно отменить тренировку? Данные не сохранятся.')) {
+    state.currentWorkout = null;
+    go('home');
+  }
+}
 
 function saveWorkout() {
-  if (state.currentWorkout.exercises.length === 0) return alert('Добавь хотя бы одно упражнение!');
+  if (!state.currentWorkout || state.currentWorkout.exercises.length === 0) return alert('Добавь хотя бы одно упражнение!');
   const tonnage = calcTonnage(state.currentWorkout);
   if (tonnage === 0 && !confirm('Тоннаж 0 кг. Точно сохранить?')) return;
+  
   state.currentWorkout.id = Date.now();
   state.currentWorkout.tonnage = tonnage;
   state.workouts.unshift(state.currentWorkout);
   save(STORAGE.workouts, state.workouts);
+  
   syncWorkoutToCloud(state.currentWorkout);
   checkAchievements();
+  
   state.lastSavedWorkoutId = state.currentWorkout.id;
   state.currentWorkout = null;
   haptic('success');
+  
   document.getElementById('feedback-modal').classList.add('active');
   go('home'); 
 }
@@ -942,8 +1352,18 @@ function updateWorkoutFeedback() {
   showToast('Сохранено!');
 }
 function selectMood(m, e) { document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected')); e.target.classList.add('selected'); }
+function saveCustomExercise() { const name = document.getElementById('custom-ex-name').value.trim(); const group = document.getElementById('custom-ex-group').value; if (!name) return; state.customExercises[name] = group; save(STORAGE.customEx, state.customExercises); syncCustomExerciseToCloud(name, group); closeModal('custom-ex-modal'); haptic('success'); render(); }
+function setTimerPreset(sec) { timerTotal=sec; timerRemaining=sec; document.querySelectorAll('.timer-preset-btn').forEach(b=>b.classList.toggle('active', +b.dataset.sec===sec)); updateTimerDisplay(); }
+function updateTimerDisplay() { const el=document.getElementById('timer-display'); if(el) el.innerText = `${Math.floor(timerRemaining/60).toString().padStart(2,'0')}:${(timerRemaining%60).toString().padStart(2,'0')}`; }
+function calc1RM() { const w=+document.getElementById('rm-weight').value; const r=+document.getElementById('rm-reps').value; if(!w||!r) return; document.getElementById('rm-result').innerText = Math.round(w * (1 + r/30)) + ' кг'; }
+function buyPremium() { state.isPremium = true; save(STORAGE.premium, true); closeModal('premium-modal'); showToast('Premium активирован! 👑'); render(); }
+function saveSetNote() { const note = document.getElementById('set-note-input').value; if (currentSetNoteTarget.exIdx !== null) { state.currentWorkout.exercises[currentSetNoteTarget.exIdx].sets[currentSetNoteTarget.setIdx].note = note; render(); } closeModal('set-note-modal'); }
 
-// --- ТРЕНДЫ (С КАЛЕНДАРЕМ И КАРТОЙ МЫШЦ) ---
+// ============================================
+// ТРЕНДЫ (ОРИГИНАЛЬНЫЙ ЭКРАН + НОВЫЕ ФИЧИ)
+// ============================================
+
+// --- НОВОЕ: КАРТА МЫШЦ ---
 function renderMuscleMap() {
   const cChest = getRecoveryColor('Грудь'); const cBack = getRecoveryColor('Спина'); const cLegs = getRecoveryColor('Ноги'); const cShoulders = getRecoveryColor('Плечи'); const cArms = getRecoveryColor('Руки'); const cAbs = getRecoveryColor('Пресс');
   return `
@@ -977,8 +1397,10 @@ function renderMuscleMap() {
   </div>
   `;
 }
+// -------------------------
 
 function renderProgress() {
+  // --- НОВОЕ: КАЛЕНДАРЬ ---
   const now = new Date(); const year = now.getFullYear(); const month = now.getMonth();
   const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
   let offset = firstDay === 0 ? 6 : firstDay - 1; 
@@ -998,86 +1420,123 @@ function renderProgress() {
     calendarHTML += `<div class="${className}">${d}</div>`;
   }
   calendarHTML += `</div>`;
+  // -------------------------
+
+  setTimeout(() => {
+    // Твой оригинальный рендер графиков
+    const volCtx = document.getElementById('volumeChart');
+    if(volCtx && state.volumeChartInstance) state.volumeChartInstance.destroy();
+    if(volCtx) {
+      const last7 = state.workouts.slice(0,7).reverse();
+      state.volumeChartInstance = new Chart(volCtx, {
+        type: 'bar',
+        data: {
+          labels: last7.map(w => w.date.slice(5)),
+          datasets: [{ label: 'Тоннаж (кг)', data: last7.map(w => w.tonnage), backgroundColor: 'var(--accent)', borderRadius: 6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93' } }, x: { grid: { display: false }, ticks: { color: '#8e8e93' } } } }
+      });
+    }
+  }, 100);
 
   return `
     <h1>Тренды</h1>
+    
+    <!-- НОВОЕ: КАЛЕНДАРЬ -->
     <div class="card" style="margin-bottom:16px;">
-      <h2>Календарь</h2>
+      <h2 style="margin-bottom:12px;">Календарь активности</h2>
       ${calendarHTML}
     </div>
+    
+    <!-- НОВОЕ: КАРТА МЫШЦ -->
     <div class="card" style="margin-bottom:16px;">
-      <h2>Восстановление мышц</h2>
+      <h2 style="margin-bottom:12px;">Восстановление мышц</h2>
       ${renderMuscleMap()}
     </div>
+
+    <!-- ТВОИ ОРИГИНАЛЬНЫЕ ГРАФИКИ -->
+    <div class="card" style="margin-bottom:16px;">
+      <h2>Объем за неделю</h2>
+      <div class="chart-container"><canvas id="volumeChart"></canvas></div>
+    </div>
+    
     <div class="card">
       <h2>История тренировок</h2>
       ${state.workouts.slice(0,10).map(w => `
-        <div style="padding:12px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;">
+        <div class="history-item" style="padding:12px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; cursor:pointer;" onclick="openHistory(${w.id})">
            <div><div style="font-weight:700;">${w.date}</div><div class="muted" style="font-size:12px;">${w.exercises.length} упражнений</div></div>
-           <div style="text-align:right;"><div style="font-weight:800; color:var(--accent);">${w.tonnage} кг</div><div style="font-size:12px;">${w.mood || ''}</div></div>
+           <div style="text-align:right;"><div style="font-weight:800; color:var(--accent);">${w.tonnage} кг</div><div style="font-size:16px;">${w.mood || ''}</div></div>
         </div>
       `).join('') || '<p class="muted">Пока нет тренировок</p>'}
     </div>
   `;
 }
 
-// --- ПРОФИЛЬ ---
+function openHistory(id) {
+  const w = state.workouts.find(x => x.id === id);
+  if (!w) return;
+  document.getElementById('history-title').innerText = `Тренировка ${w.date}`;
+  document.getElementById('history-content').innerHTML = `
+    <div style="font-size:20px; font-weight:800; color:var(--accent); margin-bottom:16px; text-align:center;">Тоннаж: ${w.tonnage} кг</div>
+    ${w.mood ? `<div style="text-align:center; font-size:40px; margin-bottom:16px;">${w.mood}</div>` : ''}
+    ${w.note ? `<div style="background:var(--card-light); padding:12px; border-radius:12px; margin-bottom:16px; font-style:italic;">"${w.note}"</div>` : ''}
+    ${w.exercises.map(ex => `
+      <div style="margin-bottom:16px; background:var(--card-light); padding:12px; border-radius:12px;">
+        <div style="font-weight:700; margin-bottom:8px;">${ex.name}</div>
+        ${ex.sets.map((s,i) => `<div style="font-size:13px; display:flex; justify-content:space-between; padding:4px 0;"><span>Подход ${i+1} ${s.isWarmup?'(разминка)':''}</span><span>${s.weight} кг × ${s.reps}</span></div>`).join('')}
+      </div>
+    `).join('')}
+  `;
+  document.getElementById('history-modal').classList.add('active');
+}
+
+// ============================================
+// ПРОФИЛЬ (ТВОЙ ОРИГИНАЛЬНЫЙ ЭКРАН)
+// ============================================
 function renderProfile() {
+  const bf = calcBodyFat(state.profile);
   return `
     <h1>Профиль</h1>
-    <div class="card" style="margin-bottom:16px;">
+    <div class="card" style="margin-bottom:16px; text-align:center;">
+      <div class="avatar" style="width:80px;height:80px;font-size:32px;margin:0 auto 16px;"><i class="ph-bold ph-user"></i></div>
       <h2>Твои данные</h2>
       <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span class="muted">Вес:</span> <b>${state.profile.weight} кг</b></div>
       <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span class="muted">Рост:</span> <b>${state.profile.height} см</b></div>
       <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span class="muted">Возраст:</span> <b>${state.profile.age} лет</b></div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span class="muted">Жир (примерно):</span> <b style="color:var(--stand)">${bf}%</b></div>
       <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span class="muted">Цель:</span> <b>${state.profile.goal === 'cut' ? 'Похудение' : state.profile.goal === 'mass' ? 'Набор' : 'Удержание'}</b></div>
-      <button class="secondary" style="margin-top:10px;" onclick="document.getElementById('onboarding-modal').classList.add('active')">Изменить параметры</button>
+      <button class="secondary" style="margin-top:10px;" onclick="openOnboardingEdit()">Изменить параметры</button>
     </div>
+    
+    <div class="card" style="margin-bottom:16px;">
+      <h2>Достижения</h2>
+      <div class="achieve-grid">
+        ${ACHIEVEMENTS_LIST.map(ach => {
+          const unlocked = state.achievements.includes(ach.id);
+          return `<div class="achieve-item ${unlocked?'unlocked':''}"><i class="ph ${ach.icon} achieve-icon"></i><div class="achieve-title">${ach.name}</div></div>`;
+        }).join('')}
+      </div>
+    </div>
+    
     <div class="card" style="margin-bottom:16px;">
       <h2>Настройки</h2>
       <button class="secondary" onclick="toggleTheme()">Сменить тему (Тёмная/Светлая)</button>
-      <button class="secondary" onclick="document.getElementById('auth-modal').classList.add('active')">Аккаунт (Синхронизация)</button>
+      <button class="secondary" onclick="openAuthModal()">Аккаунт (Синхронизация)</button>
+      <button class="secondary" onclick="document.getElementById('premium-modal').classList.add('active')" style="color:var(--premium); border:1px solid var(--premium);">Fitness Pro Premium 👑</button>
     </div>
-    <div class="card">
-      <h2>О приложении</h2>
-      <p class="muted" style="font-size:13px;">Fitness Pro от Dikov Studio. Данные сохраняются локально и в облако.</p>
+    
+    <div class="card" style="margin-bottom:16px;">
+      <h2>Данные</h2>
+      <button class="secondary" onclick="downloadBackup()"><i class="ph ph-download"></i> Скачать бэкап</button>
+      <label style="text-align:center; margin-top:10px; margin-bottom:0; font-size:12px;"><input type="file" onchange="uploadBackup(event)" style="margin:0; padding:0; display:none;">Нажми сюда, чтобы загрузить бэкап (скрытая кнопка)</label>
+      <button class="secondary" onclick="document.querySelector('input[type=file]').click()">Загрузить бэкап</button>
     </div>
   `;
 }
 
 function toggleTheme() { const next = state.themeMode==='dark'?'light':'dark'; applyTheme(next); haptic('light'); render(); showToast(`Тема: ${next==='dark'?'тёмная':'светлая'}`); }
-function openExerciseInfo(name) { 
-  document.getElementById('ex-info-title').innerText = name;
-  document.getElementById('ex-info-desc').innerText = EXERCISE_DESCS[name] || EXERCISE_DESCS['default'];
-  const gif = document.getElementById('ex-info-gif');
-  if (EXERCISE_GIFS[name]) { gif.src = EXERCISE_GIFS[name]; gif.style.display = 'block'; document.getElementById('ex-info-fallback').style.display = 'none'; } 
-  else { gif.style.display = 'none'; document.getElementById('ex-info-fallback').style.display = 'block'; }
-  document.getElementById('exercise-info-modal').classList.add('active');
-}
-
-// ЗАПУСК ПРИЛОЖЕНИЯ ПРИ ЗАГРУЗКЕ (если профиль есть)
-if (state.profile) {
-  document.getElementById('nav').style.display = 'flex';
-  render();
-}
-  // ============================================
-// ЧАСТЬ 4: ФИНАЛ (ПРОВЕРКА АВТОРИЗАЦИИ И ЗАКРЫТИЕ ТЕГОВ)
-// ============================================
-
-// Проверяем, вошел ли пользователь в аккаунт (для синхронизации с облаком)
-(async () => { 
-  if (!supabase) return; 
-  try { 
-    const { data } = await supabase.auth.getSession(); 
-    currentUser = data?.session?.user || null; 
-    if (currentUser) {
-      downloadCloudData();
-    }
-  } catch(e) {
-    console.log("Нет активной сессии");
-  } 
-})();
-
-</script>
+function go(screen) { state.screen = screen; render(); window.scrollTo(0,0); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+  </script>
 </body>
 </html>
