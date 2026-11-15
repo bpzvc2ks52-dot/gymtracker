@@ -203,7 +203,6 @@
 <div id="shopping-modal" class="modal-overlay" onclick="closeModal('shopping-modal')">
   <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
     <h2 style="margin-top:0; text-align:center;"><i class="ph ph-shopping-cart" style="color:var(--accent);"></i> Список покупок</h2>
-    <p class="muted" style="font-size:13px; margin-bottom:16px; text-align:center;">На основе твоего плана питания</p>
     <div id="shopping-list"></div>
     <button class="secondary" style="margin-top:16px;" onclick="closeModal('shopping-modal')">Закрыть</button>
   </div>
@@ -212,7 +211,6 @@
 <div id="injury-modal" class="modal-overlay" onclick="closeModal('injury-modal')">
   <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
     <h2 style="margin-top:0; text-align:center; color:var(--move);">⚠️ Дневник травм</h2>
-    <p class="muted" style="font-size:13px; margin-bottom:16px; text-align:center;">Отметь, что у тебя болит. Мы предупредим тебя в зале.</p>
     <div id="injury-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;"></div>
     <button onclick="saveInjuries()">Сохранить</button>
     <button class="secondary" onclick="closeModal('injury-modal')">Отмена</button>
@@ -222,22 +220,8 @@
 <div id="programs-modal" class="modal-overlay" onclick="closeModal('programs-modal')">
   <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
     <h2 style="margin-top:0; text-align:center;">Выбор программы</h2>
-    <p class="muted" style="font-size:13px; margin-bottom:16px; text-align:center;">Готовые сплиты и твои программы</p>
     <div id="programs-list"></div>
-    <button onclick="openCreateProgramModal()" style="margin-top:16px; background:var(--accent); color:#000;"><i class="ph ph-plus"></i> Создать свою программу</button>
     <button class="secondary" style="margin-top:8px;" onclick="closeModal('programs-modal')">Закрыть</button>
-  </div>
-</div>
-
-<div id="custom-prog-modal" class="modal-overlay" onclick="closeModal('custom-prog-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
-    <h2 style="margin-top:0; text-align:center;">Новая программа</h2>
-    <label>Название программы</label>
-    <input type="text" id="custom-prog-name" placeholder="Например: Грудь / Трицепс">
-    <label style="margin-top:16px;">Выбери упражнения:</label>
-    <div id="custom-prog-ex-list" style="max-height:200px; overflow-y:auto; background:var(--card-light); border-radius:12px; padding:10px; margin-bottom:16px;"></div>
-    <button onclick="saveCustomProgram()"><i class="ph ph-check"></i> Сохранить</button>
-    <button class="secondary" onclick="closeModal('custom-prog-modal')">Отмена</button>
   </div>
 </div>
 
@@ -245,7 +229,6 @@
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 id="ex-info-title" style="margin-top:0;">Техника</h2>
     <div style="background:var(--card-light); border-radius:16px; padding:0; margin-bottom:16px; display:flex; justify-content:center; overflow:hidden; position:relative; min-height:250px; align-items:center;">
-      <video id="ex-info-video" src="" autoplay loop muted playsinline style="width:100%; max-height:300px; border-radius:12px; object-fit:cover; display:none;"></video>
       <img id="ex-info-gif" src="" alt="Техника" style="width:100%; max-height:300px; border-radius:12px; object-fit:contain; display:none;">
       <div id="ex-info-fallback" style="display:none; text-align:center; padding:20px; color:var(--muted);"><i class="ph ph-video-camera-slash" style="font-size:48px; margin-bottom:8px;"></i><div>Видео временно недоступно</div></div>
     </div>
@@ -254,27 +237,9 @@
   </div>
 </div>
 
-<div id="templates-modal" class="modal-overlay" onclick="closeModal('templates-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-top:0;">Выбрать шаблон</h2>
-    <div id="templates-list" style="margin-bottom:20px;"></div>
-    <button class="secondary" onclick="closeModal('templates-modal')">Отмена</button>
-  </div>
-</div>
-
-<div id="save-template-modal" class="modal-overlay" onclick="closeModal('save-template-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-top:0;">Сохранить как шаблон</h2>
-    <input type="text" id="template-name-input" placeholder="Название (например: Push Day)">
-    <button onclick="saveTemplate()" style="margin-top:10px;">Сохранить</button>
-    <button class="secondary" onclick="closeModal('save-template-modal')">Отмена</button>
-  </div>
-</div>
-
 <div id="rm-modal" class="modal-overlay" onclick="closeModal('rm-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0;">Калькулятор 1ПМ</h2>
-    <p class="muted" style="font-size:13px; margin-bottom:16px;">Одноповторный максимум (теоретический)</p>
     <label>Вес (кг)</label>
     <input type="number" id="rm-weight" placeholder="80">
     <label>Повторения</label>
@@ -285,25 +250,10 @@
   </div>
 </div>
 
-<div id="set-note-modal" class="modal-overlay" onclick="closeModal('set-note-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-top:0;">Заметка к подходу</h2>
-    <input type="text" id="set-note-input" placeholder="Например: болит плечо...">
-    <button onclick="saveSetNote()" style="margin-top:10px;">Сохранить</button>
-    <button class="secondary" onclick="closeModal('set-note-modal')">Отмена</button>
-  </div>
-</div>
-
 <div id="premium-modal" class="modal-overlay" onclick="closeModal('premium-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <i class="ph-fill ph-crown" style="font-size:64px; color:var(--premium); margin-bottom:16px;"></i>
     <h2 style="margin-bottom:8px;">Fitness Pro Premium</h2>
-    <p class="muted" style="margin-bottom:24px;">Разблокируй полный потенциал</p>
-    <ul style="text-align:left; margin:0 0 24px 0; padding:0 20px; list-style:none; line-height:2;">
-      <li><i class="ph ph-check-circle" style="color:var(--accent)"></i> AI-тренер и планы</li>
-      <li><i class="ph ph-check-circle" style="color:var(--accent)"></i> Анализ состава тела</li>
-      <li><i class="ph ph-check-circle" style="color:var(--accent)"></i> Безлимитные экспорты</li>
-    </ul>
     <button class="premium-btn" onclick="buyPremium()">Оформить за 299 ₽ / мес</button>
     <button class="secondary" onclick="closeModal('premium-modal')">Позже</button>
   </div>
@@ -312,8 +262,7 @@
 <div id="food-modal" class="modal-overlay" onclick="closeModal('food-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0">Добавить еду</h2>
-    <p class="muted" style="font-size:13px; margin-top:-10px; margin-bottom:16px;">Введи название продукта и вес (например: курица 150)</p>
-    <input type="text" id="food-input" placeholder="Название и вес..." style="text-align:center; margin-bottom:20px;">
+    <input type="text" id="food-input" placeholder="Название и вес (курица 150)" style="text-align:center; margin-bottom:20px;">
     <button onclick="processFoodInput()"><i class="ph ph-check"></i> Найти и добавить</button>
   </div>
 </div>
@@ -323,7 +272,6 @@
     <div style="text-align:center; margin-bottom:16px;">
       <i class="ph-fill ph-check-circle" style="font-size:56px; color:var(--accent);"></i>
       <h2 style="margin-top:8px; margin-bottom:4px;">Тренировка сохранена!</h2>
-      <p class="muted" style="font-size:14px; margin:0;">Как она прошла? (Необязательно)</p>
     </div>
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;" id="mood-container">
       <div class="mood-btn" onclick="selectMood('🔥', event)">🔥</div>
@@ -337,52 +285,6 @@
   </div>
 </div>
 
-<div id="ai-modal" class="modal-overlay" onclick="closeModal('ai-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
-    <h2 style="text-align:center; color:var(--accent);"><i class="ph ph-magic-wand"></i> AI Тренер</h2>
-    <div id="ai-content" style="margin-top:20px; line-height:1.6; font-size:16px;"></div>
-    <button class="secondary" style="margin-top:24px;" onclick="closeModal('ai-modal')">Закрыть</button>
-  </div>
-</div>
-
-<div id="plan-modal" class="modal-overlay" onclick="closeModal('plan-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
-    <h2 id="plan-title" style="text-align:center; color:var(--accent);">План</h2>
-    <div id="plan-content" style="margin-top:20px; line-height:1.6; font-size:16px;"></div>
-    <button onclick="openShoppingList()" style="margin-top:16px; background:var(--stand); color:#000;"><i class="ph ph-shopping-cart"></i> Сгенерировать список покупок</button>
-    <button class="secondary" style="margin-top:8px;" onclick="closeModal('plan-modal')">Закрыть</button>
-  </div>
-</div>
-
-<div id="history-modal" class="modal-overlay" onclick="closeModal('history-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
-    <h2 id="history-title" style="text-align:center;">Детали</h2>
-    <div id="history-content" style="margin-top:20px;"></div>
-    <button class="secondary" style="margin-top:24px;" onclick="closeModal('history-modal')">Закрыть</button>
-  </div>
-</div>
-
-<div id="exercise-progress-modal" class="modal-overlay" onclick="closeModal('exercise-progress-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
-    <h2 id="exp-title" style="text-align:center; color:var(--accent); margin-bottom:6px;">Прогресс</h2>
-    <p id="exp-subtitle" class="muted" style="text-align:center; font-size:13px; margin-top:0; margin-bottom:16px;"></p>
-    <div id="exp-stats" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px;"></div>
-    <div class="chart-container" style="height:240px;"><canvas id="exerciseChart"></canvas></div>
-    <div style="font-size:12px; color:var(--muted); text-align:center; margin-top:16px; line-height:1.4;">Рекорд — это лучший результат за 1 подход.</div>
-    <button class="secondary" style="margin-top:24px;" onclick="closeModal('exercise-progress-modal')">Закрыть</button>
-  </div>
-</div>
-
-<div id="custom-ex-modal" class="modal-overlay" onclick="closeModal('custom-ex-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-top:0">Свое упражнение</h2>
-    <input type="text" id="custom-ex-name" placeholder="Название">
-    <select id="custom-ex-group"><option value="Ноги">Ноги</option><option value="Грудь">Грудь</option><option value="Спина">Спина</option><option value="Плечи">Плечи</option><option value="Руки">Руки</option></select>
-    <button onclick="saveCustomExercise()" style="margin-top:10px;">Добавить</button>
-    <button class="secondary" onclick="closeModal('custom-ex-modal')">Отмена</button>
-  </div>
-</div>
-
 <div id="timer-modal" class="modal-overlay" onclick="closeModal('timer-modal')">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0;">Таймер отдыха</h2>
@@ -391,21 +293,12 @@
       <button class="timer-preset-btn" data-sec="60" onclick="setTimerPreset(60)">1м</button>
       <button class="timer-preset-btn active" data-sec="90" onclick="setTimerPreset(90)">1:30</button>
       <button class="timer-preset-btn" data-sec="120" onclick="setTimerPreset(120)">2м</button>
-      <button class="timer-preset-btn" data-sec="180" onclick="setTimerPreset(180)">3м</button>
     </div>
     <div class="timer-ring-wrap">
-      <svg class="timer-ring-svg" viewBox="0 0 220 220"><circle class="timer-ring-bg" cx="110" cy="110" r="100"></circle><circle class="timer-ring-progress" id="timer-ring-progress" cx="110" cy="110" r="100" style="stroke-dasharray: 628; stroke-dashoffset: 0;"></circle></svg>
+      <svg class="timer-ring-svg" viewBox="0 0 220 220"><circle class="timer-ring-bg" cx="110" cy="110" r="100"></circle></svg>
       <div id="timer-display">01:30</div>
     </div>
     <button onclick="closeModal('timer-modal')" class="secondary">Закрыть</button>
-  </div>
-</div>
-
-<div id="plates-modal" class="modal-overlay" onclick="closeModal('plates-modal')">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 style="margin-top:0">Блины 🥞</h2>
-    <div id="plates-result" style="margin:24px 0; font-size:20px; line-height:1.8; font-weight:600;"></div>
-    <button onclick="closeModal('plates-modal')" class="secondary">Понятно</button>
   </div>
 </div>
 
@@ -413,18 +306,15 @@
   <div class="modal-content" onclick="event.stopPropagation()">
     <h2 style="margin-top:0;">Аккаунт</h2>
     <div id="auth-logged-out">
-      <label>Email</label>
-      <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email">
-      <label>Пароль</label>
-      <input type="password" id="auth-password" placeholder="Минимум 6 символов" autocomplete="current-password">
-      <button onclick="signIn()" style="margin-top:10px;"><i class="ph ph-sign-in"></i> Войти</button>
-      <button class="secondary" onclick="signUp()"><i class="ph ph-user-plus"></i> Зарегистрироваться</button>
-      <p id="auth-msg" class="muted" style="font-size:13px; text-align:center; margin-top:10px;"></p>
+      <input type="email" id="auth-email" placeholder="Email">
+      <input type="password" id="auth-password" placeholder="Пароль">
+      <button onclick="signIn()" style="margin-top:10px;">Войти</button>
+      <button class="secondary" onclick="signUp()">Зарегистрироваться</button>
+      <p id="auth-msg" class="muted" style="font-size:13px; margin-top:10px;"></p>
     </div>
     <div id="auth-logged-in" style="display:none;">
-      <p class="muted" style="text-align:center; margin-bottom:4px;">Вы вошли как</p>
-      <p style="text-align:center; font-weight:800; font-size:16px; margin-top:0;" id="auth-user-email"></p>
-      <button class="danger" onclick="signOut()" style="margin-top:16px;"><i class="ph ph-sign-out"></i> Выйти</button>
+      <p style="font-weight:800;" id="auth-user-email"></p>
+      <button class="danger" onclick="signOut()" style="margin-top:16px;">Выйти</button>
     </div>
     <button class="secondary" onclick="closeModal('auth-modal')" style="margin-top:8px;">Закрыть</button>
   </div>
@@ -440,7 +330,7 @@
 </nav>
 
 <div id="app"></div>
-<div id="export-area" style="position:absolute; left:-9999px; top:-9999px; width:400px; background:#000; padding:30px; border-radius:30px; color:#fff; font-family:-apple-system,sans-serif;"></div>
+<div id="export-area" style="position:absolute; left:-9999px; top:-9999px;"></div>
 <div id="report-area" style="position:absolute; left:-9999px; top:-9999px;"></div>
 <script>
 // ============================================
@@ -460,7 +350,7 @@ let currentUser = null;
 })();
 
 // ============================================
-// HAPTIC / SKELETON / STORAGE
+// БАЗОВЫЕ УТИЛИТЫ И ХРАНИЛИЩЕ
 // ============================================
 function haptic(type = 'light') {
   if (!('vibrate' in navigator)) return;
@@ -470,6 +360,18 @@ function haptic(type = 'light') {
 
 function renderSkeleton() {
   return `<div class="skeleton skeleton-title"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-card" style="margin-top:20px;"></div>`;
+}
+
+function showToast(message) {
+  if (!document.getElementById('toast-styles')) {
+    const st = document.createElement('style'); st.id='toast-styles';
+    st.textContent='@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}@keyframes toastOut{from{opacity:1;transform:translateX(-50%) translateY(0);}to{opacity:0;transform:translateX(-50%) translateY(20px);}}';
+    document.head.appendChild(st);
+  }
+  const toast = document.createElement('div'); toast.textContent = message;
+  toast.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--premium);color:#000;padding:14px 22px;border-radius:16px;font-weight:800;font-size:15px;z-index:99999;box-shadow:0 8px 24px rgba(255,215,0,0.4);max-width:90%;text-align:center;animation:toastIn 0.3s ease;';
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.animation='toastOut 0.3s ease'; setTimeout(() => toast.remove(), 300); }, 2500);
 }
 
 const STORAGE = { profile:'fit_p10', workouts:'fit_w10', bodyLog:'fit_b10', daily:'fit_d10', runs:'fit_r10', swims:'fit_sw10', measurements:'fit_m10', achievements:'fit_a10', premium:'fit_prem10', themeColor:'fit_color10', customEx:'fit_custom10', templates:'fit_temp10', injuries:'fit_injuries10', themeMode:'fit_theme_mode', shoppingList:'fit_shopping_list', customProg: 'fit_custom_prog' };
@@ -503,19 +405,7 @@ const EXERCISE_GIFS = {
   'Жим гантелей лёжа': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0305-3TZdu2S.gif',
   'Тяга верхнего блока': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0231-0V2Y5l9.gif',
   'Жим ногами': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0146-1gPfomN.gif',
-  'Выпады с гантелями': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0334-2gPfomN.gif',
-  'Подъём штанги на бицепс': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0031-3gPfomN.gif',
-  'Французский жим': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0060-4gPfomN.gif',
-  'Разводка гантелей': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0308-5gPfomN.gif',
-  'Тяга Т-грифа': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0028-6gPfomN.gif',
-  'Махи гантелями в стороны': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0334-7gPfomN.gif',
-  'Подъём гантелей на бицепс': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0294-8gPfomN.gif',
-  'Разгибание на трицепс на блоке': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0241-9gPfomN.gif',
-  'Планка': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/1587-Plank.gif',
-  'Скручивания': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0001-Crunch.gif',
-  'Подъём ног в висе': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0472-HangingLegRaise.gif',
-  'Румынская тяга': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0085-RomanianDeadlift.gif',
-  'Икры в тренажере': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0258-CalfRaise.gif'
+  'Планка': 'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/1587-Plank.gif'
 };
 
 const EXERCISE_DESCS = {
@@ -526,50 +416,23 @@ const EXERCISE_DESCS = {
 };
 
 const FOOD_DB = { 
-  'курица':{c:165,p:31,f:3.6,cb:0}, 'куриная грудка':{c:165,p:31,f:3.6,cb:0}, 'куриное бедро':{c:210,p:26,f:11,cb:0}, 'куриное филе':{c:113,p:23.6,f:1.9,cb:0},
-  'индейка':{c:150,p:29,f:3,cb:0}, 'говядина':{c:250,p:26,f:15,cb:0}, 'свинина':{c:260,p:27,f:16,cb:0}, 'баранина':{c:294,p:25,f:21,cb:0},
-  'фарш':{c:250,p:20,f:18,cb:0}, 'стейк':{c:271,p:25,f:19,cb:0}, 'шашлык':{c:280,p:22,f:20,cb:2}, 'сосиски':{c:257,p:13,f:22,cb:2},
-  'колбаса':{c:300,p:15,f:25,cb:2}, 'бекон':{c:541,p:37,f:45,cb:1}, 'ветчина':{c:145,p:21,f:6,cb:1}, 'печень':{c:135,p:20,f:3,cb:4}, 'сало':{c:797,p:2,f:89,cb:0},
+  'курица':{c:165,p:31,f:3.6,cb:0}, 'куриная грудка':{c:165,p:31,f:3.6,cb:0}, 'куриное бедро':{c:210,p:26,f:11,cb:0}, 'индейка':{c:150,p:29,f:3,cb:0}, 
+  'говядина':{c:250,p:26,f:15,cb:0}, 'свинина':{c:260,p:27,f:16,cb:0}, 'фарш':{c:250,p:20,f:18,cb:0}, 'сосиски':{c:257,p:13,f:22,cb:2},
   'рыба':{c:120,p:20,f:4,cb:0}, 'лосось':{c:208,p:20,f:13,cb:0}, 'тунец':{c:130,p:29,f:1,cb:0}, 'треска':{c:82,p:18,f:0.7,cb:0},
-  'минтай':{c:72,p:16,f:1,cb:0}, 'скумбрия':{c:191,p:18,f:13,cb:0}, 'сельдь':{c:161,p:18,f:10,cb:0}, 'форель':{c:148,p:21,f:6,cb:0},
-  'креветки':{c:99,p:24,f:0.3,cb:0.2}, 'кальмары':{c:92,p:15,f:2,cb:3}, 'икра':{c:250,p:25,f:15,cb:4}, 'крабовые палочки':{c:90,p:6,f:1,cb:14},
-  'творог':{c:180,p:18,f:2,cb:2}, 'творог 5%':{c:121,p:17,f:5,cb:3}, 'творог обезжиренный':{c:79,p:18,f:0.5,cb:1.5},
-  'яйцо':{c:155,p:13,f:11,cb:1.1}, 'сыр':{c:350,p:25,f:27,cb:0}, 'сыр российский':{c:364,p:24,f:29,cb:0}, 'моцарелла':{c:280,p:22,f:20,cb:2},
-  'молоко':{c:52,p:3,f:2.5,cb:4.7}, 'кефир':{c:40,p:3,f:1,cb:4}, 'йогурт':{c:60,p:5,f:3,cb:3}, 'ряженка':{c:67,p:3,f:4,cb:4},
-  'сметана':{c:206,p:2.8,f:20,cb:3.2}, 'масло сливочное':{c:717,p:0.8,f:81,cb:0.8},
-  'рис':{c:344,p:6.7,f:0.7,cb:78}, 'рис бурый':{c:337,p:7.4,f:1.8,cb:72}, 'гречка':{c:343,p:12.6,f:3.3,cb:62}, 'овсянка':{c:350,p:12,f:6,cb:60},
-  'макароны':{c:350,p:12,f:1.5,cb:70}, 'паста':{c:350,p:12,f:1.5,cb:70}, 'спагетти':{c:350,p:12,f:1.5,cb:70}, 'пшено':{c:348,p:11,f:3.3,cb:69},
-  'перловка':{c:315,p:9.3,f:1.1,cb:73}, 'булгур':{c:342,p:12,f:1.3,cb:75}, 'картофель':{c:77,p:2,f:0.1,cb:17}, 'батат':{c:86,p:1.6,f:0.1,cb:20},
-  'хлеб белый':{c:265,p:9,f:3,cb:49}, 'хлеб черный':{c:210,p:6.6,f:1.2,cb:40}, 'батон':{c:262,p:7.5,f:2.9,cb:51}, 'лаваш':{c:275,p:9,f:1,cb:56},
-  'салат':{c:80,p:2,f:5,cb:6}, 'огурец':{c:15,p:0.6,f:0.1,cb:3.6}, 'помидор':{c:18,p:0.9,f:0.2,cb:3.9}, 'капуста':{c:25,p:1.3,f:0.1,cb:5.8},
-  'брокколи':{c:34,p:2.8,f:0.4,cb:6.6}, 'морковь':{c:41,p:0.9,f:0.2,cb:9.6}, 'лук':{c:40,p:1.1,f:0.1,cb:9.3}, 'перец':{c:26,p:1,f:0.2,cb:6},
-  'кабачок':{c:17,p:1.2,f:0.3,cb:3.1}, 'баклажан':{c:25,p:1.2,f:0.1,cb:5.8}, 'свекла':{c:43,p:1.6,f:0.2,cb:9.5}, 'тыква':{c:26,p:1,f:0.1,cb:6.5},
-  'грибы':{c:27,p:4.3,f:1,cb:0.1}, 'шампиньоны':{c:27,p:4.3,f:1,cb:0.1},
-  'банан':{c:89,p:1.1,f:0.3,cb:22.8}, 'яблоко':{c:52,p:0.3,f:0.2,cb:14}, 'апельсин':{c:47,p:0.9,f:0.1,cb:12}, 'мандарин':{c:53,p:0.8,f:0.3,cb:13},
-  'манго':{c:60,p:0.8,f:0.4,cb:15}, 'авокадо':{c:160,p:2,f:15,cb:9}, 'виноград':{c:69,p:0.7,f:0.2,cb:18}, 'груша':{c:57,p:0.4,f:0.1,cb:15},
-  'персик':{c:39,p:0.9,f:0.3,cb:9.5}, 'абрикос':{c:48,p:1.4,f:0.4,cb:11}, 'киви':{c:61,p:1.1,f:0.5,cb:14.6}, 'лимон':{c:29,p:1.1,f:0.3,cb:9},
-  'арбуз':{c:30,p:0.6,f:0.2,cb:7.6}, 'дыня':{c:34,p:0.8,f:0.2,cb:8}, 'клубника':{c:33,p:0.7,f:0.3,cb:7.7}, 'малина':{c:52,p:1.2,f:0.7,cb:11.9},
-  'черника':{c:57,p:0.7,f:0.3,cb:14.5}, 'смородина':{c:56,p:1.4,f:0.2,cb:13.8},
-  'орехи':{c:600,p:20,f:55,cb:15}, 'миндаль':{c:579,p:21,f:49,cb:22}, 'грецкий орех':{c:654,p:15,f:65,cb:14}, 'фундук':{c:628,p:15,f:61,cb:17},
-  'кешью':{c:553,p:18,f:44,cb:30}, 'арахис':{c:567,p:26,f:49,cb:16}, 'семечки':{c:584,p:21,f:51,cb:20}, 'финики':{c:282,p:2.5,f:0.4,cb:75},
-  'изюм':{c:299,p:3.1,f:0.5,cb:79}, 'курага':{c:241,p:3.4,f:0.5,cb:63}, 'чернослив':{c:240,p:2.2,f:0.4,cb:64},
-  'шоколад':{c:546,p:5,f:31,cb:61}, 'шоколад темный':{c:598,p:7.8,f:42,cb:45}, 'печенье':{c:450,p:5,f:20,cb:65}, 'конфеты':{c:400,p:3,f:15,cb:70},
-  'торт':{c:350,p:5,f:15,cb:50}, 'мороженое':{c:207,p:3.5,f:11,cb:24}, 'мед':{c:304,p:0.3,f:0,cb:82}, 'сахар':{c:387,p:0,f:0,cb:100},
-  'майонез':{c:680,p:1,f:75,cb:3}, 'кетчуп':{c:100,p:1,f:0,cb:25}, 'протеин':{c:380,p:75,f:5,cb:10},
-  'ред булл':{c:45,p:0,f:0,cb:11}, 'red bull':{c:45,p:0,f:0,cb:11}, 'энергетик':{c:45,p:0,f:0,cb:11}, 'адреналин':{c:45,p:0,f:0,cb:11},
-  'кофе':{c:2,p:0.1,f:0,cb:0}, 'чай':{c:1,p:0,f:0,cb:0}, 'кофе с молоком':{c:35,p:1.5,f:1.5,cb:4}, 'сок':{c:45,p:0.5,f:0,cb:10},
-  'кола':{c:42,p:0,f:0,cb:10.6}, 'пепси':{c:42,p:0,f:0,cb:10.6}, 'спрайт':{c:40,p:0,f:0,cb:10}, 'пиво':{c:43,p:0.5,f:0,cb:3.6},
-  'вино':{c:83,p:0.1,f:0,cb:2.6}, 'вода':{c:0,p:0,f:0,cb:0},
-  'шаурма':{c:250,p:12,f:15,cb:20}, 'бургер':{c:295,p:15,f:14,cb:27}, 'пицца':{c:266,p:11,f:10,cb:33}, 'суши':{c:150,p:6,f:2,cb:26},
-  'борщ':{c:50,p:2,f:2,cb:6}, 'пельмени':{c:275,p:11,f:12,cb:30}, 'вареники':{c:200,p:8,f:5,cb:32}, 'омлет':{c:150,p:10,f:11,cb:2},
-  'блины':{c:230,p:6,f:10,cb:30}, 'оладьи':{c:220,p:6,f:8,cb:32}, 'плов':{c:180,p:8,f:6,cb:25}, 'чипсы':{c:536,p:7,f:35,cb:53},
-  'сухарики':{c:400,p:10,f:15,cb:60}
+  'творог':{c:180,p:18,f:2,cb:2}, 'яйцо':{c:155,p:13,f:11,cb:1.1}, 'сыр':{c:350,p:25,f:27,cb:0}, 'молоко':{c:52,p:3,f:2.5,cb:4.7}, 
+  'кефир':{c:40,p:3,f:1,cb:4}, 'йогурт':{c:60,p:5,f:3,cb:3}, 'рис':{c:344,p:6.7,f:0.7,cb:78}, 'гречка':{c:343,p:12.6,f:3.3,cb:62}, 
+  'овсянка':{c:350,p:12,f:6,cb:60}, 'макароны':{c:350,p:12,f:1.5,cb:70}, 'картофель':{c:77,p:2,f:0.1,cb:17}, 'хлеб':{c:265,p:9,f:3,cb:49},
+  'банан':{c:89,p:1.1,f:0.3,cb:22.8}, 'яблоко':{c:52,p:0.3,f:0.2,cb:14}, 'апельсин':{c:47,p:0.9,f:0.1,cb:12}, 'орехи':{c:600,p:20,f:55,cb:15},
+  'протеин':{c:380,p:75,f:5,cb:10}, 'кофе':{c:2,p:0.1,f:0,cb:0}, 'чай':{c:1,p:0,f:0,cb:0}, 'кола':{c:42,p:0,f:0,cb:10.6}, 'вода':{c:0,p:0,f:0,cb:0}
 };
 
 function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 function today() { return new Date().toISOString().slice(0,10); }
 
+// ============================================
+// СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+// ============================================
 let state = {
   profile: load(STORAGE.profile), workouts: load(STORAGE.workouts)||[], bodyLog: load(STORAGE.bodyLog)||[],
   runs: load(STORAGE.runs)||[], swims: load(STORAGE.swims)||[], measurements: load(STORAGE.measurements)||[], achievements: load(STORAGE.achievements)||[],
@@ -596,7 +459,7 @@ document.documentElement.style.setProperty('--accent', state.themeColor);
 if (state.daily.date !== today()) { state.daily = { date:today(), water:0, calories:0, p:0, f:0, cb:0, sleep:null, mood:null, steps:0, habits:{ water:false, steps:false, sleep:false } }; save(STORAGE.daily, state.daily); }
 
 // ============================================
-// УТИЛИТЫ И РАСЧЕТЫ
+// РАСЧЕТЫ И ЛОГИКА
 // ============================================
 function getAllExercises() { return { ...BASE_EXERCISES_DB, ...state.customExercises }; }
 function calcTonnage(workout) { return (!workout || !workout.exercises) ? 0 : workout.exercises.reduce((sum,ex) => sum + ex.sets.filter(s=>!s.isWarmup).reduce((sSum,s)=>sSum+(s.weight*s.reps),0),0); }
@@ -645,11 +508,11 @@ function getStreak() {
 function getRecoveryColor(group) {
   const now=new Date(); now.setHours(0,0,0,0); let lastTrainedDate=null;
   state.workouts.forEach(w => { w.exercises.forEach(ex => { const g=getAllExercises()[ex.name]||'Другое'; if (g===group) { const wDate=new Date(w.date); wDate.setHours(0,0,0,0); if (!lastTrainedDate || wDate>lastTrainedDate) lastTrainedDate=wDate; } }); });
-  if (!lastTrainedDate) return '#2c2c2e'; // Серый (не тренировал)
+  if (!lastTrainedDate) return '#2c2c2e';
   const days=Math.round((now.getTime()-lastTrainedDate.getTime())/(1000*60*60*24));
-  if (days<=1) return '#fa114f'; // Красный (недавно)
-  if (days<=3) return '#ffd700'; // Желтый (восстановление)
-  return '#a2ff00'; // Зеленый (готов)
+  if (days<=1) return '#fa114f'; 
+  if (days<=3) return '#ffd700'; 
+  return '#a2ff00'; 
 }
 
 function getSmartAdvice() {
@@ -680,18 +543,6 @@ function getWeightForecast() {
 // ============================================
 // ЕДА (Поиск)
 // ============================================
-function showToast(message) {
-  if (!document.getElementById('toast-styles')) {
-    const st = document.createElement('style'); st.id='toast-styles';
-    st.textContent='@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}@keyframes toastOut{from{opacity:1;transform:translateX(-50%) translateY(0);}to{opacity:0;transform:translateX(-50%) translateY(20px);}}';
-    document.head.appendChild(st);
-  }
-  const toast = document.createElement('div'); toast.textContent = message;
-  toast.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--premium);color:#000;padding:14px 22px;border-radius:16px;font-weight:800;font-size:15px;z-index:99999;box-shadow:0 8px 24px rgba(255,215,0,0.4);max-width:90%;text-align:center;animation:toastIn 0.3s ease;';
-  document.body.appendChild(toast);
-  setTimeout(() => { toast.style.animation='toastOut 0.3s ease'; setTimeout(() => toast.remove(), 300); }, 2500);
-}
-
 async function processFoodInput() {
   const input = document.getElementById('food-input').value.toLowerCase().trim(); 
   if(!input) return;
@@ -784,7 +635,145 @@ function addFoodFromDB(name, nutrients, weight) {
   document.getElementById('food-input').value = '';
 }
   // ============================================
-// ЭКРАНЫ И РЕНДЕРИНГ
+// ЧАСТЬ 3: ИНТЕРФЕЙС, ЭКРАНЫ И НАВИГАЦИЯ
+// ============================================
+
+function go(screen) { state.screen = screen; render(); window.scrollTo(0,0); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+// --- КНОПКА ПРОДОЛЖИТЬ И ОНБОРДИНГ ---
+function acceptCookies() {
+  const splash=document.getElementById('splash-screen');
+  try {
+    if (!splash) { render(); return; }
+    splash.style.pointerEvents='none'; splash.classList.add('fade-out'); splash.style.opacity='0';
+    const appEl=document.getElementById('app'); if (appEl) appEl.innerHTML=renderSkeleton();
+    setTimeout(() => {
+      try {
+        splash.style.display='none';
+        if (state.profile) { 
+          const nav=document.getElementById('nav'); 
+          if (nav) nav.style.display='flex'; 
+          render(); 
+        } else { 
+          const appEl2=document.getElementById('app'); 
+          if (appEl2) appEl2.innerHTML=''; 
+          const obModal=document.getElementById('onboarding-modal'); 
+          if (obModal) obModal.classList.add('active'); 
+          obGoal='maintain'; obEditMode=false; 
+        }
+        haptic('light');
+      } catch(e) { console.error(e); }
+    }, 400);
+  } catch(e) { if (splash) splash.style.display='none'; try { render(); } catch(e2) {} }
+}
+
+function selectGoal(goal) { obGoal=goal; document.querySelectorAll('.goal-card').forEach(c => c.classList.toggle('selected', c.dataset.goal===goal)); haptic('light'); updatePreview(); }
+function updatePreview() {
+  const sex=document.getElementById('ob_sex').value, weight=+document.getElementById('ob_weight').value, height=+document.getElementById('ob_height').value, age=+document.getElementById('ob_age').value;
+  const previewEl=document.getElementById('ob_preview');
+  if (!weight||!height||!age||!previewEl) { if (previewEl) previewEl.style.display='none'; return; }
+  const kbju=calculateKBJU({ sex, weight, height, age, goal:obGoal });
+  previewEl.style.display='block';
+  document.getElementById('ob_preview_content').innerHTML = `<div style="font-size:28px;font-weight:800;color:var(--accent);margin-bottom:10px;">${kbju.calories} <span style="font-size:14px;color:var(--muted);">ккал</span></div><div style="display:flex;justify-content:space-between;font-size:14px;"><div>Б: <b>${kbju.p} г</b></div><div>Ж: <b>${kbju.f} г</b></div><div>У: <b>${kbju.cb} г</b></div></div>`;
+}
+
+function completeOnboarding() {
+  const sex=document.getElementById('ob_sex').value, weight=+document.getElementById('ob_weight').value, height=+document.getElementById('ob_height').value, age=+document.getElementById('ob_age').value;
+  if (!weight||!height||!age) { alert('Заполни все поля'); return; }
+  const targets=calculateKBJU({ sex, weight, height, age, goal:obGoal });
+  state.profile = { sex, weight, height, age, goal:obGoal, targets, swim:state.profile?.swim||{ time:30, dist:1000, style:'Кроль (вольный стиль)' } };
+  save(STORAGE.profile, state.profile);
+  closeModal('onboarding-modal');
+  const nav=document.getElementById('nav'); if (nav) nav.style.display='flex';
+  haptic('success');
+  render();
+}
+
+// --- СИНХРОНИЗАЦИЯ И АВТОРИЗАЦИЯ ---
+async function openAuthModal() { const el = document.getElementById('auth-modal'); if (!supabase) { alert('Supabase не настроен.'); return; } try { const { data } = await supabase.auth.getSession(); currentUser = data?.session?.user || null; } catch(e) { currentUser=null; } updateAuthUI(); el.classList.add('active'); }
+function updateAuthUI() { const lo = document.getElementById('auth-logged-out'), li = document.getElementById('auth-logged-in'), emailEl = document.getElementById('auth-user-email'); if (!lo || !li) return; if (currentUser) { lo.style.display='none'; li.style.display='block'; if (emailEl) emailEl.innerText = currentUser.email || 'пользователь'; } else { lo.style.display='block'; li.style.display='none'; } }
+async function signUp() { const email = document.getElementById('auth-email').value.trim(), password = document.getElementById('auth-password').value, msg = document.getElementById('auth-msg'); if (!email || password.length < 6) { msg.innerText='Нужен email и пароль от 6 символов'; return; } msg.innerText='Отправляем...'; const { error } = await supabase.auth.signUp({ email, password }); if (error) { msg.innerText='Ошибка: '+error.message; return; } msg.innerText='Готово! Проверь почту.'; haptic('success'); }
+async function signIn() { const email = document.getElementById('auth-email').value.trim(), password = document.getElementById('auth-password').value, msg = document.getElementById('auth-msg'); if (!email || !password) { msg.innerText='Введи email и пароль'; return; } msg.innerText='Входим...'; const { data, error } = await supabase.auth.signInWithPassword({ email, password }); if (error) { msg.innerText='Ошибка: '+error.message; return; } currentUser = data.user; msg.innerText=''; updateAuthUI(); haptic('success'); showToast('Вы вошли'); downloadCloudData(); }
+async function signOut() { if (!supabase) return; await supabase.auth.signOut(); currentUser=null; updateAuthUI(); haptic('light'); showToast('Вы вышли'); }
+
+async function syncWorkoutToCloud(workout) {
+  if (!supabase || !currentUser) return;
+  const { error } = await supabase.from('workouts').insert({ user_id: currentUser.id, workout_date: workout.date, tonnage: workout.tonnage, mood: workout.mood, note: workout.note, exercises: workout.exercises });
+  if (error) console.error('Ошибка синхронизации:', error);
+}
+async function downloadCloudData() {
+  if (!supabase || !currentUser) return;
+  showToast('Загрузка данных...');
+  try {
+    const { data: wks, error: wErr } = await supabase.from('workouts').select('*').order('created_at', { ascending: false });
+    if (wks && !wErr && wks.length > 0) { state.workouts = wks.map(w => ({ id: new Date(w.created_at).getTime(), date: w.workout_date, tonnage: w.tonnage, mood: w.mood, note: w.note, exercises: w.exercises })); save(STORAGE.workouts, state.workouts); }
+  } catch(e) {}
+  render(); haptic('success'); showToast('Данные загружены!');
+}
+
+// --- ТАЙМЕР И КАЛЬКУЛЯТОРЫ ---
+function calc1RM() { const w=+document.getElementById('rm-weight').value; const r=+document.getElementById('rm-reps').value; if(!w||!r) return; document.getElementById('rm-result').innerText = Math.round(w * (1 + r/30)) + ' кг'; }
+function setTimerPreset(sec) { timerTotal=sec; timerRemaining=sec; document.querySelectorAll('.timer-preset-btn').forEach(b=>b.classList.toggle('active', +b.dataset.sec===sec)); updateTimerDisplay(); }
+function updateTimerDisplay() { const el=document.getElementById('timer-display'); if(el) el.innerText = `${Math.floor(timerRemaining/60).toString().padStart(2,'0')}:${(timerRemaining%60).toString().padStart(2,'0')}`; }
+function buyPremium() { state.isPremium = true; save(STORAGE.premium, true); closeModal('premium-modal'); showToast('Premium активирован! 👑'); render(); }
+function saveSetNote() { const note = document.getElementById('set-note-input').value; if (currentSetNoteTarget.exIdx !== null) { state.currentWorkout.exercises[currentSetNoteTarget.exIdx].sets[currentSetNoteTarget.setIdx].note = note; render(); } closeModal('set-note-modal'); }
+
+// --- ТРАВМЫ И ПРОГРАММЫ ---
+function openInjuryModal() { currentInjuriesTemp=[...state.injuries]; renderInjuryList(); document.getElementById('injury-modal').classList.add('active'); }
+function renderInjuryList() { document.getElementById('injury-list').innerHTML = INJURIES_LIST.map(inj => { const active=currentInjuriesTemp.includes(inj); return `<div onclick="toggleInjury('${inj}')" style="padding:12px;border-radius:12px;text-align:center;font-weight:700;cursor:pointer;border:2px solid ${active?'var(--move)':'var(--card-light)'};background:${active?'rgba(250,17,79,0.1)':'var(--card-light)'};color:${active?'var(--move)':'var(--text)'};">${inj}</div>`; }).join(''); }
+function toggleInjury(inj) { if (currentInjuriesTemp.includes(inj)) currentInjuriesTemp=currentInjuriesTemp.filter(i=>i!==inj); else currentInjuriesTemp.push(inj); haptic('light'); renderInjuryList(); }
+function saveInjuries() { state.injuries=[...currentInjuriesTemp]; save(STORAGE.injuries, state.injuries); closeModal('injury-modal'); haptic('success'); showToast('Сохранено'); render(); }
+function openShoppingList() { renderShopping(); document.getElementById('shopping-modal').classList.add('active'); }
+function renderShopping() { const items = ['Куриная грудка', 'Гречка', 'Яйца', 'Творог', 'Овощи']; document.getElementById('shopping-list').innerHTML = items.map(it => `<div class="shop-item" onclick="this.classList.toggle('checked')"><div class="shop-checkbox"><i class="ph-bold ph-check"></i></div><div style="font-weight:600;font-size:15px;">${it}</div></div>`).join(''); }
+
+function openProgramsModal() {
+  let html = '';
+  Object.keys(PROGRAMS_DB).forEach(key => { const p=PROGRAMS_DB[key]; html += `<div class="program-card" onclick="loadProgram('${key}')"><div style="font-size:16px;font-weight:800;color:var(--accent);margin-bottom:4px;">${p.name}</div><div class="muted" style="font-size:12px;line-height:1.4;">${p.desc}</div></div>`; });
+  document.getElementById('programs-list').innerHTML = html;
+  document.getElementById('programs-modal').classList.add('active');
+}
+function loadProgram(key) { const p=PROGRAMS_DB[key]; closeModal('programs-modal'); haptic('success'); state.currentWorkout = { date:today(), exercises:[], mood:null, note:'' }; p.workouts[0].exercises.forEach(exName => addExercise(exName, false)); state.screen='newWorkout'; render(); }
+
+// --- БЕГ И ПЛАВАНИЕ ---
+function renderRunning() {
+  const cal=Math.round(9.8*state.profile.weight*(runTime/3600));
+  return `<div class="run-screen">
+    <div class="run-time-big" id="run-time">${formatTime(runTime)}</div>
+    <div class="run-metrics">
+      <div class="run-metric-box" style="grid-column:span 2;background:var(--card-light);"><div class="muted" style="font-size:12px;margin-bottom:8px;">Дистанция (км)</div><input type="number" id="run-dist-input" value="${state.tempRunDist||''}" placeholder="0.0" style="margin:0;font-size:24px;font-weight:800;padding:12px;" onchange="state.tempRunDist = +this.value"></div>
+      <div class="run-metric-box" style="grid-column:span 2;"><div class="run-metric-val" style="color:var(--accent);">${cal}</div><div class="stat-label">ККАЛ</div></div>
+    </div>
+    <button onclick="toggleRun()" id="run-btn" style="border-radius:99px;padding:24px;font-size:22px;background:${runActive?'var(--move)':'var(--accent)'};color:${runActive?'#fff':'#000'};"><i class="ph ${runActive?'ph-pause':'ph-play'}"></i> ${runActive?'ПАУЗА':'СТАРТ'}</button>
+    <button class="secondary" id="run-save-btn" style="display:${runActive||runTime===0?'none':'flex'};" onclick="saveRun(${cal})">Сохранить</button>
+  </div>`;
+}
+function formatTime(sec) { return `${Math.floor(sec/3600).toString().padStart(2,'0')}:${Math.floor((sec%3600)/60).toString().padStart(2,'0')}:${(sec%60).toString().padStart(2,'0')}`; }
+function toggleRun() { runActive=!runActive; haptic('medium'); if (runActive) { runInt=setInterval(() => { runTime++; const el=document.getElementById('run-time'); if(el) el.innerText=formatTime(runTime); }, 1000); } else clearInterval(runInt); document.getElementById('app').innerHTML=renderRunning(); }
+function saveRun(cal) { const distInput=document.getElementById('run-dist-input'); const dist=distInput?+distInput.value:0; if(!dist||dist<=0) return alert('Введи дистанцию'); state.runs.unshift({ id:Date.now(), date:today(), distance:dist, time:formatTime(runTime), calories:cal }); save(STORAGE.runs,state.runs); checkAchievements(); haptic('success'); runTime=0; runActive=false; state.tempRunDist=null; render(); }
+
+function renderSwimming() {
+  const sw=state.profile.swim||{ time:30,dist:1000,style:'Кроль (вольный стиль)' };
+  return `<h1>Плавание</h1>
+    <div class="bento-grid">
+      <div class="card glass-card span-2"><h2>Параметры заплыва</h2>
+        <label>Стиль</label>
+        <select id="swim-style" onchange="updateSwimStyle(this.value)">
+          <option value="Кроль (вольный стиль)" ${sw.style.includes('Кроль')?'selected':''}>Кроль</option>
+          <option value="Брасс" ${sw.style.includes('Брасс')?'selected':''}>Брасс</option>
+          <option value="Баттерфляй (Дельфин)" ${sw.style.includes('Баттерфляй')?'selected':''}>Баттерфляй</option>
+          <option value="На спине" ${sw.style.includes('На спине')?'selected':''}>На спине</option>
+        </select>
+        <div style="display:flex;gap:10px;"><div style="flex:1;"><label>Время (мин)</label><input type="number" id="swim-time" value="${sw.time}"></div><div style="flex:1;"><label>Дистанция (м)</label><input type="number" id="swim-dist" value="${sw.dist}"></div></div>
+        <button style="margin-top:10px;" onclick="saveSwim()"><i class="ph ph-check"></i> Сохранить заплыв</button>
+      </div>
+    </div>`;
+}
+function updateSwimStyle(val) { if (!state.profile.swim) state.profile.swim={ time:30,dist:1000,style:val }; state.profile.swim.style=val; save(STORAGE.profile,state.profile); render(); }
+function saveSwim() { const time=+document.getElementById('swim-time').value; const dist=+document.getElementById('swim-dist').value; const style=document.getElementById('swim-style').value; state.profile.swim={ time,dist,style }; save(STORAGE.profile,state.profile); state.swims=state.swims||[]; state.swims.unshift({ date:today(),time,dist,style }); save(STORAGE.swims,state.swims); checkAchievements(); haptic('success'); alert('Заплыв сохранен!'); render(); }
+
+// ============================================
+// РЕНДЕРИНГ И ЭКРАНЫ
 // ============================================
 function render() {
   const app=document.getElementById('app');
@@ -806,50 +795,6 @@ function renderGhostData(exName) {
   return `<div class="overload-hint"><i class="ph ph-ghost"></i> Прошлый раз: ${bestSet.weight} кг × ${bestSet.reps} (${last.date})</div>`;
 }
 
-// --- НОВАЯ ФУНКЦИЯ: КАРТА МЫШЦ ---
-function renderMuscleMap() {
-  const cChest = getRecoveryColor('Грудь');
-  const cBack = getRecoveryColor('Спина');
-  const cLegs = getRecoveryColor('Ноги');
-  const cShoulders = getRecoveryColor('Плечи');
-  const cArms = getRecoveryColor('Руки');
-  const cAbs = getRecoveryColor('Пресс');
-
-  return `
-  <div class="anatomy-wrapper">
-      <svg class="anatomy-svg" viewBox="0 0 100 200">
-         <circle cx="50" cy="20" r="15" fill="#2c2c2e" /> 
-         <rect x="20" y="40" width="15" height="10" rx="5" fill="${cShoulders}" class="anatomy-muscle"/>
-         <rect x="65" y="40" width="15" height="10" rx="5" fill="${cShoulders}" class="anatomy-muscle"/>
-         <rect x="35" y="40" width="30" height="20" rx="4" fill="${cChest}" class="anatomy-muscle"/>
-         <rect x="40" y="65" width="20" height="30" rx="4" fill="${cAbs}" class="anatomy-muscle"/>
-         <rect x="15" y="55" width="10" height="40" rx="5" fill="${cArms}" class="anatomy-muscle"/>
-         <rect x="75" y="55" width="10" height="40" rx="5" fill="${cArms}" class="anatomy-muscle"/>
-         <rect x="35" y="100" width="12" height="60" rx="5" fill="${cLegs}" class="anatomy-muscle"/>
-         <rect x="53" y="100" width="12" height="60" rx="5" fill="${cLegs}" class="anatomy-muscle"/>
-      </svg>
-      <svg class="anatomy-svg" viewBox="0 0 100 200">
-         <circle cx="50" cy="20" r="15" fill="#2c2c2e" />
-         <rect x="20" y="40" width="15" height="10" rx="5" fill="${cShoulders}" class="anatomy-muscle"/>
-         <rect x="65" y="40" width="15" height="10" rx="5" fill="${cShoulders}" class="anatomy-muscle"/>
-         <rect x="30" y="40" width="40" height="40" rx="6" fill="${cBack}" class="anatomy-muscle"/>
-         <rect x="15" y="55" width="10" height="40" rx="5" fill="${cArms}" class="anatomy-muscle"/>
-         <rect x="75" y="55" width="10" height="40" rx="5" fill="${cArms}" class="anatomy-muscle"/>
-         <rect x="35" y="100" width="12" height="60" rx="5" fill="${cLegs}" class="anatomy-muscle"/>
-         <rect x="53" y="100" width="12" height="60" rx="5" fill="${cLegs}" class="anatomy-muscle"/>
-      </svg>
-  </div>
-  <div style="display:flex; justify-content:center; gap:15px; font-size:11px; margin-top:10px;">
-      <span style="color:var(--move)">🔴 Недавно</span>
-      <span style="color:#ffd700">🟡 Восстановление</span>
-      <span style="color:var(--accent)">🟢 Готово</span>
-  </div>
-  `;
-}
-
-// ============================================
-// СВОДКА
-// ============================================
 function renderHome() {
   const targets=getTargets();
   const done=state.workouts.some(w => w.date===today());
@@ -893,13 +838,10 @@ function renderHome() {
       <div class="card span-2"><button onclick="startWorkout()" style="margin:0;"><i class="ph ph-play"></i> Начать тренировку</button></div>
     </div>`;
 }
-
 function toggleHabit(habit) { if (!state.daily.habits) state.daily.habits={ water:false,steps:false,sleep:false }; state.daily.habits[habit]=!state.daily.habits[habit]; save(STORAGE.daily,state.daily); haptic('light'); render(); }
 function addWater(amount=250) { state.daily.water=(state.daily.water||0)+amount; save(STORAGE.daily,state.daily); haptic('light'); showToast(`+${amount} мл`); render(); }
 
-// ============================================
-// ТРЕНИРОВКА В ЗАЛЕ (С РЕЖИМОМ ПРИЗРАКА)
-// ============================================
+// --- ЗАЛ (С РЕЖИМОМ ПРИЗРАКА) ---
 function startWorkout() { state.currentWorkout={ date:today(), exercises:[], mood:null, note:'' }; state.screen='newWorkout'; prShownThisWorkout=new Set(); haptic('medium'); render(); }
 
 function addExercise(exName, renderNow=true) {
@@ -970,38 +912,22 @@ function renderNewWorkout() {
 function removeExercise(i) { state.currentWorkout.exercises.splice(i,1); render(); }
 function updateSet(exIdx, setIdx, field, val) { state.currentWorkout.exercises[exIdx].sets[setIdx][field] = +val; render(); }
 function addSet(exIdx) { state.currentWorkout.exercises[exIdx].sets.push({ weight:0, reps:10, isWarmup:false, completed:false }); render(); }
-function toggleSetComplete(exIdx, setIdx) {
-  const s = state.currentWorkout.exercises[exIdx].sets[setIdx];
-  s.completed = !s.completed;
-  haptic('light');
-  render();
-}
-
-function cancelWorkout() {
-  if (confirm('Точно отменить тренировку? Данные не сохранятся.')) {
-    state.currentWorkout = null;
-    go('home');
-  }
-}
+function toggleSetComplete(exIdx, setIdx) { const s = state.currentWorkout.exercises[exIdx].sets[setIdx]; s.completed = !s.completed; haptic('light'); render(); }
+function cancelWorkout() { if (confirm('Точно отменить тренировку? Данные не сохранятся.')) { state.currentWorkout = null; go('home'); } }
 
 function saveWorkout() {
   if (state.currentWorkout.exercises.length === 0) return alert('Добавь хотя бы одно упражнение!');
   const tonnage = calcTonnage(state.currentWorkout);
   if (tonnage === 0 && !confirm('Тоннаж 0 кг. Точно сохранить?')) return;
-  
   state.currentWorkout.id = Date.now();
   state.currentWorkout.tonnage = tonnage;
   state.workouts.unshift(state.currentWorkout);
   save(STORAGE.workouts, state.workouts);
-  
   syncWorkoutToCloud(state.currentWorkout);
   checkAchievements();
-  
   state.lastSavedWorkoutId = state.currentWorkout.id;
   state.currentWorkout = null;
   haptic('success');
-  
-  // Показываем окно с эмоциями
   document.getElementById('feedback-modal').classList.add('active');
   go('home'); 
 }
@@ -1011,28 +937,51 @@ function updateWorkoutFeedback() {
   const moodBtn = document.querySelector('.mood-btn.selected');
   const mood = moodBtn ? moodBtn.innerText : null;
   const w = state.workouts.find(x => x.id === state.lastSavedWorkoutId);
-  if (w) {
-    w.note = note;
-    w.mood = mood;
-    save(STORAGE.workouts, state.workouts);
-  }
+  if (w) { w.note = note; w.mood = mood; save(STORAGE.workouts, state.workouts); }
   closeModal('feedback-modal');
   showToast('Сохранено!');
 }
 function selectMood(m, e) { document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected')); e.target.classList.add('selected'); }
 
-// ============================================
-// ТРЕНДЫ (С КАЛЕНДАРЕМ И КАРТОЙ МЫШЦ)
-// ============================================
-function renderProgress() {
-  // --- ГЕНЕРАЦИЯ КАЛЕНДАРЯ ---
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const firstDay = new Date(year, month, 1).getDay(); 
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  let offset = firstDay === 0 ? 6 : firstDay - 1; 
+// --- ТРЕНДЫ (С КАЛЕНДАРЕМ И КАРТОЙ МЫШЦ) ---
+function renderMuscleMap() {
+  const cChest = getRecoveryColor('Грудь'); const cBack = getRecoveryColor('Спина'); const cLegs = getRecoveryColor('Ноги'); const cShoulders = getRecoveryColor('Плечи'); const cArms = getRecoveryColor('Руки'); const cAbs = getRecoveryColor('Пресс');
+  return `
+  <div class="anatomy-wrapper">
+      <svg class="anatomy-svg" viewBox="0 0 100 200">
+         <circle cx="50" cy="20" r="15" fill="#2c2c2e" /> 
+         <rect x="20" y="40" width="15" height="10" rx="5" fill="${cShoulders}" class="anatomy-muscle"/>
+         <rect x="65" y="40" width="15" height="10" rx="5" fill="${cShoulders}" class="anatomy-muscle"/>
+         <rect x="35" y="40" width="30" height="20" rx="4" fill="${cChest}" class="anatomy-muscle"/>
+         <rect x="40" y="65" width="20" height="30" rx="4" fill="${cAbs}" class="anatomy-muscle"/>
+         <rect x="15" y="55" width="10" height="40" rx="5" fill="${cArms}" class="anatomy-muscle"/>
+         <rect x="75" y="55" width="10" height="40" rx="5" fill="${cArms}" class="anatomy-muscle"/>
+         <rect x="35" y="100" width="12" height="60" rx="5" fill="${cLegs}" class="anatomy-muscle"/>
+         <rect x="53" y="100" width="12" height="60" rx="5" fill="${cLegs}" class="anatomy-muscle"/>
+      </svg>
+      <svg class="anatomy-svg" viewBox="0 0 100 200">
+         <circle cx="50" cy="20" r="15" fill="#2c2c2e" />
+         <rect x="20" y="40" width="15" height="10" rx="5" fill="${cShoulders}" class="anatomy-muscle"/>
+         <rect x="65" y="40" width="15" height="10" rx="5" fill="${cShoulders}" class="anatomy-muscle"/>
+         <rect x="30" y="40" width="40" height="40" rx="6" fill="${cBack}" class="anatomy-muscle"/>
+         <rect x="15" y="55" width="10" height="40" rx="5" fill="${cArms}" class="anatomy-muscle"/>
+         <rect x="75" y="55" width="10" height="40" rx="5" fill="${cArms}" class="anatomy-muscle"/>
+         <rect x="35" y="100" width="12" height="60" rx="5" fill="${cLegs}" class="anatomy-muscle"/>
+         <rect x="53" y="100" width="12" height="60" rx="5" fill="${cLegs}" class="anatomy-muscle"/>
+      </svg>
+  </div>
+  <div style="display:flex; justify-content:center; gap:15px; font-size:11px; margin-top:10px;">
+      <span style="color:var(--move)">🔴 Недавно</span>
+      <span style="color:#ffd700">🟡 Восстановление</span>
+      <span style="color:var(--accent)">🟢 Готово</span>
+  </div>
+  `;
+}
 
+function renderProgress() {
+  const now = new Date(); const year = now.getFullYear(); const month = now.getMonth();
+  const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
+  let offset = firstDay === 0 ? 6 : firstDay - 1; 
   let calendarHTML = `<div class="calendar-grid">`;
   const daysNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
   daysNames.forEach(d => calendarHTML += `<div class="cal-day empty" style="background:transparent; color:var(--muted); font-size:10px;">${d}</div>`);
@@ -1056,12 +1005,10 @@ function renderProgress() {
       <h2>Календарь</h2>
       ${calendarHTML}
     </div>
-
     <div class="card" style="margin-bottom:16px;">
       <h2>Восстановление мышц</h2>
       ${renderMuscleMap()}
     </div>
-
     <div class="card">
       <h2>История тренировок</h2>
       ${state.workouts.slice(0,10).map(w => `
@@ -1074,9 +1021,7 @@ function renderProgress() {
   `;
 }
 
-// ============================================
-// ПРОФИЛЬ
-// ============================================
+// --- ПРОФИЛЬ ---
 function renderProfile() {
   return `
     <h1>Профиль</h1>
@@ -1088,13 +1033,11 @@ function renderProfile() {
       <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span class="muted">Цель:</span> <b>${state.profile.goal === 'cut' ? 'Похудение' : state.profile.goal === 'mass' ? 'Набор' : 'Удержание'}</b></div>
       <button class="secondary" style="margin-top:10px;" onclick="document.getElementById('onboarding-modal').classList.add('active')">Изменить параметры</button>
     </div>
-    
     <div class="card" style="margin-bottom:16px;">
       <h2>Настройки</h2>
       <button class="secondary" onclick="toggleTheme()">Сменить тему (Тёмная/Светлая)</button>
       <button class="secondary" onclick="document.getElementById('auth-modal').classList.add('active')">Аккаунт (Синхронизация)</button>
     </div>
-    
     <div class="card">
       <h2>О приложении</h2>
       <p class="muted" style="font-size:13px;">Fitness Pro от Dikov Studio. Данные сохраняются локально и в облако.</p>
@@ -1102,11 +1045,7 @@ function renderProfile() {
   `;
 }
 
-// ============================================
-// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И ИНИЦИАЛИЗАЦИЯ
-// ============================================
-function go(screen) { state.screen = screen; render(); window.scrollTo(0,0); }
-function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+function toggleTheme() { const next = state.themeMode==='dark'?'light':'dark'; applyTheme(next); haptic('light'); render(); showToast(`Тема: ${next==='dark'?'тёмная':'светлая'}`); }
 function openExerciseInfo(name) { 
   document.getElementById('ex-info-title').innerText = name;
   document.getElementById('ex-info-desc').innerText = EXERCISE_DESCS[name] || EXERCISE_DESCS['default'];
@@ -1116,11 +1055,29 @@ function openExerciseInfo(name) {
   document.getElementById('exercise-info-modal').classList.add('active');
 }
 
-// ЗАПУСК ПРИЛОЖЕНИЯ
+// ЗАПУСК ПРИЛОЖЕНИЯ ПРИ ЗАГРУЗКЕ (если профиль есть)
 if (state.profile) {
   document.getElementById('nav').style.display = 'flex';
   render();
 }
+  // ============================================
+// ЧАСТЬ 4: ФИНАЛ (ПРОВЕРКА АВТОРИЗАЦИИ И ЗАКРЫТИЕ ТЕГОВ)
+// ============================================
+
+// Проверяем, вошел ли пользователь в аккаунт (для синхронизации с облаком)
+(async () => { 
+  if (!supabase) return; 
+  try { 
+    const { data } = await supabase.auth.getSession(); 
+    currentUser = data?.session?.user || null; 
+    if (currentUser) {
+      downloadCloudData();
+    }
+  } catch(e) {
+    console.log("Нет активной сессии");
+  } 
+})();
+
 </script>
 </body>
 </html>
