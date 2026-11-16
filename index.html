@@ -331,6 +331,10 @@
       <div class="mood-btn" onclick="selectMood('🥵', event)">🥵</div>
       <div class="mood-btn" onclick="selectMood('😴', event)">😴</div>
     </div>
+    
+    <!-- НОВОЕ ПОЛЕ: Время тренировки -->
+    <input type="number" id="workout-duration" placeholder="Время тренировки (мин)" style="text-align:center; margin-bottom:12px;">
+    
     <input type="text" id="workout-note" placeholder="Заметка..." style="text-align:left;">
     <button onclick="updateWorkoutFeedback()" style="margin-top:10px;">Добавить к тренировке</button>
     <button class="secondary" onclick="closeModal('feedback-modal')">Пропустить</button>
@@ -1241,15 +1245,27 @@ function promptFinishWorkout() {
   syncWorkoutToCloud(newW);
   state.lastSavedWorkoutId=newW.id; state.currentWorkout=null; state.screen='home'; render();
   setTimeout(() => exportWorkoutStory(newW.id), 300);
-  state.tempMood=null; document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected')); document.getElementById('workout-note').value='';
+  state.tempMood=null; document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected')); document.getElementById('workout-note').value=''; document.getElementById('workout-duration').value='';
   document.getElementById('feedback-modal').classList.add('active');
 }
 function selectMood(emoji,ev) { state.tempMood=emoji; document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected')); if (ev && ev.target) ev.target.classList.add('selected'); haptic('light'); }
 function updateWorkoutFeedback() {
   if (!state.lastSavedWorkoutId) return;
   const w=state.workouts.find(x=>x.id===state.lastSavedWorkoutId);
-  if (w) { w.mood=state.tempMood||'😐'; w.note=document.getElementById('workout-note').value; save(STORAGE.workouts,state.workouts); haptic('success'); showToast('Заметка добавлена'); }
-  closeModal('feedback-modal'); render();
+  if (w) { 
+    w.mood=state.tempMood||'😐'; 
+    w.note=document.getElementById('workout-note').value; 
+    
+    // Сохраняем время тренировки, если пользователь его ввел
+    const durVal = document.getElementById('workout-duration').value;
+    if (durVal) w.duration = +durVal;
+
+    save(STORAGE.workouts,state.workouts); 
+    haptic('success'); 
+    showToast('Данные добавлены'); 
+  }
+  closeModal('feedback-modal'); 
+  render();
 }
 function cancelWorkout() { if (confirm('Отменить тренировку?')) { state.currentWorkout=null; state.screen='home'; haptic('warn'); render(); } }
 
@@ -1571,10 +1587,17 @@ function openDayDetails(dateStr) {
   let html = '';
   
   if (workout) {
-    const totalSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).length, 0);
-    const estMinutes = Math.round(totalSets * 2.5); 
-    const userWeight = state.profile?.weight || 70; 
-    const estCalories = Math.round((5.0 * 3.5 * userWeight) / 200 * estMinutes);
+    const userWeight = state.profile?.weight || 70;
+    let duration = workout.duration; 
+    let isEstimate = false;
+
+    if (!duration) {
+      const totalSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).length, 0);
+      duration = Math.round(totalSets * 3); 
+      isEstimate = true;
+    }
+
+    const estCalories = Math.round((5.0 * 3.5 * userWeight) / 200 * duration);
 
     html += `<div style="margin-bottom:20px;">
       <div style="font-weight:800;color:var(--exercise);margin-bottom:10px;font-size:16px;"><i class="ph ph-barbell"></i> Тренировка в зале</div>
@@ -1587,11 +1610,11 @@ function openDayDetails(dateStr) {
         </div>
         <div style="text-align:center; flex:1; border-right:1px solid var(--border);">
           <div style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Время</div>
-          <div style="font-weight:800; font-size:18px;">~${estMinutes} <span style="font-size:10px;">мин</span></div>
+          <div style="font-weight:800; font-size:18px;">${isEstimate ? '~' : ''}${duration} <span style="font-size:10px;">мин</span></div>
         </div>
         <div style="text-align:center; flex:1;">
           <div style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Сожжено</div>
-          <div style="font-weight:800; color:var(--premium); font-size:18px;">~${estCalories} <span style="font-size:10px;">ккал</span></div>
+          <div style="font-weight:800; color:var(--premium); font-size:18px;">${isEstimate ? '~' : ''}${estCalories} <span style="font-size:10px;">ккал</span></div>
         </div>
       </div>
 
