@@ -140,8 +140,8 @@
   .shop-item.checked { opacity:0.5; text-decoration:line-through; }
   .shop-checkbox { width:24px; height:24px; border-radius:6px; border:2px solid var(--muted); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .shop-item.checked .shop-checkbox { background:var(--accent); border-color:var(--accent); color:#000; }
-
-  /* Стили для Paywall */
+  
+  /* Стили экрана оплаты */
   .paywall-content { padding: 30px 20px 20px; text-align: center; position: relative; }
   .paywall-close { position: absolute; top: 14px; right: 14px; background: transparent; color: var(--muted); width: auto; padding: 8px 12px; font-size: 18px; margin: 0; }
   .paywall-badge { display: inline-block; background: linear-gradient(90deg, #ffd700, #ffaa00); color: #000; padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; margin-bottom: 12px; }
@@ -546,33 +546,40 @@ async function syncWorkoutToCloud(workout) {
 
 async function syncCustomExerciseToCloud(name, group) {
   if (!supabase || !currentUser) return;
-  await supabase.from('custom_exercises').insert({ user_id: currentUser.id, name: name, muscle_group: group });
+  const { error } = await supabase.from('custom_exercises').insert({ user_id: currentUser.id, name: name, muscle_group: group });
+  if (error) console.error('Ошибка синхронизации упражнения:', error);
 }
 
 async function syncCustomProgramToCloud(program) {
   if (!supabase || !currentUser) return;
-  await supabase.from('custom_programs').insert({ user_id: currentUser.id, name: program.name, exercises: program.exercises });
+  const { error } = await supabase.from('custom_programs').insert({ user_id: currentUser.id, name: program.name, exercises: program.exercises });
+  if (error) console.error('Ошибка синхронизации программы:', error);
 }
 
 async function downloadCloudData() {
   if (!supabase || !currentUser) return;
   showToast('Загрузка данных из облака...');
+  
   try {
-    const { data: prof } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
-    if (prof) { state.profile = { weight: prof.weight, height: prof.height, age: prof.age, sex: prof.sex, goal: prof.goal, targets: prof.targets }; save(STORAGE.profile, state.profile); }
+    const { data: prof, error: pErr } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (prof && !pErr) { state.profile = { weight: prof.weight, height: prof.height, age: prof.age, sex: prof.sex, goal: prof.goal, targets: prof.targets }; save(STORAGE.profile, state.profile); }
   } catch(e) {}
+
   try {
-    const { data: wks } = await supabase.from('workouts').select('*').order('created_at', { ascending: false });
-    if (wks && wks.length > 0) { state.workouts = wks.map(w => ({ id: new Date(w.created_at).getTime(), date: w.workout_date, tonnage: w.tonnage, mood: w.mood, note: w.note, exercises: w.exercises })); save(STORAGE.workouts, state.workouts); }
+    const { data: wks, error: wErr } = await supabase.from('workouts').select('*').order('created_at', { ascending: false });
+    if (wks && !wErr && wks.length > 0) { state.workouts = wks.map(w => ({ id: new Date(w.created_at).getTime(), date: w.workout_date, tonnage: w.tonnage, mood: w.mood, note: w.note, exercises: w.exercises })); save(STORAGE.workouts, state.workouts); }
   } catch(e) {}
+
   try {
-    const { data: exs } = await supabase.from('custom_exercises').select('*');
-    if (exs) { exs.forEach(ex => { state.customExercises[ex.name] = ex.muscle_group; }); save(STORAGE.customEx, state.customExercises); }
+    const { data: exs, error: eErr } = await supabase.from('custom_exercises').select('*');
+    if (exs && !eErr) { exs.forEach(ex => { state.customExercises[ex.name] = ex.muscle_group; }); save(STORAGE.customEx, state.customExercises); }
   } catch(e) {}
+
   try {
-    const { data: progs } = await supabase.from('custom_programs').select('*');
-    if (progs && progs.length > 0) { state.customPrograms = progs.map(p => ({ name: p.name, exercises: p.exercises })); save(STORAGE.customProg, state.customPrograms); }
+    const { data: progs, error: prErr } = await supabase.from('custom_programs').select('*');
+    if (progs && !prErr && progs.length > 0) { state.customPrograms = progs.map(p => ({ name: p.name, exercises: p.exercises })); save(STORAGE.customProg, state.customPrograms); }
   } catch(e) {}
+
   render(); haptic('success'); showToast('Данные загружены!');
 }
 
@@ -678,8 +685,10 @@ const FOOD_DB = {
   'сухарики':{c:400,p:10,f:15,cb:60}
 };
 
+const COLORS = [{ id:'green',hex:'#a2ff00'},{id:'pink',hex:'#fa114f'},{id:'blue',hex:'#00d4ff'},{id:'orange',hex:'#ff9f0a'},{id:'purple',hex:'#bf5af2'}];
+
 // ============================================
-// 3. СОСТОЯНИЕ И ПЕРЕМЕННЫЕ
+// 3. СОСТОЯНИЕ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 // ============================================
 function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
 function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
@@ -713,7 +722,7 @@ if (state.daily.date !== today()) { state.daily = { date:today(), water:0, calor
 function toggleTheme() { const next = state.themeMode==='dark'?'light':'dark'; applyTheme(next); haptic('light'); render(); showToast(`Тема: ${next==='dark'?'тёмная':'светлая'}`); }
 
 // ============================================
-// 4. УТИЛИТЫ
+// 4. УТИЛИТЫ (TOAST, HAPTIC, РАСЧЕТЫ)
 // ============================================
 function haptic(type = 'light') { if (!('vibrate' in navigator)) return; const patterns = { light: [8], medium: [15], heavy: [25], success: [10, 50, 10, 50, 30], warn: [50, 30, 50] }; try { navigator.vibrate(patterns[type] || patterns.light); } catch(e) {} }
 function renderSkeleton() { return `<div class="skeleton skeleton-title"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-card" style="margin-top:20px;"></div>`; }
@@ -749,9 +758,46 @@ function calculateKBJU(p) {
 
 function getLastExerciseData(exName) { const sorted=[...state.workouts].sort((a,b)=>b.id-a.id); for (const w of sorted) { const ex = w.exercises.find(e => e.name===exName); if (ex) { const ws = ex.sets.filter(s=>!s.isWarmup); if (ws.length) return { date:w.date, sets:ws }; } } return null; }
 function getPR(exName) { let max=0; state.workouts.forEach(w => { const ex = w.exercises.find(e=>e.name===exName); if (ex) ex.sets.filter(s=>!s.isWarmup).forEach(s => { if (s.weight>max) max=s.weight; }); }); return max; }
-
 function downloadBackup() { const data={}; Object.values(STORAGE).forEach(key => { const val=localStorage.getItem(key); if(val) data[key]=JSON.parse(val); }); const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`fitness_backup_${today()}.json`; a.click(); URL.revokeObjectURL(url); }
 function uploadBackup(event) { const file=event.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=(e)=>{ try { const data=JSON.parse(e.target.result); Object.keys(data).forEach(key => localStorage.setItem(key, JSON.stringify(data[key]))); alert('Данные восстановлены! Страница перезагрузится.'); location.reload(); } catch(err) { alert('Ошибка бэкапа.'); } }; reader.readAsText(file); }
+
+function getStreak() {
+  if (state.workouts.length===0) return 0;
+  const dates=[...new Set(state.workouts.map(w=>w.date))].sort().reverse();
+  let streak=0; let checkDate=new Date(); const todayStr=today();
+  if (dates[0]!==todayStr) checkDate.setDate(checkDate.getDate()-1);
+  for (let i=0;i<365;i++) { 
+    const dStr=checkDate.toISOString().slice(0,10); 
+    if (dates.includes(dStr)) { streak++; checkDate.setDate(checkDate.getDate()-1); } 
+    else { if (i===0 && dates[0]!==todayStr) { checkDate.setDate(checkDate.getDate()-1); continue; } break; } 
+  }
+  return streak;
+}
+
+function getSmartAdvice() {
+  if (state.workouts.length===0) return null;
+  const sorted=[...state.workouts].sort((a,b)=>b.id-a.id); const last=sorted[0];
+  const daysSince=Math.floor((new Date()-new Date(last.date))/(1000*60*60*24));
+  if (daysSince>=3) return 'Ты давно не тренировался! Самое время вернуться в зал.';
+  const lastEx = last.exercises.map(e => getAllExercises()[e.name]||'Другое');
+  if (lastEx.includes('Грудь')||lastEx.includes('Спина')||lastEx.includes('Плечи')) return 'Верх тела еще восстанавливается. Сегодня лучше сделать ноги!';
+  if (lastEx.includes('Ноги')) return 'Ноги отдыхают. Идеальный день для жима или тяги!';
+  return 'Ты отлично восстанавливаешься. Продолжай в том же духе!';
+}
+
+function getWeightForecast() {
+  if (state.bodyLog.length<3) return null;
+  const sorted=[...state.bodyLog].sort((a,b)=>a.date.localeCompare(b.date));
+  const first=sorted[0], last=sorted[sorted.length-1];
+  const days=(new Date(last.date)-new Date(first.date))/(1000*60*60*24); if (days<7) return null;
+  const perDay=(last.weight-first.weight)/days; if (Math.abs(perDay)<0.005) return 'Вес стабилен.';
+  const target = state.profile.goal==='cut'?state.profile.weight-5:state.profile.goal==='mass'?state.profile.weight+5:null;
+  if (!target) return null;
+  const daysToTarget = Math.abs((target-last.weight)/perDay); if (daysToTarget>365) return null;
+  const targetDate=new Date(); targetDate.setDate(targetDate.getDate()+daysToTarget);
+  const months=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  return `При текущем темпе ты достигнешь цели ~${Math.round(target)} кг к ${targetDate.getDate()} ${months[targetDate.getMonth()]}.`;
+}
 
 // ============================================
 // 5. ПОИСК ЕДЫ
@@ -814,13 +860,7 @@ function addFoodFromDB(name, nutrients, weight) {
   }
   document.getElementById('food-input').value = '';
 }
-
-// Логика для Paywall (Оплата)
-let selectedPlan = 'yearly';
-function openPremiumModal() { document.getElementById('premium-modal').classList.add('active'); haptic('medium'); }
-function selectPlan(plan, el) { selectedPlan = plan; document.querySelectorAll('.paywall-plan').forEach(p => p.classList.remove('selected')); el.classList.add('selected'); haptic('light'); }
-function startCheckout() { showToast('Переход к оплате...'); setTimeout(() => { alert(`Вы выбрали: ${selectedPlan === 'yearly' ? 'Год (2990 ₽)' : 'Месяц (599 ₽)'}.\n\nСкоро здесь откроется настоящая оплата!`); }, 800); }
-function buyPremium() { openPremiumModal(); }// ============================================
+  // ============================================
 // 6. РОУТЕР И ОТРИСОВКА ЭКРАНОВ
 // ============================================
 function render() {
@@ -838,9 +878,7 @@ function render() {
 
 function go(screen) { 
   if (screen === 'newWorkout' && !state.currentWorkout) { startWorkout(); return; } 
-  state.screen = screen; 
-  haptic('light'); 
-  render(); 
+  state.screen = screen; haptic('light'); render(); 
 }
 
 function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('active'); if (id === 'timer-modal') clearInterval(timerInt); }
@@ -853,9 +891,7 @@ function initApp() { render(); }
 function renderHome() {
   const targets = getTargets();
   const done = state.workouts.some(w => w.date === today());
-  const streak = getStreak(); 
-  const advice = getSmartAdvice(); 
-  const forecast = getWeightForecast();
+  const streak = getStreak(); const advice = getSmartAdvice(); const forecast = getWeightForecast();
   const waterMl = state.daily.water || 0;
   const waterPct = Math.min((waterMl / 2000) * 100, 100);
   const stepsPct = Math.min((state.daily.steps / 10000) * 100, 100);
@@ -1124,7 +1160,8 @@ function renderSwimming() {
 }
 function updateSwimStyle(val) { if (!state.profile.swim) state.profile.swim={ time:30,dist:1000,style:val }; state.profile.swim.style=val; save(STORAGE.profile,state.profile); render(); }
 function saveSwim() { const time=+document.getElementById('swim-time').value; const dist=+document.getElementById('swim-dist').value; const style=document.getElementById('swim-style').value; state.profile.swim={ time,dist,style }; save(STORAGE.profile,state.profile); state.swims=state.swims||[]; state.swims.unshift({ date:today(),time,dist,style }); save(STORAGE.swims,state.swims); checkAchievements(); haptic('success'); alert('Заплыв сохранен!'); render(); }
-  // ============================================
+
+// ============================================
 // 10. ПРОГРЕСС (ТРЕНДЫ)
 // ============================================
 function renderProgress() {
@@ -1197,7 +1234,7 @@ function openHistoryModal(id) {
 }
 
 // ============================================
-// 11. ПРОФИЛЬ И НАСТРОЙКИ
+// 11. ПРОФИЛЬ
 // ============================================
 function renderProfile() {
   const p = state.profile;
@@ -1233,7 +1270,44 @@ function renderProfile() {
 }
 
 // ============================================
-// 12. МОДАЛКИ: ТРАВМЫ, ПРОГРАММЫ, УПРАЖНЕНИЯ
+// 12. ТАЙМЕР, КАЛЬКУЛЯТОРЫ И ФИДБЕК
+// ============================================
+function selectMood(m, e) { state.tempMood = m; document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected')); e.target.classList.add('selected'); haptic('light'); }
+function updateWorkoutFeedback() {
+  const mood = state.tempMood;
+  const note = document.getElementById('workout-note').value;
+  if (state.lastSavedWorkoutId) {
+    const w = state.workouts.find(x => x.id === state.lastSavedWorkoutId);
+    if (w) { w.mood = mood; w.note = note; save(STORAGE.workouts, state.workouts); }
+  }
+  closeModal('feedback-modal'); state.currentWorkout = null; state.screen = 'home'; render();
+}
+
+function setTimerPreset(sec) { timerTotal = sec; timerRemaining = sec; document.querySelectorAll('.timer-preset-btn').forEach(b => b.classList.toggle('active', +b.dataset.sec === sec)); updateTimerDisplay(); startTimerCountdown(); }
+function updateTimerDisplay() { const el = document.getElementById('timer-display'); if (el) el.innerText = `${Math.floor(timerRemaining/60).toString().padStart(2,'0')}:${(timerRemaining%60).toString().padStart(2,'0')}`; }
+function startTimerCountdown() {
+  clearInterval(timerInt);
+  const ring = document.getElementById('timer-ring-progress');
+  if (ring) { const circ = 2*Math.PI*100; ring.style.strokeDasharray = circ; ring.style.strokeDashoffset = 0; }
+  timerInt = setInterval(() => {
+    timerRemaining--; updateTimerDisplay();
+    if (ring) { const circ = 2*Math.PI*100; ring.style.strokeDashoffset = circ * (1 - Math.max(0, timerRemaining) / timerTotal); }
+    if (timerRemaining <= 0) { clearInterval(timerInt); haptic('warn'); if (document.getElementById('timer-display')) document.getElementById('timer-display').innerText = 'СТОП'; }
+  }, 1000);
+}
+
+function calc1RM() { const w = +document.getElementById('rm-weight').value; const r = +document.getElementById('rm-reps').value; if (!w || !r) return; document.getElementById('rm-result').innerText = `1ПМ = ${Math.round(w * (1 + r / 30))} кг`; }
+function openPlatesCalc(weight) {
+  let side = (weight - 20) / 2;
+  if (side <= 0) { document.getElementById('plates-result').innerText = 'Пустой гриф (20 кг)'; document.getElementById('plates-modal').classList.add('active'); return; }
+  const plates = [25, 20, 15, 10, 5, 2.5, 1.25]; let res = [];
+  plates.forEach(p => { while (side >= p) { res.push(p); side -= p; } });
+  document.getElementById('plates-result').innerHTML = res.length ? `На каждую сторону:<br><b style="color:var(--accent);font-size:32px;">${res.join(' + ')}</b> кг` : 'Слишком маленький вес';
+  document.getElementById('plates-modal').classList.add('active');
+}
+
+// ============================================
+// 13. МОДАЛКИ (ТРАВМЫ, ПРОГРАММЫ, УПРАЖНЕНИЯ)
 // ============================================
 function openInjuryModal() { currentInjuriesTemp = [...state.injuries]; renderInjuryList(); document.getElementById('injury-modal').classList.add('active'); }
 function renderInjuryList() {
@@ -1307,40 +1381,8 @@ function saveCustomExercise() {
 }
 
 // ============================================
-// 13. ТАЙМЕР, КАЛЬКУЛЯТОРЫ, ПИТАНИЕ
+// 14. ПЛАНЫ И СПИСОК ПОКУПОК
 // ============================================
-function selectMood(m, e) { state.tempMood = m; document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected')); e.target.classList.add('selected'); haptic('light'); }
-function updateWorkoutFeedback() {
-  if (state.lastSavedWorkoutId) {
-    const w = state.workouts.find(x => x.id === state.lastSavedWorkoutId);
-    if (w) { w.mood = state.tempMood; w.note = document.getElementById('workout-note').value; save(STORAGE.workouts, state.workouts); }
-  }
-  closeModal('feedback-modal'); state.currentWorkout = null; state.screen = 'home'; render();
-}
-
-function setTimerPreset(sec) { timerTotal = sec; timerRemaining = sec; document.querySelectorAll('.timer-preset-btn').forEach(b => b.classList.toggle('active', +b.dataset.sec === sec)); updateTimerDisplay(); startTimerCountdown(); }
-function updateTimerDisplay() { const el = document.getElementById('timer-display'); if (el) el.innerText = `${Math.floor(timerRemaining/60).toString().padStart(2,'0')}:${(timerRemaining%60).toString().padStart(2,'0')}`; }
-function startTimerCountdown() {
-  clearInterval(timerInt);
-  const ring = document.getElementById('timer-ring-progress');
-  if (ring) { const circ = 2*Math.PI*100; ring.style.strokeDasharray = circ; ring.style.strokeDashoffset = 0; }
-  timerInt = setInterval(() => {
-    timerRemaining--; updateTimerDisplay();
-    if (ring) { const circ = 2*Math.PI*100; ring.style.strokeDashoffset = circ * (1 - Math.max(0, timerRemaining) / timerTotal); }
-    if (timerRemaining <= 0) { clearInterval(timerInt); haptic('warn'); if (document.getElementById('timer-display')) document.getElementById('timer-display').innerText = 'СТОП'; }
-  }, 1000);
-}
-
-function calc1RM() { const w = +document.getElementById('rm-weight').value; const r = +document.getElementById('rm-reps').value; if (!w || !r) return; document.getElementById('rm-result').innerText = `1ПМ = ${Math.round(w * (1 + r / 30))} кг`; }
-function openPlatesCalc(weight) {
-  let side = (weight - 20) / 2;
-  if (side <= 0) { document.getElementById('plates-result').innerText = 'Пустой гриф (20 кг)'; document.getElementById('plates-modal').classList.add('active'); return; }
-  const plates = [25, 20, 15, 10, 5, 2.5, 1.25]; let res = [];
-  plates.forEach(p => { while (side >= p) { res.push(p); side -= p; } });
-  document.getElementById('plates-result').innerHTML = res.length ? `На каждую сторону:<br><b style="color:var(--accent);font-size:32px;">${res.join(' + ')}</b> кг` : 'Слишком маленький вес';
-  document.getElementById('plates-modal').classList.add('active');
-}
-
 function showPlan(type) {
   document.getElementById('plan-title').innerText = type === 'food' ? 'План питания' : 'План тренировок';
   document.getElementById('plan-content').innerHTML = type === 'food' ? '<p>Примерное меню на день:</p><ul><li>Завтрак: Овсянка + яйца</li><li>Обед: Курица + рис + овощи</li><li>Ужин: Рыба + гречка</li></ul>' : '<p>Используй вкладку "Зал" для выбора программы.</p>';
@@ -1360,7 +1402,7 @@ function openShoppingList() {
 function toggleShoppingItem(item) { if (state.shoppingList.includes(item)) state.shoppingList = state.shoppingList.filter(i => i !== item); else state.shoppingList.push(item); save(STORAGE.shoppingList, state.shoppingList); haptic('light'); openShoppingList(); }
 
 // ============================================
-// 14. ONBOARDING И PAYWALL
+// 15. ONBOARDING И PAYWALL (ОПЛАТА)
 // ============================================
 function acceptCookies() {
   const splash = document.getElementById('splash-screen');
@@ -1396,18 +1438,18 @@ function openOnboardingEdit() {
   updatePreview(); document.getElementById('onboarding-modal').classList.add('active');
 }
 
-// Логика для нашего нового Paywall (Оплата)
+// Логика для нового Paywall (Оплата)
 let selectedPlan = 'yearly';
 function openPremiumModal() { document.getElementById('premium-modal').classList.add('active'); haptic('medium'); }
 function selectPlan(plan, el) { selectedPlan = plan; document.querySelectorAll('.paywall-plan').forEach(p => p.classList.remove('selected')); el.classList.add('selected'); haptic('light'); }
 function startCheckout() {
   showToast('Переход к оплате...');
-  setTimeout(() => { alert(`Вы выбрали: ${selectedPlan === 'yearly' ? 'Год (2990 ₽)' : 'Месяц (599 ₽)'}.\n\nСкоро здесь откроется настоящая оплата!`); }, 800);
+  setTimeout(() => { alert(`Вы выбрали тариф: ${selectedPlan === 'yearly' ? 'Год (2990 ₽)' : 'Месяц (599 ₽)'}.\n\nСкоро здесь откроется настоящая оплата!`); }, 800);
 }
 function buyPremium() { openPremiumModal(); }
 
 // ============================================
-// 15. ФИНАЛЬНЫЙ ЗАПУСК
+// 16. ЗАВЕРШЕНИЕ ИНИЦИАЛИЗАЦИИ
 // ============================================
 initApp();
 
