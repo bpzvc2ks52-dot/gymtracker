@@ -756,8 +756,7 @@ function uploadBackup(event) {
   reader.onload=(e)=>{ try { const data=JSON.parse(e.target.result); Object.keys(data).forEach(key => localStorage.setItem(key, JSON.stringify(data[key]))); alert('Данные восстановлены! Страница перезагрузится.'); location.reload(); } catch(err) { alert('Ошибка бэкапа.'); } };
   reader.readAsText(file);
 }
-
-// ============================================
+  // ============================================
 // ПОИСК ЕДЫ (ЛОКАЛЬНАЯ БАЗА + OPEN FOOD FACTS)
 // ============================================
 async function processFoodInput() {
@@ -819,7 +818,8 @@ function addFoodFromDB(name, nutrients, weight) {
   }
   document.getElementById('food-input').value = '';
 }
-  // ============================================
+
+// ============================================
 // ВИЗУАЛИЗАТОР ШТАНГИ, ТРАВМЫ, ПРОГРАММЫ, ТЕХНИКА
 // ============================================
 function renderBarbell(weight) {
@@ -1004,15 +1004,6 @@ function render() {
   else if (state.screen==='swimming') app.innerHTML=renderSwimming();
   else if (state.screen==='progress') app.innerHTML=renderProgress();
   else if (state.screen==='profile') app.innerHTML=renderProfile();
-  
-  if (state.screen === 'progress') {
-    setTimeout(initProgressCharts, 50); // Запускаем графики через долю секунды после отрисовки
-  }
-}
-
-function initProgressCharts() {
-  // Функция-заглушка, так как все графики у тебя уже рисуются в других функциях.
-  // Если понадобятся новые, добавим сюда.
 }
 
 // ============================================
@@ -1171,8 +1162,7 @@ function getWeightForecast() {
   const months=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
   return `При текущем темпе ты достигнешь цели ~${Math.round(target)} кг к ${targetDate.getDate()} ${months[targetDate.getMonth()]}.`;
 }
-
-// ============================================
+  // ============================================
 // ТРЕНИРОВКА В ЗАЛЕ
 // ============================================
 function startWorkout() { state.currentWorkout={ date:today(), exercises:[], mood:null, note:'' }; state.screen='newWorkout'; prShownThisWorkout=new Set(); haptic('medium'); render(); }
@@ -1283,8 +1273,6 @@ function renderCalendar() {
     let cls = 'cal-day';
     if (hasW && hasR) cls += ' both'; else if (hasW) cls += ' workout'; else if (hasR) cls += ' run';
     const isToday = dateStr === today();
-    
-    // ВОТ ЗДЕСЬ ДОБАВЛЕНА КЛИКАБЕЛЬНОСТЬ И ВЫЗОВ НОВОЙ ФУНКЦИИ
     html += `<div class="${cls}" style="${isToday?'border:2px solid var(--text);':''}; cursor:pointer;" onclick="openDayDetails('${dateStr}')" title="${dateStr}">${d}</div>`;
   }
   html += `</div>`;
@@ -1351,7 +1339,6 @@ function renderProgress() {
   return `<h1>Тренды</h1>
   <div class="bento-grid">
     <div class="card glass-card span-2"><h2><i class="ph ph-chart-bar" style="color:var(--accent);"></i> Объем по неделям</h2><p class="muted" style="font-size:13px;margin-bottom:16px;">Суммарный тоннаж за последние 8 недель</p><div class="chart-container"><canvas id="volumeChart"></canvas></div></div>
-    
     <div class="card glass-card span-2"><h2><i class="ph ph-calendar-check" style="color:var(--accent);"></i> Календарь активности</h2><p class="muted" style="font-size:13px;margin-bottom:12px;">Тренировки и кардио за месяц</p>${renderCalendar()}</div>
     <div class="card glass-card span-2"><h2><i class="ph ph-person" style="color:var(--accent);"></i> Карта восстановления</h2><p class="muted" style="font-size:13px;margin-bottom:16px;">Цвет = готовность мышц</p>${renderAnatomyMap()}</div>
     <div class="card"><h2>Лидерборд</h2><p class="muted" style="font-size:13px;margin-bottom:16px;">Тоннаж за месяц</p>${friends.map((f,i) => `<div class="leaderboard-item"><div style="display:flex;align-items:center;gap:10px;"><span style="font-weight:800;color:${i===0?'#ffd700':'var(--muted)'}">${i+1}</span><div class="avatar" style="background:${f.me?'var(--accent)':'var(--card-light)'};color:${f.me?'#000':'var(--text)'}">${f.name[0]}</div><span style="font-weight:${f.me?'800':'500'};color:${f.me?'var(--accent)':'var(--text)'}">${f.name}</span></div><span style="font-weight:700;">${f.ton.toLocaleString('ru')} кг</span></div>`).join('')}</div>
@@ -1371,53 +1358,18 @@ function saveMeasurements() {
 function drawVolumeChart() {
   const ctx = document.getElementById('volumeChart'); if (!ctx) return;
   if (state.volumeChartInstance) state.volumeChartInstance.destroy();
-
   const weeks = {}; 
   state.workouts.forEach(w => {
-    const d = new Date(w.date);
-    const day = d.getDay() || 7;
-    const monday = new Date(d);
-    monday.setDate(d.getDate() - day + 1);
-    const key = monday.toISOString().slice(0, 10);
-    
-    if (!weeks[key]) {
-      weeks[key] = { label: `${monday.getDate()}.${(monday.getMonth()+1).toString().padStart(2,'0')}`, volume: 0 };
-    }
+    const d = new Date(w.date); const day = d.getDay() || 7; const monday = new Date(d);
+    monday.setDate(d.getDate() - day + 1); const key = monday.toISOString().slice(0, 10);
+    if (!weeks[key]) weeks[key] = { label: `${monday.getDate()}.${(monday.getMonth()+1).toString().padStart(2,'0')}`, volume: 0 };
     weeks[key].volume += w.tonnage || 0;
   });
-
-  const sortedKeys = Object.keys(weeks).sort();
-  const last8 = sortedKeys.slice(-8);
-  
-  const labels = last8.map(k => weeks[k].label);
-  const data = last8.map(k => weeks[k].volume);
-
-  const accentColor = state.themeColor || '#a2ff00';
-  const gridColor = state.themeMode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)';
+  const sortedKeys = Object.keys(weeks).sort(); const last8 = sortedKeys.slice(-8);
+  const labels = last8.map(k => weeks[k].label); const data = last8.map(k => weeks[k].volume);
+  const accentColor = state.themeColor || '#a2ff00'; const gridColor = state.themeMode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)';
   const textColor = state.themeMode === 'light' ? '#6e6e73' : '#8e8e93';
-
-  state.volumeChartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels.length ? labels : ['Нет данных'],
-      datasets: [{
-        label: 'Тоннаж за неделю, кг',
-        data: data.length ? data : [0],
-        backgroundColor: accentColor + '88',
-        borderColor: accentColor,
-        borderWidth: 2,
-        borderRadius: 8
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { grid: { color: gridColor }, ticks: { color: textColor }, beginAtZero: true },
-        x: { grid: { display: false }, ticks: { color: textColor } }
-      }
-    }
-  });
+  state.volumeChartInstance = new Chart(ctx, { type: 'bar', data: { labels: labels.length ? labels : ['Нет данных'], datasets: [{ label: 'Тоннаж за неделю, кг', data: data.length ? data : [0], backgroundColor: accentColor + '88', borderColor: accentColor, borderWidth: 2, borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: gridColor }, ticks: { color: textColor }, beginAtZero: true }, x: { grid: { display: false }, ticks: { color: textColor } } } } });
 }
 
 function drawWeightChart() {
@@ -1428,24 +1380,20 @@ function drawWeightChart() {
   const data = sorted.length ? sorted.map(b=>b.weight) : [state.profile.weight];
   const gradient = ctx.getContext('2d').createLinearGradient(0,0,0,250);
   gradient.addColorStop(0, state.themeColor+'88'); gradient.addColorStop(1, state.themeColor+'00');
-  const gridColor = state.themeMode==='light'?'rgba(0,0,0,0.1)':'rgba(255,255,255,0.05)';
-  const textColor = state.themeMode==='light'?'#6e6e73':'#8e8e93';
+  const gridColor = state.themeMode==='light'?'rgba(0,0,0,0.1)':'rgba(255,255,255,0.05)'; const textColor = state.themeMode==='light'?'#6e6e73':'#8e8e93';
   state.chartInstance = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ data, borderColor:state.themeColor, backgroundColor:gradient, borderWidth:4, tension:0.4, fill:true, pointRadius:4, pointBackgroundColor:'#fff' }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ grid:{ color:gridColor }, ticks:{ color:textColor } }, x:{ grid:{ display:false }, ticks:{ color:textColor } } } } });
 }
 
 function drawMeasurementsChart() {
   const ctx = document.getElementById('measureChart'); if (!ctx) return;
   if (state.measureChartInstance) state.measureChartInstance.destroy();
-  const select = document.getElementById('measure-select');
-  const field = select ? select.value : 'chest';
+  const select = document.getElementById('measure-select'); const field = select ? select.value : 'chest';
   const fieldNames = { chest:'Грудь', waist:'Талия', bicep:'Бицепс', thigh:'Бедро' };
   const sorted = [...state.measurements].filter(m=>m[field]).sort((a,b)=>a.date.localeCompare(b.date));
-  const labels = sorted.length ? sorted.map(m=>m.date.slice(5)) : ['Нет данных'];
-  const data = sorted.length ? sorted.map(m=>m[field]) : [0];
+  const labels = sorted.length ? sorted.map(m=>m.date.slice(5)) : ['Нет данных']; const data = sorted.length ? sorted.map(m=>m[field]) : [0];
   const gradient = ctx.getContext('2d').createLinearGradient(0,0,0,250);
   gradient.addColorStop(0,'rgba(0,212,255,0.5)'); gradient.addColorStop(1,'rgba(0,212,255,0)');
-  const gridColor = state.themeMode==='light'?'rgba(0,0,0,0.1)':'rgba(255,255,255,0.05)';
-  const textColor = state.themeMode==='light'?'#6e6e73':'#8e8e93';
+  const gridColor = state.themeMode==='light'?'rgba(0,0,0,0.1)':'rgba(255,255,255,0.05)'; const textColor = state.themeMode==='light'?'#6e6e73':'#8e8e93';
   state.measureChartInstance = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:fieldNames[field], data, borderColor:'#00d4ff', backgroundColor:gradient, borderWidth:3, tension:0.4, fill:true, pointRadius:4, pointBackgroundColor:'#fff' }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ grid:{ color:gridColor }, ticks:{ color:textColor } }, x:{ grid:{ display:false }, ticks:{ color:textColor } } } } });
 }
 
@@ -1455,9 +1403,7 @@ function drawRadarChart() {
   const load = { 'Грудь':0,'Спина':0,'Ноги':0,'Руки':0,'Плечи':0,'Пресс':0 };
   state.workouts.forEach(w => { w.exercises.forEach(ex => { const g=getAllExercises()[ex.name]; if (load[g]!==undefined) load[g]+=ex.sets.filter(s=>!s.isWarmup).reduce((sum,s)=>sum+(s.weight*s.reps),0); }); });
   const maxVal = Math.max(...Object.values(load)) || 100;
-  const accentColor = state.themeColor || '#a2ff00';
-  const textColor = state.themeMode==='light'?'#000':'#fff';
-  const gridColor = state.themeMode==='light'?'rgba(0,0,0,0.1)':'rgba(255,255,255,0.1)';
+  const accentColor = state.themeColor || '#a2ff00'; const textColor = state.themeMode==='light'?'#000':'#fff'; const gridColor = state.themeMode==='light'?'rgba(0,0,0,0.1)':'rgba(255,255,255,0.1)';
   state.radarChartInstance = new Chart(ctx, { type:'radar', data:{ labels:Object.keys(load), datasets:[{ label:'Объем (кг)', data:Object.values(load), backgroundColor:accentColor+'44', borderColor:accentColor, pointBackgroundColor:accentColor, borderWidth:2, fill:true }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ r:{ suggestedMin:0, suggestedMax:maxVal*1.2, angleLines:{ color:gridColor }, grid:{ color:gridColor }, pointLabels:{ color:textColor, font:{ size:12, weight:'bold' } }, ticks:{ display:false } } } } });
 }
 
@@ -1548,8 +1494,7 @@ function exportWorkoutStory(id) {
 function showPlan(type) {
   const title = document.getElementById('plan-title'), content = document.getElementById('plan-content');
   if (type === 'food') {
-    const plan = generateMealPlan();
-    const target = getTargets();
+    const plan = generateMealPlan(); const target = getTargets();
     const goalNames = { cut:'Похудение', mass:'Набор массы', maintain:'Удержание' };
     title.innerText = `План питания — ${goalNames[state.profile.goal]||'Удержание'}`;
     let html = `<div style="background:var(--card-light);padding:16px;border-radius:16px;margin-bottom:16px;text-align:center;"><div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Дневная норма</div><div style="font-size:26px;font-weight:800;color:var(--accent);margin-bottom:8px;">${target.calories} ккал</div><div style="display:flex;justify-content:space-around;font-size:13px;"><div>Б: <b>${target.p} г</b></div><div>Ж: <b>${target.f} г</b></div><div>У: <b>${target.cb} г</b></div></div></div>`;
@@ -1560,8 +1505,7 @@ function showPlan(type) {
 }
 
 function generateMealPlan() {
-  const goal = state.profile.goal || 'maintain';
-  const target = getTargets();
+  const goal = state.profile.goal || 'maintain'; const target = getTargets();
   const bCal = Math.round(target.calories*0.25), lCal = Math.round(target.calories*0.35), sCal = Math.round(target.calories*0.15), dCal = Math.round(target.calories*0.25);
   const plans = {
     cut: [ { name:'Завтрак', cal:bCal, p:22, f:10, cb:35, desc:'Омлет из 2 яиц, 50 г овсянки на воде, зелёный чай' }, { name:'Обед', cal:lCal, p:40, f:8, cb:55, desc:'150 г куриной грудки, 100 г гречки, овощной салат' }, { name:'Перекус', cal:sCal, p:20, f:12, cb:10, desc:'150 г творога 5%, горсть орехов (20 г)' }, { name:'Ужин', cal:dCal, p:35, f:6, cb:30, desc:'150 г трески, 100 г брокколи, 50 г риса' } ],
@@ -1582,7 +1526,6 @@ function showPlates(totalWeight) {
 }
 function open1RM() { document.getElementById('rm-weight').value=''; document.getElementById('rm-reps').value=''; document.getElementById('rm-result').innerText=''; document.getElementById('rm-modal').classList.add('active'); }
 function calc1RM() { const w = +document.getElementById('rm-weight').value, r = +document.getElementById('rm-reps').value; if (!w || !r || r < 1 || r > 30) { document.getElementById('rm-result').innerText = 'Введи корректные данные'; return; } const rm = Math.round(w*(1+r/30)); document.getElementById('rm-result').innerText = `~ ${rm} кг`; haptic('success'); }
-
 function openSetNote(exIdx, setIdx) { currentSetNoteTarget = { exIdx, setIdx }; const s = state.currentWorkout.exercises[exIdx].sets[setIdx]; document.getElementById('set-note-input').value = s.note || ''; document.getElementById('set-note-modal').classList.add('active'); }
 function saveSetNote() { const note = document.getElementById('set-note-input').value.trim(); const { exIdx, setIdx } = currentSetNoteTarget; if (exIdx !== null && setIdx !== null) { state.currentWorkout.exercises[exIdx].sets[setIdx].note = note; closeModal('set-note-modal'); haptic('success'); render(); } }
 
@@ -1597,8 +1540,7 @@ function setTimerPreset(sec) { timerTotal=sec; timerRemaining=sec; updateTimerDi
 function updatePresetButtons() { document.querySelectorAll('.timer-preset-btn').forEach(btn => { btn.classList.toggle('active', +btn.dataset.sec === timerTotal); }); }
 function updateTimerDisplay() { const el = document.getElementById('timer-display'); if (!el) return; el.innerText = `${Math.floor(timerRemaining/60).toString().padStart(2,'0')}:${(timerRemaining%60).toString().padStart(2,'0')}`; }
 function startTimerCountdown() {
-  clearInterval(timerInt);
-  const ring = document.getElementById('timer-ring-progress'); const circumference = 2*Math.PI*100;
+  clearInterval(timerInt); const ring = document.getElementById('timer-ring-progress'); const circumference = 2*Math.PI*100;
   if (ring) { ring.style.strokeDasharray = circumference; ring.style.strokeDashoffset = 0; }
   timerInt = setInterval(() => {
     timerRemaining--; updateTimerDisplay();
@@ -1615,7 +1557,7 @@ function resetApp() { if (confirm('Удалить все данные?')) { loca
 function go(screen) { if (screen === 'newWorkout' && !state.currentWorkout) { startWorkout(); return; } state.screen = screen; haptic('light'); render(); window.scrollTo(0,0); }
 
 // ============================================
-// НОВАЯ ФУНКЦИЯ: ДЕТАЛИ ДНЯ В КАЛЕНДАРЕ
+// ДЕТАЛИ ДНЯ В КАЛЕНДАРЕ (С КАЛОРИЯМИ И ВРЕМЕНЕМ)
 // ============================================
 function openDayDetails(dateStr) {
   const workout = state.workouts.find(w => w.date === dateStr);
@@ -1627,17 +1569,48 @@ function openDayDetails(dateStr) {
   }
 
   let html = '';
+  
   if (workout) {
+    const totalSets = workout.exercises.reduce((sum, ex) => sum + ex.sets.filter(s => !s.isWarmup).length, 0);
+    const estMinutes = Math.round(totalSets * 2.5); 
+    const userWeight = state.profile?.weight || 70; 
+    const estCalories = Math.round((5.0 * 3.5 * userWeight) / 200 * estMinutes);
+
     html += `<div style="margin-bottom:20px;">
       <div style="font-weight:800;color:var(--exercise);margin-bottom:10px;font-size:16px;"><i class="ph ph-barbell"></i> Тренировка в зале</div>
-      <div style="font-size:14px;margin-bottom:10px;">Общий тоннаж: <b style="color:var(--accent);">${workout.tonnage} кг</b></div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        ${workout.exercises.map(ex => `
-          <div style="background:var(--card-light);padding:10px 14px;border-radius:10px;font-size:14px;display:flex;justify-content:space-between;">
-            <span>${ex.name}</span>
-            <span style="color:var(--muted);font-size:12px;">${ex.sets.length} подх.</span>
+      
+      <!-- Плашка со статистикой -->
+      <div style="display:flex; justify-content:space-between; margin-bottom:16px; background:var(--card); padding:16px; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+        <div style="text-align:center; flex:1; border-right:1px solid var(--border);">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Тоннаж</div>
+          <div style="font-weight:800; color:var(--accent); font-size:18px;">${workout.tonnage} <span style="font-size:10px;">кг</span></div>
+        </div>
+        <div style="text-align:center; flex:1; border-right:1px solid var(--border);">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Время</div>
+          <div style="font-weight:800; font-size:18px;">~${estMinutes} <span style="font-size:10px;">мин</span></div>
+        </div>
+        <div style="text-align:center; flex:1;">
+          <div style="font-size:10px; color:var(--muted); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Сожжено</div>
+          <div style="font-weight:800; color:var(--premium); font-size:18px;">~${estCalories} <span style="font-size:10px;">ккал</span></div>
+        </div>
+      </div>
+
+      <!-- Список упражнений -->
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${workout.exercises.map(ex => {
+          const exTonnage = ex.sets.reduce((sum, s) => sum + (s.weight * s.reps), 0);
+          return `
+          <div style="background:var(--card-light);padding:12px 14px;border-radius:12px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-weight:700; font-size:14px;">${ex.name}</span>
+              <span style="color:var(--accent);font-size:12px;font-weight:800;">${exTonnage} кг</span>
+            </div>
+            <div style="font-size:11px; color:var(--muted); display:flex; flex-wrap:wrap; gap:6px;">
+              ${ex.sets.map((s, i) => `<span style="background:var(--card); padding:4px 8px; border-radius:6px; ${s.isWarmup?'color:var(--move); font-weight:bold;':''}">${s.isWarmup?'W':i+1}: ${s.weight}кг × ${s.reps}</span>`).join('')}
+            </div>
           </div>
-        `).join('')}
+          `
+        }).join('')}
       </div>
     </div>`;
   }
@@ -1646,9 +1619,9 @@ function openDayDetails(dateStr) {
     html += `<div>
       <div style="font-weight:800;color:var(--stand);margin-bottom:10px;font-size:16px;"><i class="ph ph-person-simple-run"></i> Кардио</div>
       ${runs.map(r => `
-        <div style="background:var(--card-light);padding:10px 14px;border-radius:10px;font-size:14px;margin-bottom:6px;display:flex;justify-content:space-between;">
+        <div style="background:var(--card-light);padding:12px 14px;border-radius:12px;font-size:14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
           <span>Дистанция: <b>${r.distance} км</b></span>
-          <span style="color:var(--muted);">${r.time}</span>
+          <span style="color:var(--premium); font-weight:700;">${r.calories} ккал</span>
         </div>
       `).join('')}
     </div>`;
